@@ -13,7 +13,7 @@ import {
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
 import { StoreMark } from "./StoreMark";
-import { ChevronRight, LogOut } from "lucide-react";
+import { ChevronRight, History, LogOut } from "lucide-react";
 import {
   ADMIN_ACCENT,
   getVisibleNavGroups,
@@ -33,6 +33,7 @@ export function AppSidebar({
   siteLogo,
   adminRole,
   restricted = false,
+  onOpenChangelog,
 }: {
   activeMenu: string;
   currentPath: string;
@@ -42,6 +43,7 @@ export function AppSidebar({
   siteLogo?: string;
   adminRole: AdminRole;
   restricted?: boolean;
+  onOpenChangelog?: () => void;
 }) {
   const rawName = siteName || adminName;
   const storeName = rawName
@@ -92,7 +94,7 @@ export function AppSidebar({
         )}
         {groups.map((group) => (
           <SidebarGroup key={group.label} className="py-1">
-            <SidebarGroupLabel className="mb-0.5 h-6 px-2 text-xs font-medium uppercase tracking-wider text-slate-400">
+            <SidebarGroupLabel className="mb-0.5 h-6 px-2 text-xs font-semibold uppercase tracking-[0.06em] text-slate-400">
               {group.label}
             </SidebarGroupLabel>
             <SidebarMenu>
@@ -123,6 +125,13 @@ export function AppSidebar({
                         href={item.href}
                         aria-current={overviewActive ? "page" : undefined}
                       >
+                        {active && (
+                          <span
+                            className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full"
+                            style={{ backgroundColor: ADMIN_ACCENT }}
+                            aria-hidden="true"
+                          />
+                        )}
                         <item.icon className="size-[17px]" aria-hidden="true" />
                         <span className="min-w-0 flex-1 truncate">
                           {item.label}
@@ -184,13 +193,42 @@ export function AppSidebar({
               </SidebarMenuButton>
             </form>
           </SidebarMenuItem>
+          {onOpenChangelog && (
+            <SidebarMenuItem className="hidden group-data-[collapsible=icon]:block">
+              <SidebarMenuButton
+                type="button"
+                onClick={onOpenChangelog}
+                tooltip={`Catatan Rilis v${CMS_VERSION.version}`}
+                className="h-10 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+              >
+                <History className="size-[17px]" aria-hidden="true" />
+                <span>v{CMS_VERSION.version}</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
         </SidebarMenu>
-        <div className="mt-2 flex items-center justify-between rounded-lg border border-slate-200/80 bg-slate-50/80 px-2.5 py-1.5 text-xs font-medium text-slate-500 group-data-[collapsible=icon]:hidden">
-          <span className="font-medium text-slate-700">AdsBookCMS</span>
-          <span className="rounded bg-slate-200/70 px-1.5 py-0.5 font-mono text-xs font-medium text-slate-600">
-            v{CMS_VERSION.version}
-          </span>
-        </div>
+        {onOpenChangelog ? (
+          <button
+            type="button"
+            onClick={onOpenChangelog}
+            title="Buka catatan rilis AdsBookCMS"
+            className="group mt-2 flex w-full items-center justify-between rounded-lg border border-slate-200/80 bg-slate-50/80 px-2.5 py-1.5 text-xs font-medium text-slate-500 transition-colors hover:border-slate-300 hover:bg-slate-100 hover:text-slate-900 group-data-[collapsible=icon]:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+          >
+            <span className="font-medium text-slate-700 group-hover:text-slate-900">
+              AdsBookCMS
+            </span>
+            <span className="rounded bg-slate-200/70 px-1.5 py-0.5 font-mono text-xs font-medium text-slate-600 group-hover:bg-slate-200 group-hover:text-slate-900">
+              v{CMS_VERSION.version}
+            </span>
+          </button>
+        ) : (
+          <div className="mt-2 flex items-center justify-between rounded-lg border border-slate-200/80 bg-slate-50/80 px-2.5 py-1.5 text-xs font-medium text-slate-500 group-data-[collapsible=icon]:hidden">
+            <span className="font-medium text-slate-700">AdsBookCMS</span>
+            <span className="rounded bg-slate-200/70 px-1.5 py-0.5 font-mono text-xs font-medium text-slate-600">
+              v{CMS_VERSION.version}
+            </span>
+          </div>
+        )}
       </SidebarFooter>
     </Sidebar>
   );

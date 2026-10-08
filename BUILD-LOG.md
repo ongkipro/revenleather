@@ -1,6 +1,6 @@
 # BUILD LOG: AdsBookCMS
 
-> Verified against disk: 2026-09-28 @ `2a04340` + working tree
+> Verified against disk: 2026-09-30 @ `f3be2b1` + working tree
 
 Author & Curator: **[ongki.pro](https://ongki.pro)**
 
@@ -6133,3 +6133,194 @@ whenever the list was opened. The upsert now writes only a real difference.
 
 **Evidence.** New test: an unchanged re-sync leaves `updated_at` alone and a
 changed description moves it; dropping the upsert's `WHERE` fails it. 783 tests.
+
+## 2026-09-29 — The hourly Advice run could never reach a new payment
+
+The run asked AutoLaris about the 25 **oldest** pending-or-expired QRIS/VA
+instructions, with no age bound. An instruction nobody pays stays eligible
+forever, so on zvarashop — 96 eligible, none ever paid — the window sat on the
+same August rows every hour and nothing created after 11 September was asked
+about. A buyer who paid and closed the payment page before it polled would never
+have been marked paid; the order would not have been released and its Purchase
+would never have reached Meta. The live run confirmed the shape: `checked: 25`,
+all `pending`, all from 28 Aug–11 Sep.
+
+The selection now takes every pending instruction plus those expired within the
+last 24 hours, newest first, still 25 a run. Older expiries are left to the
+audited manual reconciliation in `/admin/payments`.
+
+**Evidence.** New test on a real SQLite: thirty long-expired rows, one expired
+two hours ago, one pending — the run returns the pending and the recent one and
+none of the thirty; restoring the old query fails it. 784 tests.
+
+## 2026-09-29 — A landing made a product page kept its ad's click ids no longer
+
+When an operator makes a landing page the product page, its own URL answers
+`308` to `/produk/<slug>`. The redirect was built from the path alone, so the
+query string was dropped — and ads point at landing URLs. `fbclid`, `gclid` and
+the UTM tags vanished before any script could read them: no `_fbc` cookie, no
+click attribution, a paid click reported as organic. Found live on zvarashop the
+hour its operator made all nine landings product pages.
+
+All four public redirects to a product (native and CMS landing as product page,
+a bare product slug, the retired `/solusi-terbaru`) now carry the query string,
+and a source test in `click-ids.test.ts` fails if one is added without it.
+
+**Evidence.** The test fails when the middleware redirect alone is reverted.
+785 tests.
+
+## 2026-09-29 — Product-page redirects are a cacheable 301
+
+A landing made a product page (and a bare product slug) now answers `301`, like
+the store's other permanent moves, instead of `308`; search engines treat the
+two alike, and `301` is what an operator reading the network tab expects. The
+response now carries `Cache-Control: public, max-age=300`. Without it a
+permanent redirect is kept by the browser indefinitely, so a visitor would have
+kept bouncing to the product page after an operator released the claim; five
+minutes keeps a repeat visit instant and a change in `/admin` effective.
+`productPageRedirect` builds all three; the query string still travels.
+
+**Evidence.** New test on the response (status, Location with the ad's query
+string, Cache-Control); the source guard still requires `url.search` at every
+call site. 786 tests.
+
+## 2026-09-29 — CMS landing images wait for the scroll
+
+A CMS landing's HTML is written by hand, and its images arrived eager and
+unsized. On taniniaga's ad landing `/saratoga-tani` four before/after JPEGs
+(1200×800, up to 176 KB, shown 140 px tall) and a 172 KB stock photo far below
+the fold were fetched with the page, competing with the hero on the mobile
+connection LCP is measured on. `deferOffscreenImages` now adds
+`loading="lazy" decoding="async"` at render to every image but the first of the
+first section, one that already sets `loading`, and one carrying
+`onerror`/`onload` — the content runs its scroll-to-form script through a hidden
+`<img src="x" onerror>`, and a lazy hidden image is never fetched.
+
+**Evidence.** New test covers all four cases; removing the `onerror` guard fails
+it. 787 tests.
+
+## 2026-09-29 — /thanks can hand a COD buyer to WhatsApp support
+
+Settings → Store gains "Arahkan pembeli COD ke WhatsApp setelah order"
+(`stores.thanks_whatsapp_redirect`, migration `0060`, off by default). When on,
+a COD buyer on `/thanks` sees a short countdown and lands in a chat with the
+store's support number, the message already carrying the invoice number, the
+buyer's name and the product with its variant and quantity. The same message
+now fills the existing "Konfirmasi via WhatsApp" button, which used to name
+neither the invoice nor the variant.
+
+The hand-off waits for the Purchase: the tracker signals `ps:purchase-done`
+when it has handed the event off, the page waits for the Pixel library and
+800 ms more, never under 1.5 s nor much past 5 s, and the CAPI leg now posts
+with `keepalive` so leaving cannot cancel it. QRIS, VA, transfer and lead-only
+records are never redirected. `src/lib/thanks-whatsapp.ts` holds the message,
+the link and the rule.
+
+**Evidence.** Six tests (message, missing fields, link normalisation, the COD
+rule, timing bounds, and the tracker/page contract). 793 tests. The countdown
+and the navigation itself were not exercised in a browser: headless Chrome on
+this machine could not open any page, local or remote.
+
+## 2026-09-30 — Landings may not skip the form's province rule
+
+`GeoIpResolvedForm` is where the hybrid rule lives: an excluded or unresolved
+province gets the full form, every other the middle form. Twelve native landings
+on taniniaga rendered `FormHybridContent` — the full form — directly, so every
+visitor got the full form whatever their province. `form-mode.test.ts` now
+fails on any page under `src/pages/` that renders `FormHybridContent` or
+`FormMiddleContent` itself; `hybrid-form.astro`, the legacy full-form route, is
+the one exception.
+
+**Evidence.** Passes on the product; fails naming the file when one of those
+taniniaga landings is dropped in. 794 tests.
+
+## 2026-09-30 — A landing served as a product page kept the full form for everyone
+
+`/produk/<slug>` hands off to the landing that serves as the product page with
+`Astro.rewrite(new Request(...))`. A request built that way has no
+`request.cf`, so the landing's `GeoIpResolvedForm` saw no province and, by the
+hybrid rule's own fallback, showed every buyer the full form. On taniniaga the
+same landing resolved `middle` at its own URL and `full` at `/produk/…`; on
+zvarashop all nine landings are product pages. The rewrite now forwards the
+visitor's Cloudflare location as `x-cf-*` headers (`geoHeadersFromCf`), which
+`resolveGeoLocation` already reads as its fallback. COD eligibility is still
+decided again on submit, so a forged header changes the form shown, never
+whether COD is accepted.
+
+**Evidence.** Two tests: a rebuilt request with the forwarded headers resolves
+the original province (and resolves none without them); the product page's
+rewrite spreads them. 796 tests.
+
+## 2026-09-30 — Ninja removed; a new store starts with JNE and J&T
+
+Mengantar retired Ninja on 2026-09-01 and `0056` only disabled its rule. `0061`
+now deletes the rule, and the code stops naming it (display name, admin colour).
+Every live install was checked first: one disabled Ninja rule each, no order
+with it. Orders are untouched; a hypothetical Ninja order would keep its
+`courier_code` and show it as written. No cache holds it: quotes are filtered
+through `courier_rules`, and a courier without a rule is dropped.
+
+A fresh install now enables JNE and J&T only. Every other courier still gets a
+row, switched off, so turning one on in `/admin/expeditions` is a toggle.
+Existing stores keep their own policy. RELEASE §3 also gains the missing
+`0059`–`0061` entries, and §4's `schemaVersion` (it still read 59) is 62.
+
+**Evidence.** Migration test applies `0042`→`0061` and finds no Ninja row; the
+install test and a new default test require exactly JNE and J&T enabled. 797
+tests.
+
+## 2026-09-30 — Release notes in the admin, written from the record
+
+The admin gains a "Catatan Rilis" modal (header button and the sidebar version
+badge). Its first draft listed dates and changes that the record contradicts —
+1.4.0 on 29 September, 1.3.3/1.3.4 in September carrying work that shipped this
+week, and an unverifiable 1.2.0. An operator reads this as fact, so the entries
+were rewritten from git and this log: 1.3.0 (22 Aug, `2026.08-landing`), 1.3.1
+(23 Aug), 1.3.2–1.4.0 (27 Aug, `2026.08-stock-unlimited`), and a `1.4.0+` entry
+for the work since, which carries no version number yet.
+
+**Evidence.** 797 tests, `astro check` 0/0/0, build green. The modal itself is
+proven only by opening the page.
+
+## 2026-10-07 — QRIS/VA offered only when Create Order can run; landing thumbnails
+
+Found while bringing an install (beranda-tani) live; each fix is product-wide.
+
+- **AutoLaris readiness was the API key alone.** `/api/payment-methods`
+  offered QRIS/VA to every buyer of a store with a key but no
+  `AUTOLARIS_ORDER_ORIGIN_ID`/`AUTOLARIS_ORDER_DESTINATION_ID` or warehouse,
+  and `/submit` then refused each payment after the order already existed.
+  `autoLarisOrderRailGap` (`provider-config.ts`, tested) names what is
+  missing — key, a positive-integer area pair, a warehouse address — and both
+  `/api/payment-methods` (the reason shown) and `/api/submit-order` use it.
+  The server now also refuses a prepaid order when the store's
+  `is_autolaris_enabled` switch is off; before, only the UI hid it.
+- **`getStoreSupportWhatsapp` returns `62…`.** The admin stores the number as
+  typed, so an `08…` number reached every caller that builds a `wa.me` link
+  in a form that link cannot resolve. Normalised once at the source.
+- **Landing thumbnails.** The admin list and `/landing-page` showed text only.
+  `landingThumbnail` picks the page's first `image` section, then a legacy
+  HTML `<img>`, then a native register `image` (new optional field, validated
+  as a site path or https URL), else the product's photo; both lists render it
+  through the card derivative. No migration: the picture comes from data the
+  page already has.
+- **Dead code.** BaseLayout carried an inline drawer script bound to
+  `#menu-toggle`/`#mobile-menu`, ids no product component renders; an install
+  whose themed header used those ids got two scripts racing on one drawer.
+- **`dev:seed` over a tailnet.** A store started with `dev:local --ip=<addr>`
+  could not be seeded: install refused `http://<addr>` as its address, by
+  design. The seed installs such a store as `http://localhost:<port>`, the one
+  http address install accepts. Verified: install and seeding over a
+  Tailscale address.
+- **Docs.** INSTALLATION and RELEASE said 59 migrations (`0000`–`0058`); the
+  tree has 62 (`0000`–`0061`), matching `schemaVersion`.
+
+### 2026-10-07 — Home CMS landing cards carry their thumbnail
+
+`getTenantHomeContent` built every CMS landing card with the AdsBook mark
+hard-coded, though `listPublicLandingPages` already returns each page's
+`landingThumbnail`. The product's home section renders these cards as text,
+so nothing here changes on screen; an install theme that renders the card's
+picture (beranda-tani) showed the mark on every card, and its `/landing-page`,
+which reads the home card's image first, did too. The card now carries the
+page's thumbnail, the mark only when a page has no picture.

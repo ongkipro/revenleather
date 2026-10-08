@@ -1,6 +1,6 @@
 # Building a landing page
 
-> Verified against disk: 2026-09-28 @ `0d6ca3f` + native-reconcile-cron working tree
+> Verified against disk: 2026-10-07 @ `515e81b` + autolaris-readiness/landing-thumbnail working tree
 
 There are two kinds of landing page in this CMS and they are not
 interchangeable. Pick the right one before writing anything.
@@ -46,7 +46,9 @@ A landing page can take over its product's page (A21). When it does:
 
 - `/produk/<product-slug>` renders the landing page, and that is its canonical
   address;
-- its own `/<landing-slug>` answers `308` to the product URL, so exactly one
+- its own `/<landing-slug>` answers `301` to the product URL (cached five minutes, so releasing
+  the claim takes effect) — query string
+  kept, so an ad's `fbclid`/`gclid` and UTM tags survive — so exactly one
   URL is live and the two never compete as duplicate content;
 - unpublishing it, or releasing the claim, hands `/produk/<product-slug>` back
   to the normal product template — the product never 404s because a landing
@@ -167,6 +169,13 @@ gallery is `scroll-snap`; a countdown is a `<script>` tag.
 - The checkout handoff remains canonical:
   `<GeoIpResolvedForm mode="hybrid" productSlug={product.slug} />`. Never pass
   a hard-coded product ID, price, variant, or a made-up form context.
+  Never render `FormHybridContent` (the full form) or `FormMiddleContent`
+  yourself: only `GeoIpResolvedForm` applies the province rule, and
+  `form-mode.test.ts` fails on a page that bypasses it.
+  Served as a product page, the landing is reached through a rewrite from
+  `/produk/<slug>`; that rebuilt request carries the visitor's Cloudflare
+  location as `x-cf-*` headers (`geoHeadersFromCf`), or the rule would see no
+  province and show everyone the full form.
 
 ### 6. Verify before calling it done
 
@@ -206,6 +215,13 @@ owner already wrote (`changesHtmlSections`). Moving a page that has taken over
 its product's page to a different product releases the takeover instead of
 carrying it to the new product.
 
+An `html` section's images are deferred at render (`deferOffscreenImages`):
+every `<img>` gets `loading="lazy" decoding="async"` except the first image of
+the page's first section (the likely LCP), a tag that already sets `loading`,
+and a tag with `onerror`/`onload` — content runs script through a hidden
+`<img onerror>`, which a lazy hidden image would never fire. Give a hero image a
+`width` and `height` yourself; nothing infers them.
+
 `?preview=1` renders an inactive page for an authenticated admin and sends
 `Cache-Control: no-store`.
 
@@ -229,10 +245,18 @@ export const nativeLandingPages: NativeLandingPage[] = [
     title: 'Promo Lebaran',       // shown in the CMS list
     productSlug: 'pupuk-organik', // the product this page sells
     description: 'Landing khusus kampanye Lebaran.',
+    // image: '/images/landing/promo-lebaran/hero.webp', // list thumbnail
     // isActive: false,           // registered, not yet linked
   },
 ];
 ```
+
+**List thumbnails.** The admin list and `/landing-page` show each page with
+a picture chosen by `landingThumbnail` (`src/lib/landing-pages.ts`): a CMS
+page's first `image` section, then the first `<img>` of a legacy HTML
+section, then a native page's register `image` (a site path or an https URL,
+checked by `validateNativeLandingPages`), and otherwise the photo of the
+product the page sells — so no listed page is a blank tile.
 
 **The file owns the page; the database owns only the operational state.** The
 manifest decides that the page exists and what it says. `landing_pages` holds
@@ -261,7 +285,7 @@ What follows from that:
 ### A native page as the product page
 
 Same action as a CMS page — **⋯ → Jadikan halaman produk** — and the same
-rules: `/produk/<product-slug>` renders it, its own slug answers `308` there,
+rules: `/produk/<product-slug>` renders it, its own slug answers `301` there,
 and neither sitemap advertises the redirecting address. Only owner and admin
 may set it.
 

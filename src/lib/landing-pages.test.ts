@@ -16,6 +16,7 @@ import {
   reconcileNativeLandingPages,
   changesHtmlSections,
   isReservedLandingSlug,
+  deferOffscreenImages,
   setLandingPageAsProductPage,
   updateLandingPage,
   validateLandingPageSlug,
@@ -93,9 +94,10 @@ class SqliteD1Database {
         id INTEGER PRIMARY KEY,
         slug TEXT NOT NULL,
         title TEXT NOT NULL,
-        is_active INTEGER DEFAULT 1
+        is_active INTEGER DEFAULT 1,
+        image_url TEXT
       );
-      INSERT INTO products (id, slug, title) VALUES (20001, 'pupuk-organik', 'Pupuk Organik');
+      INSERT INTO products (id, slug, title, image_url) VALUES (20001, 'pupuk-organik', 'Pupuk Organik', '/assets/uploads/pupuk.webp');
       INSERT INTO products (id, slug, title) VALUES (20002, 'benih-jagung', 'Benih Jagung');
       INSERT INTO products (id, slug, title, is_active) VALUES (20003, 'produk-mati', 'Produk Mati', 0);
     `);
@@ -357,7 +359,7 @@ test("a claimed page is excluded from the addresses a sitemap may advertise", as
   });
   await setLandingPageAsProductPage(locals, claimed.id, true);
 
-  // This is the filter both sitemaps apply. A claimed page answers 308 on its
+  // This is the filter both sitemaps apply. A claimed page answers 301 on its
   // own slug and the product URL is listed separately, so advertising it here
   // would hand out exactly the duplicate pair the takeover prevents.
   const advertised = (await listLandingPages(locals))
@@ -493,6 +495,9 @@ test("the public listing links a claimed page to the product URL it answers on",
   assert.equal(bySlug.get(claimed.slug)?.href, "/produk/benih-jagung");
   assert.equal(bySlug.get(claimed.slug)?.isProductPage, true);
   assert.equal(bySlug.has(draft.slug), false);
+  // Without imagery of its own a page is listed with its product's photo.
+  assert.equal(bySlug.get(standalone.slug)?.image, "/assets/uploads/pupuk.webp");
+  assert.equal(bySlug.get(claimed.slug)?.image, null);
 
   // A page whose product is off answers 404; home and sitemap must not link it.
   const orphan = await createLandingPage(locals, {
@@ -663,4 +668,39 @@ test("moving a claimed page to another product releases the claim instead of ste
   assert.equal(moved?.is_product_page, 0);
   assert.equal(await getProductPageLanding(locals, "20001"), null);
   assert.equal(await getProductPageLanding(locals, "20002"), null);
+});
+
+test("CMS images below the first are deferred, and script-bearing images are left alone", () => {
+  const html = [
+    '<img src="/hero.webp" alt="hero">',
+    '<img src="/before.jpg" alt="before" style="height:140px">',
+    '<img src="/chosen.jpg" loading="eager">',
+    `<img src="x" style="display:none" onerror="bindCta()">`,
+    '<IMG SRC="/upper.jpg">',
+  ].join("");
+  const out = deferOffscreenImages(html, true);
+  assert.match(out, /^<img src="\/hero\.webp" alt="hero">/, "the first image stays eager for LCP");
+  assert.match(out, /<img loading="lazy" decoding="async" src="\/before\.jpg"/);
+  assert.match(out, /<img src="\/chosen\.jpg" loading="eager">/, "an operator's own choice stands");
+  // A lazy hidden image is never fetched, so its onerror — the only way CMS
+  // content runs script — would never fire.
+  assert.match(out, /<img src="x" style="display:none" onerror="bindCta\(\)">/);
+  assert.match(out, /<img loading="lazy" decoding="async" SRC="\/upper\.jpg">/);
+  // A later section has no LCP candidate: its first image is deferred too.
+  assert.match(deferOffscreenImages('<img src="/a.jpg">', false), /^<img loading="lazy" decoding="async"/);
+});
+
+test("a landing page is listed with its own first image, else its product's photo", async () => {
+  const { landingThumbnail } = await import("./landing-pages.ts");
+  const image = (src: string) => ({ type: "image" as const, content_html: null, content_config: { src, alt: "" } });
+  const html = (markup: string) => ({ type: "html" as const, content_html: markup, content_config: null });
+  // An image section beats everything, even when an HTML image comes first.
+  assert.equal(
+    landingThumbnail({ sections: [html('<img src="/a.webp">'), image("/hero.webp")], nativeImage: "/n.webp", productImage: "/p.webp" }),
+    "/hero.webp",
+  );
+  assert.equal(landingThumbnail({ sections: [html('<p>x</p><img alt="" src="/legacy.webp">')], productImage: "/p.webp" }), "/legacy.webp");
+  assert.equal(landingThumbnail({ sections: [], nativeImage: "/n.webp", productImage: "/p.webp" }), "/n.webp");
+  assert.equal(landingThumbnail({ sections: [image("  ")], productImage: "/p.webp" }), "/p.webp");
+  assert.equal(landingThumbnail({}), null);
 });

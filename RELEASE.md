@@ -1,6 +1,6 @@
 # Release and Deployment — AdsBookCMS
 
-> Verified against disk: 2026-09-26 @ `fc4015f` + alert-webhook working tree
+> Verified against disk: 2026-10-07 @ `515e81b` + autolaris-readiness/landing-thumbnail working tree
 
 This document is the single owner of how a change reaches production. It replaces the previous `VERSION.md` runbook and the deleted `AUTO_UPDATE_DEPLOY.md`, which between them described three mutually exclusive release models, none of which matched the one workflow that exists.
 
@@ -76,7 +76,8 @@ COD and manual seller-bank transfer can be considered for a controlled canary
 after install-specific configuration, backup/rollback preparation, and provider
 smoke checks. AutoLaris QRIS/VA no longer depends on the retired webhook path:
 since 1.4.x the hourly cron calls the provider's Advice endpoint for every
-pending transaction and marks one paid **only** when the response carries
+pending transaction — and each that expired in the last 24 hours, newest first,
+up to 25 a run (`PENDING_AUTOLARIS_INQUIRY_SQL`) — and marks one paid **only** when the response carries
 `rc: "00"`; `02` stays pending and every other code is unproven and moves
 nothing. The owner/admin manual reconciliation from `/admin/payments` remains
 as the audited fallback, and both paths write `paid_at`. Automatic marking is
@@ -133,6 +134,14 @@ Migration-specific notes:
 - **`0058`** adds `install_secrets`, where a Worker with no `AUTH_SECRET`
   secret keeps the session key it generates for itself (ADR-026). Additive;
   an install that sets `AUTH_SECRET` never writes a row.
+- **`0059`** adds an `SPX` courier rule to every store that already has a
+  courier policy (Mengantar quotes it as `spx`). Additive.
+- **`0060`** adds `stores.thanks_whatsapp_redirect`, the switch for handing a
+  COD buyer from `/thanks` to WhatsApp support. Default `0`: no behaviour
+  changes until an operator turns it on.
+- **`0061`** deletes the `Ninja` courier rule `0056` disabled. Only
+  `courier_rules` rows; no install had an order with Ninja, and one that did
+  would keep its `courier_code`.
 
 ---
 
@@ -144,15 +153,15 @@ Two registries, currently in step:
 | --- | --- | --- |
 | `src/lib/version.ts` | `version` | `1.4.0` |
 | `src/lib/version.ts` | `releaseTag` | `2026.08-stock-unlimited` |
-| `src/lib/version.ts` | `schemaVersion` | `59` |
+| `src/lib/version.ts` | `schemaVersion` | `62` |
 | `package.json` | `version` | `1.4.0` |
 
 `src/lib/version.ts` is what the admin sidebar renders and is the value users
 see. Keep it and `package.json` in step when bumping.
 
-`schemaVersion` counts migration files, and the tree holds 59 (`0000`–`0058`).
+`schemaVersion` counts migration files, and the tree holds 62 (`0000`–`0061`).
 `releaseTag` still names the 1.4.0 release; the next release bump must move it,
-because the tree now carries `0056`–`0058` that 1.4.0 did not.
+because the tree now carries `0056`–`0061` that 1.4.0 did not.
 `schema-version.test.ts` fails CI on drift; middleware enforces the same chain at
 runtime; `operational-health.ts` and the dashboard expose applied version.
 
