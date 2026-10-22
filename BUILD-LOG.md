@@ -24,29 +24,66 @@ Author & Curator: **[ongki.pro](https://ongki.pro)**
   variants, `Rp1.000` on 2 variants) so `parseShortcodes` in
   `src/lib/landing-pages.ts` and the XML feeds (`/feed/meta-catalog.xml`,
   `/feed/google-catalog.xml`) emit exact dynamic discounts across all 6 tiers.
-- **Full-Form checkout (`{"mode": "full"}`) & shipping/payment UX (`a23c737`).**
+- **Full-Form checkout (`{"mode": "full"}`) & shipping/payment bug fixes (`a23c737`).**
   Switched all 79 `landing_sections` form blocks to `{"mode": "full"}` while
   keeping `stores.cod_disabled_province_codes`
-  (`PA,PB,PD,PT,PE,PS,MA,MU,NT,KU,SR,GO,KR,AC,BE`) intact. Fixed three checkout
-  friction points in `src/scripts/form-hybrid.ts`,
+  (`PA,PB,PD,PT,PE,PS,MA,MU,NT,KU,SR,GO,KR,AC,BE`) intact. Diagnosed and fixed
+  five checkout & shipping bugs across `src/scripts/form-hybrid.ts`,
   `src/components/storefront/forms/FormHybridContent.astro`,
-  `src/components/storefront/forms/GeoIpResolvedForm.astro`, and
-  `src/lib/shipping-quote.ts`:
-  1. `#payment-method-block` stays hidden until a shipping district (`locationId`)
-     is selected, orders Transfer Bank / Virtual Account above `COD (Bayar di Tempat)`,
-     and renders a single bank/VA option (`Transfer Bank MANDIRI` `1330035981794`
-     a.n. `PT East Retail Network`) directly as a flat radio row without a
-     show/collapse wrapper while using the collapsible group when more than one
-     bank/VA option is active.
-  2. Selecting a COD-eligible province defaults back to `cod` unless the buyer
-     explicitly clicked another payment option (`userPickedPaymentMethod`).
-  3. `#district-picked` renders the street address (`#shipping-address-line`,
-     regular weight) above the bold resolved Kecamatan (`#district-picked-subtitle`,
-     e.g. `Sukodadi, Lamongan, Jawa Timur 62253`) under `Kirim ke` (hiding
-     `#shipping-address-line` only while the street address input is still blank
-     so `"Alamat lengkap belum diisi."` never appears), and clears
-     `#district-help` once the quote succeeds so the shipping cost is displayed
-     solely in `Ringkasan Pemesanan`.
+  `src/components/storefront/forms/GeoIpResolvedForm.astro`,
+  `src/styles/form-hybrid.css`, and `src/lib/shipping-quote.ts`:
+  1. **Bug — Shipping quote error (`"Ongkir belum berhasil dihitung..."`) on subdistrict/courier edge cases:**
+     - *Root cause:* `buildShippingQuotes` in `src/lib/shipping-quote.ts` used
+       `Promise.all` across candidate subdistrict IDs (so a single subdistrict
+       failure aborted the entire quote even when sibling subdistricts or the
+       city fallback succeeded) and returned `[]` when `courier_rules` was empty
+       in local D1.
+     - *Fix:* Switched subdistrict fan-out to `Promise.allSettled`, added a
+       default-enabled courier fallback when `courier_rules` has no rows,
+       widened the client shipping fetch timeout from `6000ms` to `10000ms` with
+       automatic retry, and synced `warehouses` (`Malang Gudang Utama`
+       `68bd3b8c9d03e38246bc0476`) + `courier_rules` (`iDexpress`, `JNE`,
+       `SiCepat`, `SAP`) into local D1.
+  2. **Bug — `GeoIpResolvedForm.astro` dropped `resolvedProvince` when rendering `FormHybridContent.astro`:**
+     - *Root cause:* `GeoIpResolvedForm.astro` resolved the visitor's province
+       from Cloudflare headers to choose `middle` vs `full` mode, but did not
+       pass `province={resolvedProvince}` to `<FormHybridContent />`. Combined
+       with `isCodDisabledByProvince()` returning `true` when `provinceCode` was
+       empty, initial load stripped `COD` from `visiblePaymentOptions` and
+       locked `state.paymentMethod` to `manual_transfer` even after selecting a
+       COD-eligible district.
+     - *Fix:* Passed `province={resolvedProvince}` into `FormHybridContent.astro`,
+       changed `isCodDisabledByProvince()` to return `false` when `provinceCode`
+       is still unknown, and tracked `userPickedPaymentMethod` so COD-eligible
+       provinces default to `cod` unless the buyer explicitly chooses Transfer.
+  3. **Bug — `#payment-method-block` visibility, ordering, and single-bank collapse UX:**
+     - *Root cause:* When a store had only 1 manual bank account (`Transfer Bank MANDIRI`
+       `1330035981794` a.n. `PT East Retail Network`, `seller_bank_account_id = 5`),
+       wrapping it inside a collapsed `Transfer Bank (1 rekening tersedia)`
+       accordion hid the bank option behind an extra click and omitted the
+       account holder name.
+     - *Fix:* Kept `#payment-method-block` hidden (`!state.locationId`) until a
+       district is selected, ordered `Transfer Bank` / `Virtual Account` **above**
+       `COD (Bayar di Tempat)`, rendered a single bank/VA option (`length === 1`)
+       directly as a flat radio row (with `Tanpa biaya admin · a.n. PT East Retail Network`)
+       while using the collapsible accordion when `length > 1`, and added
+       `MANUAL_5` to `FALLBACK_PAYMENT_OPTIONS`.
+  4. **Bug — `Kirim ke` summary card showed `"Alamat lengkap belum diisi."`, inverted line order, and duplicated shipping cost hint:**
+     - *Root cause:* Selecting a district before typing the street address
+       rendered the placeholder `"Alamat lengkap belum diisi."`, placed the
+       district above the street address, and repeated the shipping cost below
+       the card.
+     - *Fix:* Hid `#shipping-address-line` (`hidden = !addr`) whenever the street
+       address textarea is blank, ordered `#shipping-address-line` (regular
+       weight `#555555`) **above** the bold `#district-picked-subtitle`
+       (`Kecamatan, Kota, Provinsi Kodepos`, `font-weight: 700; color: #111111`),
+       and cleared `#district-help` once the shipping quote succeeds so shipping
+       cost appears only once in `Ringkasan Pemesanan`.
+  5. **Bug — Unvalidated `"Bonus Gift Kulit Sapi Asli"` claim & hang-tag visual on grafir sample:**
+     - *Fix:* Removed `"Bonus Gift Kulit Sapi Asli"` from all 79 `.offer-card`
+       sections, replaced it with validated inclusions, and cropped
+       `/images/reven-grafir-sample.webp` (`86f3a07`) edge-to-edge on the leather
+       surface so it never reads as a separate hang tag.
 
 ---
 
