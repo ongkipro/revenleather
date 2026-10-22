@@ -1,8 +1,50 @@
 # BUILD LOG: AdsBookCMS
 
-> Verified against disk: 2026-10-16 @ `fd652b4`
+> Verified against disk: 2026-10-23 @ `761a08a`
 
 Author & Curator: **[ongki.pro](https://ongki.pro)**
+
+---
+
+## 2026-10-23 — Reven Leather (`page.revenleather.com`): 79-LP Grafir/Non-Grafir segmentation, dynamic compare-price calibration, and Full-Form checkout hardening
+
+- **Grafir vs Non-Grafir segmentation across 79 landing pages.** Audited the 28
+  reference images in Google Drive `letak grafir tas` against the 79 active
+  products in `revenleather-d1`. The 33 approved grafir landing pages render the
+  full-bleed `/images/reven-grafir-sample.webp` (`86f3a07`, cropped edge-to-edge
+  on the leather surface so it is never mistaken for a separate hang tag),
+  `<s>Rp37.000</s> GRATIS HARI INI` in `.grafir-spot` and `.offer-card`, and
+  `Gratis Grafir` in `.rv-sticky`. The remaining 46 non-grafir landing pages
+  strip every grafir badge, spotlight, bento tile, and box card while keeping the
+  shared 2-level sticky bar, product-thumbnail social proof toast, and inline
+  Verified SVG review badge.
+- **Dynamic `compare_price` across 6 discount tiers (`30%`, `35%`, `40%`, `45%`,
+  `49%`, `55%`).** Previously 65 of 79 products sat at `30%` and 13 at `29%`.
+  Updated `product_variants.compare_price` across all 208 variants (leaving
+  `product_variants.price` untouched) to clean IDR multiples (`Rp5.000` on 206
+  variants, `Rp1.000` on 2 variants) so `parseShortcodes` in
+  `src/lib/landing-pages.ts` and the XML feeds (`/feed/meta-catalog.xml`,
+  `/feed/google-catalog.xml`) emit exact dynamic discounts across all 6 tiers.
+- **Full-Form checkout (`{"mode": "full"}`) & shipping/payment UX (`761a08a`).**
+  Switched all 79 `landing_sections` form blocks to `{"mode": "full"}` while
+  keeping `stores.cod_disabled_province_codes`
+  (`PA,PB,PD,PT,PE,PS,MA,MU,NT,KU,SR,GO,KR,AC,BE`) intact. Fixed three checkout
+  friction points in `src/scripts/form-hybrid.ts`,
+  `src/components/storefront/forms/FormHybridContent.astro`,
+  `src/components/storefront/forms/GeoIpResolvedForm.astro`, and
+  `src/lib/shipping-quote.ts`:
+  1. `#payment-method-block` is now visible immediately and renders single-bank
+     `Transfer Bank MANDIRI` (`1330035981794` a.n. `PT East Retail Network`)
+     directly as a top-level radio option beside `COD (Bayar di Tempat)` rather
+     than hiding it inside a collapsed accordion.
+  2. Selecting a COD-eligible province defaults back to `cod` unless the buyer
+     explicitly clicked another payment option (`userPickedPaymentMethod`).
+  3. `#district-picked` places the resolved Kecamatan
+     (`Sukodono, Sragen, Jawa Tengah 57263`) as the primary bold line under
+     `Kirim ke`, hides `#shipping-address-line` until the street address is
+     typed (removing the misleading `"Alamat lengkap belum diisi."` headline),
+     and prints live green shipping confirmation (`✓ Estimasi ongkir ...`) in
+     `#district-help`.
 
 ---
 

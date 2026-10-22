@@ -1,6 +1,59 @@
 # STATUS — AdsBookCMS
 
-> Verified against disk: 2026-10-21 (1.7.4 on zvarashop; 1.7.2 on beranda-tani, numaskin-adbook, taniniaga, agritani-shop, zanobyshop)
+> Verified against disk: 2026-10-23 (1.7.8 on revenleather `page.revenleather.com` @ `761a08a`; 1.7.4 on zvarashop; 1.7.2 on beranda-tani, numaskin-adbook, taniniaga, agritani-shop, zanobyshop)
+
+## 2026-10-23 — Reven Leather (`page.revenleather.com`): 79-LP Grafir/Non-Grafir rollout, dynamic compare-price tiers, full-form checkout, XML feeds & Ads tracking
+
+- **79 Landing Pages Segmented (33 Approved Grafir vs 46 Non-Grafir).** All 79
+  published landing pages in `revenleather-d1` (`landing_pages` + `landing_sections`)
+  are synchronized:
+  - **33 Approved Grafir LPs** (mapped from the 28 validated Google Drive
+    `letak grafir tas` references) carry the Hero `✎ GRATIS GRAFIR NAMA / BRAND`
+    pill, full-width `.grafir-spot` (`✦ GRATIS GRAFIR LASER`,
+    `PREMIUM GRAFIR LASER`, `<s>Rp37.000</s> GRATIS HARI INI`, full-bleed
+    `/images/reven-grafir-sample.webp`, and 3-column borderless strip:
+    `Nama Pribadi` | `Inisial Monogram` | `Brand / Komunitas`), full-width
+    `.offer-card` with `Premium Grafir Laser (<s>Rp37.000</s> GRATIS)`, 5-item
+    `.box` grid, and 2-level `.rv-sticky` (`[HEMAT {{discount_percent}}] • Gratis Grafir`).
+  - **46 Non-Grafir LPs** strip all grafir claims across Hero, `.rv-feat`,
+    `.offer-card` (3 validated inclusions: `100% Kulit Sapi Asli Bersertifikat`,
+    `Box Kemasan Eksklusif Reven Leather`, `Garansi Resmi 1 Tahun & Bisa COD`),
+    `.box` (`2×2` standard grid), and `.rv-sticky` (`[HEMAT {{discount_percent}}] • Bisa COD`).
+  - **Shared UI across all 79 LPs:** Social Proof Toast uses each product's own
+    40×40 Hero studio thumbnail (`0 KB` extra payload), customer reviews replace
+    the text pill with the inline `#1d9bf0` Verified SVG badge after the buyer
+    name, `.quote-wrap` centers on `var(--cream)` with `✦` ornament, and
+    `.rv-color` uses word-count headlines (`Dua / Tiga / Empat / Lima pilihan warna, satu standar kriya.`)
+    with 3D radial leather gradients.
+- **Dynamic Compare-Price (`compare_price`) Calibration (`30%`–`55%`).** All 208
+  rows in `product_variants` keep their selling `price` (`harga non-coret`)
+  untouched while `compare_price` (`harga coret`) is calibrated to clean IDR
+  multiples (`Rp5.000` / `Rp1.000`) so `{{discount_percent}}` distributes across
+  6 exact tiers: **`30%` (14 products / 34 variants)**, **`35%` (13 / 41)**,
+  **`40%` (13 / 33)**, **`45%` (13 / 26)**, **`49%` (13 / 38)**, and **`55%`
+  (13 / 36)**.
+- **Full-Form Checkout (`{"mode": "full"}`) & Shipping/Payment Hardening
+  (`761a08a`).** Every form section in `landing_sections` is set to
+  `{"mode": "full"}` while preserving `stores.cod_disabled_province_codes`
+  (`PA,PB,PD,PT,PE,PS,MA,MU,NT,KU,SR,GO,KR,AC,BE`). `GeoIpResolvedForm.astro`
+  passes `province={resolvedProvince}` to `FormHybridContent.astro`;
+  `src/scripts/form-hybrid.ts` keeps `#payment-method-block` visible from initial
+  render, renders single-account `Transfer Bank MANDIRI` (`1330035981794` a.n.
+  `PT East Retail Network`, `seller_bank_account_id = 5`) directly as a top-level
+  radio row beside `COD (Bayar di Tempat)`, defaults COD-eligible provinces to
+  `cod` unless the buyer manually chose another method, promotes the selected
+  Kecamatan (`#district-picked-subtitle`) to the bold primary line under
+  `Kirim ke`, and shows live green shipping confirmation (`✓ Estimasi ongkir ...`)
+  in `#district-help`. `src/lib/shipping-quote.ts` degrades gracefully when
+  `courier_rules` is empty or a single subdistrict quote fails when a city
+  fallback is available.
+- **XML Catalog Feeds & Ads Signal Contract (`page.revenleather.com`).**
+  - `/feed/meta-catalog.xml` and `/feed/google-catalog.xml` serve all **79
+    products** (`200 OK`), emitting immutable 5-digit `products.id` as `<g:id>`
+    (matching Meta Pixel `1568437321304661` and CAPI `content_ids` 1:1),
+    `<g:price>` (`compare_price IDR`), `<g:sale_price>` (`price IDR`), and
+    `.jpg` image links for Meta Commerce compatibility.
+  - Deployed to Cloudflare Worker `revenleather` (`Version ID: 92f9c14f-addc-4553-a663-99f045b75cb5`).
 
 ## 2026-10-21 — 1.7.3–1.7.4: uploads and province-scoped product pages cached at the edge; zvarashop back on the product line
 
