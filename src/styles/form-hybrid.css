@@ -419,7 +419,7 @@
   font-weight: 600;
 }
 .district-help[data-tone='success'] {
-  color: #111111;
+  color: #15803d;
   font-weight: 600;
 }
 .district-help:empty {
@@ -450,21 +450,24 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
-#shipping-address-line {
-  margin: 0.65rem 0 0;
+#district-picked-subtitle {
+  margin: 0.45rem 0 0;
   color: #111111;
   font-size: 0.8125rem;
   font-weight: 700;
   line-height: 1.45;
   overflow-wrap: anywhere;
 }
-#district-picked-subtitle {
+#shipping-address-line {
   margin: 0.2rem 0 0;
   color: #555555;
   font-size: 0.75rem;
-  font-weight: 400;
+  font-weight: 500;
   line-height: 1.45;
   overflow-wrap: anywhere;
+}
+#shipping-address-line[hidden] {
+  display: none;
 }
 .district-edit-button {
   appearance: none;

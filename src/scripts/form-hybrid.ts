@@ -130,6 +130,19 @@ const FALLBACK_PAYMENT_OPTIONS: PaymentOption[] = [
     label: "COD (Bayar di Tempat)",
     desc: "Bayar tunai saat barang tiba",
   },
+  {
+    code: "MANUAL_5",
+    sellerBankAccountId: 5,
+    bankCode: "MANDIRI",
+    logoUrl: "/images/payment/mandiri.svg",
+    adminFee: 0,
+    adminFeeRate: 0,
+    adminFeeVatRate: 0,
+    feeBearer: "seller",
+    paymentMethod: "manual_transfer",
+    label: "Transfer Bank MANDIRI",
+    desc: "Tanpa biaya admin · a.n. PT East Retail Network",
+  },
 ];
 const parsePaymentOptions = (payload: unknown): PaymentOption[] => {
   if (
@@ -172,7 +185,10 @@ const parsePaymentOptions = (payload: unknown): PaymentOption[] => {
           : undefined,
         logoUrl: row.logo_url ? String(row.logo_url).trim() : undefined,
         label: String(row.name || code),
-        desc: String(row.fee_description || row.description || ""),
+        desc:
+          paymentMethod === "manual_transfer"
+            ? [row.fee_description, row.description].filter(Boolean).join(" · ")
+            : String(row.fee_description || row.description || ""),
         adminFee: Number(row.admin_fee || 0),
         adminFeeRate: Number(row.admin_fee_rate || 0),
         adminFeeVatRate: Number(row.admin_fee_vat_rate || 0),
@@ -614,8 +630,8 @@ function initHybridOrderFormInstance(formRoot: HTMLElement) {
     sellerBankAccountId: null,
     location: null,
     shipping: null,
-    paymentOptions: [FALLBACK_PAYMENT_OPTIONS[0]],
-    visiblePaymentOptions: [FALLBACK_PAYMENT_OPTIONS[0]],
+    paymentOptions: [...FALLBACK_PAYMENT_OPTIONS],
+    visiblePaymentOptions: [...FALLBACK_PAYMENT_OPTIONS],
     districtLoading: false,
     shippingLoading: false,
     submitting: false,
@@ -634,6 +650,7 @@ function initHybridOrderFormInstance(formRoot: HTMLElement) {
   let districtSearchSeq = 0;
   let districtSearchController: AbortController | null = null;
   let providerPrecisionSearch = false;
+  let userPickedPaymentMethod = false;
 
   const timerKey = `promo_end_${config.productSlug}_hybrid`;
   const now = Date.now();
@@ -656,10 +673,11 @@ function initHybridOrderFormInstance(formRoot: HTMLElement) {
     if (el && el.textContent !== text) el.textContent = text;
   };
   const syncShippingAddressSummary = () => {
-    setNodeText(
-      shippingAddressLine,
-      addressInput?.value.trim() || "Alamat lengkap belum diisi.",
-    );
+    const addr = addressInput?.value.trim() || "";
+    setNodeText(shippingAddressLine, addr);
+    if (shippingAddressLine instanceof HTMLElement) {
+      shippingAddressLine.hidden = !addr;
+    }
     if (!state.location) return;
     setNodeText(
       districtPickedSubtitle,
@@ -824,7 +842,7 @@ function initHybridOrderFormInstance(formRoot: HTMLElement) {
         state.geoProvince ||
         "",
     );
-    if (!provinceCode) return true;
+    if (!provinceCode) return false;
     return COD_DISABLED_PROVINCE_CODES.includes(provinceCode);
   };
 
@@ -845,7 +863,7 @@ function initHybridOrderFormInstance(formRoot: HTMLElement) {
   };
 
   const syncPaymentFields = () => {
-    if (paymentMethodBlock) paymentMethodBlock.hidden = !state.locationId;
+    if (paymentMethodBlock) paymentMethodBlock.hidden = false;
   };
 
   const resetShippingState = () => {
@@ -896,6 +914,17 @@ function initHybridOrderFormInstance(formRoot: HTMLElement) {
     state.visiblePaymentOptions = isCodDisabledByProvince()
       ? state.paymentOptions.filter((item) => item.paymentMethod !== "cod")
       : [...state.paymentOptions];
+
+    const codDefault = !userPickedPaymentMethod
+      ? state.visiblePaymentOptions.find((item) => item.paymentMethod === "cod")
+      : undefined;
+    if (codDefault) {
+      state.paymentMethod = codDefault.paymentMethod;
+      state.paymentChannel = codDefault.channelCode || "";
+      state.sellerBankAccountId = codDefault.sellerBankAccountId || null;
+      syncPaymentFields();
+      return;
+    }
 
     const selected = state.visiblePaymentOptions.find(isPaymentOptionSelected);
     if (!selected) {
@@ -1090,11 +1119,21 @@ function initHybridOrderFormInstance(formRoot: HTMLElement) {
         syncHiddenLocationFields();
       }
       applyShippingOptions(cachedShipping.items);
+      const bestCached = cachedShipping.items[0];
+      if (bestCached) {
+        const courierLabel =
+          bestCached.name || bestCached.shipment_provider_code || "Kurir";
+        setDistrictHelp(
+          `✓ Estimasi ongkir ${fmt(bestCached.shipping_cost)} (${courierLabel})`,
+          "success",
+        );
+      }
       syncSubmitButton();
       return;
     }
 
     state.shippingLoading = true;
+    setDistrictHelp("Menghitung ongkir terbaik...", "neutral");
     syncSummary();
     syncSubmitButton();
     resetShippingState();
@@ -1113,7 +1152,7 @@ function initHybridOrderFormInstance(formRoot: HTMLElement) {
 
       const fetchShippingOnce = async () => {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 6000);
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
         try {
           const resp = await fetch(`/api/shipping-options?${qs.toString()}`, {
             cache: "no-store",
@@ -1153,6 +1192,15 @@ function initHybridOrderFormInstance(formRoot: HTMLElement) {
         source: "api",
       });
       applyShippingOptions(sortedItems);
+      const best = sortedItems[0];
+      if (best) {
+        const courierLabel =
+          best.name || best.shipment_provider_code || "Kurir";
+        setDistrictHelp(
+          `✓ Estimasi ongkir ${fmt(best.shipping_cost)} (${courierLabel})`,
+          "success",
+        );
+      }
     } catch {
       applyShippingOptions([]);
       setDistrictHelp(
@@ -1227,6 +1275,7 @@ function initHybridOrderFormInstance(formRoot: HTMLElement) {
       input.checked = checked;
       input.addEventListener("change", () => {
         if (!input.checked) return;
+        userPickedPaymentMethod = true;
         state.paymentMethod = opt.paymentMethod;
         state.paymentChannel = opt.channelCode || "";
         state.sellerBankAccountId = opt.sellerBankAccountId || null;
@@ -1327,31 +1376,51 @@ function initHybridOrderFormInstance(formRoot: HTMLElement) {
       }
       head?.addEventListener("click", () => {
         toggle();
+        const firstOpt = groupOptions[0];
+        if (firstOpt && !groupOptions.some(isPaymentOptionSelected)) {
+          userPickedPaymentMethod = true;
+          state.paymentMethod = firstOpt.paymentMethod;
+          state.paymentChannel = firstOpt.channelCode || "";
+          state.sellerBankAccountId = firstOpt.sellerBankAccountId || null;
+          const firstInput = body?.querySelector<HTMLInputElement>("input");
+          if (firstInput) firstInput.checked = true;
+          syncPaymentFields();
+          syncSummary();
+          loadShippingOptions();
+        }
         syncPaymentGroupState();
       });
       paymentOptionsEl.appendChild(group);
     };
 
-    appendPaymentRows(qrisOptions);
-    appendPaymentGroup(
-      manualBankOptions,
-      "Transfer Bank",
-      `${manualBankOptions.length} rekening tersedia`,
-      manualBankGroupExpanded,
-      () => {
-        manualBankGroupExpanded = !manualBankGroupExpanded;
-      },
-    );
-    appendPaymentGroup(
-      virtualAccountOptions,
-      "Virtual Account",
-      `${virtualAccountOptions.length} bank tersedia`,
-      bankGroupExpanded,
-      () => {
-        bankGroupExpanded = !bankGroupExpanded;
-      },
-    );
     appendPaymentRows(codOptions);
+    appendPaymentRows(qrisOptions);
+    if (manualBankOptions.length === 1) {
+      appendPaymentRows(manualBankOptions);
+    } else {
+      appendPaymentGroup(
+        manualBankOptions,
+        "Transfer Bank",
+        `${manualBankOptions.length} rekening tersedia`,
+        manualBankGroupExpanded,
+        () => {
+          manualBankGroupExpanded = !manualBankGroupExpanded;
+        },
+      );
+    }
+    if (virtualAccountOptions.length === 1) {
+      appendPaymentRows(virtualAccountOptions);
+    } else {
+      appendPaymentGroup(
+        virtualAccountOptions,
+        "Virtual Account",
+        `${virtualAccountOptions.length} bank tersedia`,
+        bankGroupExpanded,
+        () => {
+          bankGroupExpanded = !bankGroupExpanded;
+        },
+      );
+    }
     appendPaymentRows(otherDirectOptions);
 
     syncSummary();
@@ -1452,10 +1521,11 @@ function initHybridOrderFormInstance(formRoot: HTMLElement) {
       btn.addEventListener("click", async () => {
         closeDistrictList();
         districtInput.value = `${group.district}, ${group.city}, ${group.province}`;
-        setNodeText(
-          shippingAddressLine,
-          addressInput?.value.trim() || "Alamat lengkap belum diisi.",
-        );
+        const addrText = addressInput?.value.trim() || "";
+        setNodeText(shippingAddressLine, addrText);
+        if (shippingAddressLine instanceof HTMLElement) {
+          shippingAddressLine.hidden = !addrText;
+        }
         setNodeText(districtPickedSubtitle, `${group.district}, ${group.city}, ${group.province}`);
         setDistrictLocked(true);
         setDistrictHelp(

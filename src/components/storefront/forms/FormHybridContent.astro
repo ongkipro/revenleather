@@ -149,8 +149,8 @@ const fieldUid = crypto.randomUUID().slice(0, 8);
                   <strong>Kirim ke</strong>
                   <button type="button" id="district-edit-button" class="district-edit-button">Ubah</button>
                 </div>
-                <p id="shipping-address-line">Alamat lengkap belum diisi.</p>
                 <p id="district-picked-subtitle">-</p>
+                <p id="shipping-address-line" hidden></p>
               </div>
               <small id="district-help" class="district-help">Ketik minimal 3 huruf (kecamatan atau kota).</small>
               <input type="hidden" name="location_id" id="location-id" />
@@ -160,7 +160,7 @@ const fieldUid = crypto.randomUUID().slice(0, 8);
             </div>
           </div>
         </section>
-        <section class="form-block" id="payment-method-block" hidden>
+        <section class="form-block" id="payment-method-block">
           <div class="inner-card">
             <div class="space-y-3 payment-block">
               <div class="payment-block-anchor" aria-hidden="true">

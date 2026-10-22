@@ -154,11 +154,16 @@ export async function resolveEligibleShippingRates(
   // policy at every amount sampled between Rp50.000 and Rp1.000.000. That
   // divergence is recorded in `UNIMPLEMENTED_SPECS.md`, not silently corrected.
   const [rates, ruleResult] = await Promise.all([
-    client.estimateRates({
-      originId,
-      destinationId,
-      weight: weightKg,
-    }),
+    client
+      .estimateRates({
+        originId,
+        destinationId,
+        weight: weightKg,
+      })
+      .catch((err) => {
+        if (input.destinationCity?.trim()) return [] as CourierRateResult[];
+        throw err;
+      }),
     database
       .prepare(
         `
@@ -174,7 +179,7 @@ export async function resolveEligibleShippingRates(
   const eligible = (providerRates: CourierRateResult[]) =>
     providerRates
       .filter((rate) =>
-        isCourierRateEnabled(rate.courier_code, rules, isCod),
+        rules.length === 0 || isCourierRateEnabled(rate.courier_code, rules, isCod),
       )
       .filter(
         (rate) =>
