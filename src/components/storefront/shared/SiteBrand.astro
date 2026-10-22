@@ -8,8 +8,8 @@ interface Props {
 
 const { href = '/', class: className = '', tone = 'dark', showTagline = false } = Astro.props;
 const isLight = tone === 'light';
-const textClass = isLight ? 'text-[#f4eee6]' : 'text-[#1a1411]';
-const goldClass = isLight ? 'text-[#c89b72]' : 'text-[#8a5a3b]';
+const textClass = isLight ? 'text-white' : 'text-[#1a1411]';
+const subTextClass = isLight ? 'text-[#d8c7b4]' : 'text-[#6e5a49]';
 
 const storeName = Astro.locals.tenant.name.trim();
 const [leadWord = '', ...restWords] = storeName.split(/\s+/);
@@ -32,14 +32,17 @@ const brandMark = Astro.locals.tenant.brandMark;
         alt=""
         width="26"
         height="28"
-        class="shrink-0 object-contain"
+        class:list={[
+          'shrink-0 object-contain',
+          isLight && 'brightness-0 invert',
+        ]}
         decoding="async"
       />
     ) : (
       <span
         aria-hidden="true"
         data-monogram={monogram}
-        class={`site-brand-monogram flex h-7 w-7 items-center justify-center bg-transparent text-[14px] font-bold tracking-widest ${goldClass} transition-colors`}
+        class={`site-brand-monogram flex h-7 w-7 items-center justify-center bg-transparent text-[14px] font-bold tracking-widest ${textClass} transition-colors`}
         style="font-family: 'Cormorant Garamond', 'Cinzel', Georgia, serif;"
       ></span>
     )
@@ -50,12 +53,12 @@ const brandMark = Astro.locals.tenant.brandMark;
       class={`whitespace-nowrap text-[16px] font-semibold uppercase tracking-[0.22em] leading-none ${textClass}`}
       style="font-family: 'Cormorant Garamond', 'Cinzel', Georgia, serif;"
     >
-      {leadWord}{trailingWords && <> <span class={`font-semibold ${goldClass}`}>{trailingWords}</span></>}
+      {leadWord}{trailingWords && <> <span class={`font-normal ${subTextClass}`}>{trailingWords}</span></>}
     </span>
     {
       showTagline && tagline && (
         <span
-          class={`mt-1 text-[8.5px] font-semibold uppercase tracking-[0.22em] ${isLight ? 'text-[#bfb2a3]' : 'text-[#76685b]'}`}
+          class={`mt-1 text-[9px] font-normal uppercase tracking-[0.18em] ${isLight ? 'text-[#b5a697]' : 'text-[#76685b]'}`}
           style="font-family: Inter, sans-serif;"
         >
           {tagline}

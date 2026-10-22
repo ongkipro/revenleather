@@ -36,82 +36,74 @@ const grafirCount = products.filter((p) => isApprovedGrafirSlug(p.slug)).length;
 
 const categoryMap = new Map<string, number>();
 for (const p of products) {
-  const cat = (p.category || 'Koleksi Lainnya').trim();
+  const cat = (p.category || 'Lainnya').trim();
   categoryMap.set(cat, (categoryMap.get(cat) || 0) + 1);
 }
 const categories = [...categoryMap.entries()].sort((a, b) => b[1] - a[1]);
 ---
 
-<section id="produk" class="bg-[#faf6f1] px-4 py-7">
-  <!-- Gratis Grafir Banner -->
+<section id="produk" class="bg-[#faf6f1] px-4 py-6">
+  <!-- Gratis Grafir Full-Image Showcase -->
   {
     grafirCount > 0 && (
       <div
         id="grafir-spotlight"
-        class="mb-6 overflow-hidden rounded-xl border border-[#c89b72]/35 bg-[#1a1411] text-[#f4eee6]"
+        class="mb-6 border border-[#2e241f] bg-[#1a1411] text-[#f4eee6]"
       >
-        <div class="grid grid-cols-[108px_1fr] items-stretch sm:grid-cols-[128px_1fr]">
-          <div class="relative min-h-[124px] overflow-hidden bg-[#231b16]">
-            <img
-              src="/images/reven-grafir-sample.webp"
-              alt="Sampel Gratis Grafir Laser Reven Leather"
-              width="240"
-              height="240"
-              loading="lazy"
-              decoding="async"
-              class="h-full w-full object-cover"
-            />
+        <div class="relative aspect-[16/9] w-full overflow-hidden border-b border-[#2e241f] bg-[#140f0d]">
+          <img
+            src="/images/reven-grafir-sample.webp"
+            alt="Sampel Gratis Grafir Laser Reven Leather"
+            width="640"
+            height="360"
+            loading="lazy"
+            decoding="async"
+            class="h-full w-full object-cover object-center"
+          />
+          <div class="absolute right-3 top-3 border border-[#c89b72]/50 bg-[#1a1411]/90 px-2.5 py-1 text-[10px] font-semibold tracking-[0.08em] text-[#e5a970]">
+            <s class="mr-1.5 font-normal text-[#b5a697]">Rp37.000</s>
+            <span>GRATIS</span>
           </div>
-          <div class="flex flex-col justify-between p-3.5">
-            <div>
-              <div class="flex flex-wrap items-center justify-between gap-1">
-                <span class="text-[9.5px] font-bold uppercase tracking-[0.14em] text-[#e5a970]">
-                  Layanan Gratis Grafir
-                </span>
-                <span class="rounded bg-[#c89b72]/20 px-1.5 py-0.5 text-[9px] font-bold text-[#e5a970]">
-                  <s class="mr-1 font-normal text-[#bfb2a3]">Rp37.000</s>GRATIS
-                </span>
-              </div>
-              <h2
-                class="mt-1 text-[17px] font-semibold leading-tight text-[#f4eee6]"
-                style="font-family: 'Cormorant Garamond', Georgia, serif;"
-              >
-                Gratis Ukir Nama / Inisial di {grafirCount} Produk Pilihan
-              </h2>
-              <p class="mt-1 text-[11px] leading-relaxed text-[#bfb2a3]">
-                Berlaku untuk produk bertanda Gratis Grafir dengan metode pembayaran non-COD (Transfer Bank).
-              </p>
-            </div>
-            <div class="mt-2.5">
-              <button
-                type="button"
-                id="filter-grafir-cta"
-                class="inline-flex min-h-8 cursor-pointer items-center gap-1.5 rounded-lg border border-[#c89b72]/45 bg-[#c89b72] px-3 py-1 text-[10.5px] font-bold uppercase tracking-[0.06em] text-[#1a1411] transition-colors hover:bg-[#e5a970]"
-              >
-                <span>Tampilkan {grafirCount} Produk Grafir</span>
-                <span aria-hidden="true">→</span>
-              </button>
-            </div>
-          </div>
+        </div>
+
+        <div class="p-4">
+          <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#c89b72]">
+            Layanan Gratis Grafir Laser
+          </p>
+          <h2
+            class="mt-1 text-[20px] font-semibold leading-snug text-white"
+            style="font-family: 'Cormorant Garamond', Georgia, serif;"
+          >
+            Gratis Ukir Nama / Inisial di {grafirCount} Produk Pilihan
+          </h2>
+          <p class="mt-1.5 text-[12px] leading-relaxed text-[#bfb2a3]">
+            Berlaku untuk produk bertanda Gratis Grafir dengan metode pembayaran non-COD (Transfer Bank).
+          </p>
+          <button
+            type="button"
+            id="filter-grafir-cta"
+            class="mt-3.5 inline-flex min-h-10 w-full cursor-pointer items-center justify-center gap-2 border border-[#c89b72] bg-[#c89b72] px-4 py-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#1a1411] transition-colors hover:bg-[#d8ae86]"
+          >
+            <span>Lihat {grafirCount} Produk Gratis Grafir</span>
+            <span aria-hidden="true">→</span>
+          </button>
         </div>
       </div>
     )
   }
 
   <!-- Catalog Heading -->
-  <div class="mb-4">
-    <span class="text-[10px] font-bold uppercase tracking-[0.16em] text-[#8a5a3b]">
-      Katalog Produk
-    </span>
+  <div class="mb-4 flex items-baseline justify-between border-b border-[#dcd2c6] pb-2.5">
     <h2
-      class="mt-0.5 text-[24px] font-semibold leading-tight text-[#1a1411]"
+      class="text-[22px] font-semibold leading-none text-[#1a1411]"
       style="font-family: 'Cormorant Garamond', Georgia, serif;"
     >
-      Semua Koleksi ({products.length})
+      Katalog Produk
     </h2>
+    <span class="text-[11px] font-medium text-[#6e5f52]">{products.length} Koleksi</span>
   </div>
 
-  <!-- Search + Category Filter Pills -->
+  <!-- Search + Sharp Category Filter Tabs -->
   <div class="mb-5 flex flex-col gap-2.5" hidden={products.length === 0}>
     <div class="relative w-full">
       <input
@@ -119,11 +111,11 @@ const categories = [...categoryMap.entries()].sort((a, b) => b[1] - a[1]);
         id="catalog-search"
         placeholder="Cari tas, handbag, clutch, dompet, atau sabuk..."
         aria-label="Cari produk"
-        class="min-h-10 w-full rounded-xl border border-[#d9cdbf] bg-white py-2 pl-9 pr-4 text-[13px] text-[#1a1411] transition-colors placeholder:text-[#8a7e72] focus:border-[#8a5a3b] focus:outline-none"
+        class="min-h-10 w-full rounded-none border border-[#cfc3b4] bg-white py-2 pl-9 pr-4 text-[13px] text-[#1a1411] transition-colors placeholder:text-[#8a7e72] focus:border-[#1a1411] focus:outline-none"
       />
       <Icon
         name="lucide:search"
-        class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8a5a3b]"
+        class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6e5f52]"
         aria-hidden="true"
       />
     </div>
@@ -132,16 +124,15 @@ const categories = [...categoryMap.entries()].sort((a, b) => b[1] - a[1]);
       id="catalog-filter-pills"
       role="tablist"
       aria-label="Filter kategori produk"
-      class="flex items-center gap-1.5 overflow-x-auto pb-1 pt-0.5"
+      class="flex items-center gap-1.5 overflow-x-auto pb-1 pt-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
       <button
         type="button"
         data-filter-pill="all"
         aria-selected="true"
-        class="catalog-pill is-active inline-flex min-h-8 shrink-0 cursor-pointer items-center gap-1 rounded-full border border-[#1a1411] bg-[#1a1411] px-3 py-1 text-[11px] font-semibold text-[#f4eee6] transition-colors"
+        class="catalog-pill is-active inline-flex min-h-8 shrink-0 cursor-pointer items-center gap-1 rounded-none border border-[#1a1411] bg-[#1a1411] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-white transition-colors"
       >
-        <span>Semua</span>
-        <span class="text-[10px] opacity-75">({products.length})</span>
+        <span>Semua ({products.length})</span>
       </button>
 
       {
@@ -150,10 +141,9 @@ const categories = [...categoryMap.entries()].sort((a, b) => b[1] - a[1]);
             type="button"
             data-filter-pill="__grafir__"
             aria-selected="false"
-            class="catalog-pill inline-flex min-h-8 shrink-0 cursor-pointer items-center gap-1 rounded-full border border-[#c89b72] bg-[#f4eee6] px-3 py-1 text-[11px] font-semibold text-[#633d24] transition-colors hover:border-[#8a5a3b]"
+            class="catalog-pill inline-flex min-h-8 shrink-0 cursor-pointer items-center gap-1 rounded-none border border-[#8a5a3b] bg-[#f4eee6] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5c3a21] transition-colors hover:bg-[#ebe1d4]"
           >
-            <span>Gratis Grafir</span>
-            <span class="text-[10px] opacity-75">({grafirCount})</span>
+            <span>Gratis Grafir ({grafirCount})</span>
           </button>
         )
       }
@@ -164,10 +154,9 @@ const categories = [...categoryMap.entries()].sort((a, b) => b[1] - a[1]);
             type="button"
             data-filter-pill={cat}
             aria-selected="false"
-            class="catalog-pill inline-flex min-h-8 shrink-0 cursor-pointer items-center gap-1 rounded-full border border-[#d9cdbf] bg-white px-3 py-1 text-[11px] font-medium text-[#5a4a3f] transition-colors hover:border-[#8a5a3b] hover:text-[#1a1411]"
+            class="catalog-pill inline-flex min-h-8 shrink-0 cursor-pointer items-center gap-1 rounded-none border border-[#cfc3b4] bg-white px-3 py-1 text-[11px] font-medium uppercase tracking-[0.06em] text-[#4a3f36] transition-colors hover:border-[#1a1411] hover:text-[#1a1411]"
           >
-            <span>{cat}</span>
-            <span class="text-[10px] opacity-70">({count})</span>
+            <span>{cat} ({count})</span>
           </button>
         ))
       }
@@ -176,7 +165,7 @@ const categories = [...categoryMap.entries()].sort((a, b) => b[1] - a[1]);
 
   {
     products.length === 0 && (
-      <div class="rounded-xl border border-[#d9cdbf] bg-white px-5 py-10 text-center">
+      <div class="border border-[#cfc3b4] bg-white px-5 py-10 text-center">
         <p class="text-[13px] font-semibold text-[#1a1411]">Katalog sedang disiapkan</p>
         <p class="mx-auto mt-2 max-w-[26rem] text-[12px] leading-6 text-[#5a4a3f]">
           Belum ada produk yang diterbitkan.
@@ -185,7 +174,7 @@ const categories = [...categoryMap.entries()].sort((a, b) => b[1] - a[1]);
     )
   }
 
-  <div id="product-grid" class="grid grid-cols-2 gap-3" hidden={products.length === 0}>
+  <div id="product-grid" class="grid grid-cols-2 items-start gap-3" hidden={products.length === 0}>
     {
       products.map((product, idx) => {
         const hasGrafir = isApprovedGrafirSlug(product.slug);
@@ -220,15 +209,15 @@ const categories = [...categoryMap.entries()].sort((a, b) => b[1] - a[1]);
     class="mt-7 flex flex-col items-center gap-3"
     hidden={products.length === 0}
   >
-    <p id="catalog-status" class="text-[11.5px] font-medium text-[#5a4a3f]">
-      Menampilkan <span id="product-visible-count" class="font-bold text-[#1a1411]">{Math.min(12, products.length)}</span> dari <span id="product-total-count" class="font-bold text-[#1a1411]">{products.length}</span> produk
+    <p id="catalog-status" class="text-[11.5px] font-normal text-[#5a4a3f]">
+      Menampilkan <span id="product-visible-count" class="font-semibold text-[#1a1411]">{Math.min(12, products.length)}</span> dari <span id="product-total-count" class="font-semibold text-[#1a1411]">{products.length}</span> produk
     </p>
     {
       products.length > 12 && (
         <button
           type="button"
           id="load-more-btn"
-          class="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-[#1a1411] bg-[#1a1411] px-6 py-2.5 text-[11px] font-bold uppercase tracking-[0.1em] text-[#f4eee6] transition-colors hover:bg-[#2c221d] active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1a1411]"
+          class="inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-none border border-[#1a1411] bg-[#1a1411] px-6 py-2.5 text-[11px] font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-[#2c221d]"
         >
           <span>Tampilkan Produk Lainnya</span>
           <Icon name="lucide:chevron-down" class="h-4 w-4" aria-hidden="true" />
@@ -258,13 +247,13 @@ const categories = [...categoryMap.entries()].sort((a, b) => b[1] - a[1]);
         pill.setAttribute('aria-selected', String(active));
         if (active) {
           pill.className =
-            'catalog-pill is-active inline-flex min-h-8 shrink-0 cursor-pointer items-center gap-1 rounded-full border border-[#1a1411] bg-[#1a1411] px-3 py-1 text-[11px] font-semibold text-[#f4eee6] transition-colors';
+            'catalog-pill is-active inline-flex min-h-8 shrink-0 cursor-pointer items-center gap-1 rounded-none border border-[#1a1411] bg-[#1a1411] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-white transition-colors';
         } else if (pill.getAttribute('data-filter-pill') === '__grafir__') {
           pill.className =
-            'catalog-pill inline-flex min-h-8 shrink-0 cursor-pointer items-center gap-1 rounded-full border border-[#c89b72] bg-[#f4eee6] px-3 py-1 text-[11px] font-semibold text-[#633d24] transition-colors hover:border-[#8a5a3b]';
+            'catalog-pill inline-flex min-h-8 shrink-0 cursor-pointer items-center gap-1 rounded-none border border-[#8a5a3b] bg-[#f4eee6] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5c3a21] transition-colors hover:bg-[#ebe1d4]';
         } else {
           pill.className =
-            'catalog-pill inline-flex min-h-8 shrink-0 cursor-pointer items-center gap-1 rounded-full border border-[#d9cdbf] bg-white px-3 py-1 text-[11px] font-medium text-[#5a4a3f] transition-colors hover:border-[#8a5a3b] hover:text-[#1a1411]';
+            'catalog-pill inline-flex min-h-8 shrink-0 cursor-pointer items-center gap-1 rounded-none border border-[#cfc3b4] bg-white px-3 py-1 text-[11px] font-medium uppercase tracking-[0.06em] text-[#4a3f36] transition-colors hover:border-[#1a1411] hover:text-[#1a1411]';
         }
       });
     }

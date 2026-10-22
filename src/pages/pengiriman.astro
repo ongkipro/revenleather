@@ -17,11 +17,11 @@ const data = getTenantLegalPage('shipping', Astro.locals.tenant.name);
       { label: data.badge, href: '/pengiriman' },
     ]}
   >
-    <div slot="before" class="mb-4 rounded-xl border border-[#dfd3c3] bg-white p-5 shadow-[0_2px_10px_rgba(26,20,17,0.03)]">
-      <span class="text-[10px] font-bold uppercase tracking-[0.14em] text-[#8a5a3b]">
+    <div slot="before" class="mb-4 border border-[#d6cbbd] bg-white p-5">
+      <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#7c6a5a]">
         Ringkasan Logistik Resmi
-      </span>
-      <h2 class="mt-1 font-serif text-[19px] font-bold text-[#1a1411]">
+      </p>
+      <h2 class="mt-1 font-serif text-[19px] font-semibold text-[#1a1411]">
         Pengiriman Langsung dari Gudang Utama Malang
       </h2>
       <dl class="mt-3 divide-y divide-[#efe7dc] text-[12.5px]">

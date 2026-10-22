@@ -1,84 +1,43 @@
 ---
 import SiteBrand from './SiteBrand.astro';
 
-const footerExplore = [
-  { label: 'Beranda', href: '/' },
-  { label: 'Katalog Produk (79)', href: '/produk' },
-  { label: 'Produk Gratis Grafir (33)', href: '/produk?filter=grafir' },
-  { label: 'Tentang Reven Leather', href: '/tentang' },
-  { label: 'Ulasan Pembeli', href: '/testimoni' },
-];
-
-const footerLegal = [
-  { label: 'Kontak & CS', href: '/kontak' },
-  { label: 'Pengiriman & Retur', href: '/pengiriman' },
-  { label: 'Kebijakan Privasi', href: '/kebijakan-privasi' },
-  { label: 'Syarat & Ketentuan', href: '/syarat-ketentuan' },
-  { label: 'Disclaimer', href: '/disclaimer' },
-  { label: 'Kebijakan Cookie', href: '/kebijakan-cookie' },
+const footerLinks = [
+  { label: 'Katalog', href: '/produk' },
+  { label: 'Tentang', href: '/tentang' },
+  { label: 'Ulasan', href: '/testimoni' },
+  { label: 'Kontak', href: '/kontak' },
+  { label: 'Pengiriman', href: '/pengiriman' },
+  { label: 'Privasi', href: '/kebijakan-privasi' },
+  { label: 'Syarat', href: '/syarat-ketentuan' },
 ];
 ---
 
-<footer class="border-t border-[#c89b72]/25 bg-[#1a1411] px-5 pb-12 pt-10 text-[#f4eee6]">
-  <div class="mx-auto max-w-[480px] space-y-6">
-    <div class="space-y-2.5">
-      <SiteBrand href="/" tone="light" showTagline={true} />
-      <p class="text-[12px] leading-relaxed text-[#bfb2a3]">
-        Toko resmi produk kulit sapi asli Reven Leather. Tas, handbag, clutch, dompet, dan ikat pinggang dengan garansi resmi 1 tahun.
-      </p>
-    </div>
+<footer class="border-t border-[#2e241f] bg-[#1a1411] px-5 py-9 text-[#f4eee6]">
+  <div class="mx-auto flex max-w-[480px] flex-col items-center text-center">
+    <SiteBrand href="/" tone="light" showTagline={false} />
 
-    <div class="grid grid-cols-2 gap-3 rounded-xl border border-[#c89b72]/20 bg-[#231b16] p-3.5 text-[11.5px] leading-relaxed">
-      <div>
-        <p class="text-[10px] font-bold uppercase tracking-[0.14em] text-[#e5a970]">Gudang Pengiriman</p>
-        <p class="mt-1 font-medium text-[#f4eee6]">Bululawang, Kab. Malang</p>
-        <p class="text-[11px] text-[#bfb2a3]">Jawa Timur 65171</p>
-      </div>
-      <div>
-        <p class="text-[10px] font-bold uppercase tracking-[0.14em] text-[#e5a970]">Metode Pembayaran</p>
-        <p class="mt-1 font-medium text-[#f4eee6]">Transfer Mandiri & COD</p>
-        <p class="text-[11px] text-[#bfb2a3]">PT East Retail Network</p>
-      </div>
-    </div>
+    <p class="mt-2.5 max-w-[22rem] text-[11.5px] leading-relaxed text-[#b5a697]">
+      100% Kulit Sapi Asli · Gudang Utama Bululawang, Kab. Malang
+    </p>
 
-    <div class="grid grid-cols-2 gap-6 border-t border-[#c89b72]/15 pt-6 text-left">
-      <div>
-        <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-[#e5a970]">Menu Toko</p>
-        <nav aria-label="Menu koleksi" class="mt-2.5 flex flex-col gap-1.5 text-[12px] text-[#d6c9b8]">
-          {
-            footerExplore.map((item) => (
-              <a
-                href={item.href}
-                class="inline-flex min-h-7 items-center transition-colors hover:text-[#e5a970] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#c89b72]"
-              >
-                {item.label}
-              </a>
-            ))
-          }
-        </nav>
-      </div>
+    <nav
+      aria-label="Tautan footer"
+      class="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 border-y border-[#2e241f] py-3.5 text-[11px] font-medium uppercase tracking-[0.08em] text-[#cfc2b4] w-full"
+    >
+      {
+        footerLinks.map((item) => (
+          <a
+            href={item.href}
+            class="transition-colors hover:text-white focus-visible:outline-none"
+          >
+            {item.label}
+          </a>
+        ))
+      }
+    </nav>
 
-      <div>
-        <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-[#e5a970]">Bantuan & Legal</p>
-        <nav aria-label="Tautan footer" class="mt-2.5 flex flex-col gap-1.5 text-[12px] text-[#d6c9b8]">
-          {
-            footerLegal.map((item) => (
-              <a
-                href={item.href}
-                class="inline-flex min-h-7 items-center transition-colors hover:text-[#e5a970] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#c89b72]"
-              >
-                {item.label}
-              </a>
-            ))
-          }
-        </nav>
-      </div>
-    </div>
-
-    <div class="border-t border-[#c89b72]/15 pt-5 text-center">
-      <p class="text-[10.5px] tracking-wider text-[#9c8e80]">
-        © {new Date().getFullYear()} {Astro.locals.tenant.name} · PT East Retail Network
-      </p>
-    </div>
+    <p class="mt-5 text-[10.5px] tracking-[0.06em] text-[#8a7c6f]">
+      © {new Date().getFullYear()} {Astro.locals.tenant.name} · PT East Retail Network
+    </p>
   </div>
 </footer>

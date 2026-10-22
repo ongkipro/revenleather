@@ -32,56 +32,49 @@ const discountPercentage = hasDiscount
 const hasGrafir = isApprovedGrafirSlug(product.slug);
 ---
 
-<article class="group h-full overflow-hidden rounded-xl border border-[#dfd3c3] bg-white shadow-[0_2px_10px_rgba(26,20,17,0.04)] transition-all hover:border-[#8a5a3b] hover:shadow-[0_8px_22px_rgba(26,20,17,0.09)]">
+<article class="group border border-[#d6cbbd] bg-white transition-colors hover:border-[#1a1411]">
   <a
     href={`/produk/${product.slug}`}
-    class="flex h-full flex-col focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1a1411]"
+    class="flex flex-col focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1a1411]"
   >
-    <div class="relative aspect-square overflow-hidden border-b border-[#ebe2d6] bg-[#f4eee6]">
+    <div class="relative aspect-square overflow-hidden border-b border-[#ebe3d8] bg-[#f4eee6]">
       <img
         src={cardImageSrc(product.heroImage)}
         alt={`Foto produk ${product.productName}`}
         width="320"
         height="320"
-        class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+        class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
         loading={eager ? 'eager' : 'lazy'}
         fetchpriority={eager ? 'high' : undefined}
         decoding="async"
       />
       {discountPercentage > 0 && (
-        <span class="absolute left-2 top-2 rounded-md bg-[#9e2a2b] px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.08em] text-white shadow-xs">
-          Hemat {discountPercentage}%
+        <span class="absolute left-0 top-0 bg-[#9e2a2b] px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.06em] text-white">
+          -{discountPercentage}%
         </span>
       )}
       {hasGrafir && (
-        <span class="absolute bottom-2 left-2 inline-flex items-center rounded-md border border-[#c89b72]/45 bg-[#1a1411]/90 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-[#e5a970] backdrop-blur-xs">
+        <span class="absolute bottom-0 left-0 bg-[#1a1411]/90 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-[#e5a970]">
           Gratis Grafir
         </span>
       )}
     </div>
 
-    <div class="flex flex-1 flex-col p-3">
-      <div class="flex items-center justify-between gap-1.5 text-[9.5px] font-bold uppercase tracking-[0.12em] text-[#8a5a3b]">
-        <span class="min-w-0 truncate">{product.category}</span>
-        <span class="shrink-0 font-semibold text-[#76685b]">{product.variants.length} warna</span>
-      </div>
-      <h2 class="mt-1.5 line-clamp-2 min-h-10 text-[13.5px] font-semibold leading-5 text-[#1a1411] group-hover:text-[#8a5a3b]">
+    <div class="p-2.5">
+      <p class="truncate text-[9.5px] font-medium uppercase tracking-[0.12em] text-[#7c6a5a]">
+        {product.category}
+      </p>
+      <h2 class="mt-0.5 line-clamp-2 text-[13px] font-semibold leading-[1.35] text-[#1a1411]">
         {product.productName}
       </h2>
 
-      <div class="mt-auto pt-2.5">
-        <div class="flex flex-wrap items-baseline gap-1.5">
-          <p class="text-[14.5px] font-extrabold leading-5 text-[#1a1411]">{formatPrice(product.price)}</p>
-          {hasDiscount && (
-            <p class="text-[10.5px] leading-4 text-[#8a7e72] line-through">
-              {formatPrice(comparePrice)}
-            </p>
-          )}
-        </div>
-        <div class="mt-2 flex items-center justify-between border-t border-[#f0e8de] pt-2 text-[10.5px] font-semibold text-[#8a5a3b]">
-          <span>Lihat Produk</span>
-          <span aria-hidden="true" class="transition-transform group-hover:translate-x-0.5">→</span>
-        </div>
+      <div class="mt-1.5 flex flex-wrap items-baseline gap-1.5">
+        <p class="text-[14px] font-bold leading-none text-[#1a1411]">{formatPrice(product.price)}</p>
+        {hasDiscount && (
+          <p class="text-[10.5px] leading-none text-[#8c7f73] line-through">
+            {formatPrice(comparePrice)}
+          </p>
+        )}
       </div>
     </div>
   </a>

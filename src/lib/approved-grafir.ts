@@ -2,6 +2,7 @@
  * Canonical set of 33 Reven Leather product/landing-page slugs approved for
  * complimentary custom laser engraving (Gratis Grafir Nama / Inisial / Logo),
  * mapped from the 28 validated reference photos in `letak grafir tas`.
+ * Includes both `landing_pages.slug` and `products.slug` forms.
  */
 export const APPROVED_GRAFIR_SLUGS: ReadonlySet<string> = new Set([
   'ammar-sling-bag',
@@ -27,19 +28,30 @@ export const APPROVED_GRAFIR_SLUGS: ReadonlySet<string> = new Set([
   'nakula-pouch-bag',
   'nayaka-pouch',
   'oslo',
+  'oslo-sling-bag',
   'reven-adam-clutch-bag',
+  'adam-clutch-bag',
   'reven-angkara-multibag',
+  'angkara-multibag',
   'reven-ardana-multibag',
+  'ardana-multibag',
   'reven-asgard-leather-laptop-bag',
+  'asgard-leather-laptop-bag',
   'reven-darius-clutch-bag',
+  'darius-clutch-bag',
   'reven-frontier-bag',
+  'frontier-bag',
   'reven-futura-multibag',
+  'futura-multibag',
   'reven-gio-handbag',
+  'gio-handbag',
   'reven-sadewa-multibag',
+  'sadewa-multibag',
   'yudistira-sling-bag',
 ]);
 
 export function isApprovedGrafirSlug(slug: string | undefined | null): boolean {
   if (!slug) return false;
-  return APPROVED_GRAFIR_SLUGS.has(slug.trim().toLowerCase());
+  const clean = slug.trim().toLowerCase();
+  return APPROVED_GRAFIR_SLUGS.has(clean) || APPROVED_GRAFIR_SLUGS.has(clean.replace(/^reven-/, ''));
 }

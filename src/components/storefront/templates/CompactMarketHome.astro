@@ -43,44 +43,6 @@ const { content, products, heroSlides, sections } = Astro.props;
   >
     {sections.hero && <HeroSection slides={heroSlides} highlights={content.heroHighlights} content={content.hero} />}
     {sections.catalog && <ProductsSection products={products} heading={content.catalog} />}
-
-    <!-- Informasi Material, Garansi & Pengiriman -->
-    <section class="border-t border-[#dfd3c3] bg-[#f4eee6] px-4 py-7">
-      <div class="mb-4">
-        <span class="text-[10px] font-bold uppercase tracking-[0.16em] text-[#8a5a3b]">
-          Standar Produk & Layanan
-        </span>
-        <h2
-          class="mt-1 text-[22px] font-semibold leading-tight text-[#1a1411]"
-          style="font-family: 'Cormorant Garamond', Georgia, serif;"
-        >
-          Informasi Pembelian Resmi
-        </h2>
-      </div>
-
-      <div class="grid grid-cols-1 gap-2.5">
-        <div class="rounded-xl border border-[#dfd3c3] bg-white p-4">
-          <h3 class="text-[13.5px] font-bold text-[#1a1411]">100% Kulit Sapi Asli</h3>
-          <p class="mt-1 text-[12px] leading-relaxed text-[#5a4a3f]">
-            Menggunakan bahan kulit sapi asli (Full-Grain, Pull-Up, Crazy Horse, Nappa, dan Mill Leather) yang kuat dan tidak mengelupas seperti bahan sintetis.
-          </p>
-        </div>
-
-        <div class="rounded-xl border border-[#dfd3c3] bg-white p-4">
-          <h3 class="text-[13.5px] font-bold text-[#1a1411]">Garansi Resmi 1 Tahun</h3>
-          <p class="mt-1 text-[12px] leading-relaxed text-[#5a4a3f]">
-            Setiap produk dilengkapi Kartu Garansi 1 Tahun untuk jahitan, resleting, dan aksesoris logam, serta dikemas menggunakan boks Reven Leather.
-          </p>
-        </div>
-
-        <div class="rounded-xl border border-[#dfd3c3] bg-white p-4">
-          <h3 class="text-[13.5px] font-bold text-[#1a1411]">Pengiriman Malang • Transfer Mandiri & COD</h3>
-          <p class="mt-1 text-[12px] leading-relaxed text-[#5a4a3f]">
-            Dikirim dari Gudang Utama Bululawang, Kab. Malang (JNE, J&T, SiCepat, iDexpress, SAP) dengan metode pembayaran Transfer Bank Mandiri a.n. PT East Retail Network atau Bayar di Tempat (COD).
-          </p>
-        </div>
-      </div>
-    </section>
   </div>
 </main>
 
@@ -93,8 +55,8 @@ const { content, products, heroSlides, sections } = Astro.props;
     [...heroDots.children].forEach((dot, itemIndex) => {
       dot.className =
         itemIndex === index
-          ? 'h-11 w-7 border-b-2 border-[#e5a970] bg-transparent transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white'
-          : 'h-11 w-4 border-b border-white/55 bg-transparent transition-colors hover:border-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white';
+          ? 'h-8 w-7 border-b-2 border-white bg-transparent transition-colors focus-visible:outline-none'
+          : 'h-8 w-4 border-b border-white/45 bg-transparent transition-colors hover:border-white focus-visible:outline-none';
     });
   };
 

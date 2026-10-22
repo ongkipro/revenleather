@@ -29,22 +29,7 @@ const { slides } = Astro.props;
 <section class="bg-[#1a1411] text-[#f4eee6]">
   <h1 class="sr-only">{Astro.locals.tenant.defaultTitle}</h1>
 
-  <div class="px-5 pb-4 pt-5">
-    <p class="inline-flex items-center rounded-md border border-[#c89b72]/30 bg-[#c89b72]/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-[#e5a970]">
-      Reven Leather Official
-    </p>
-    <p
-      class="mt-2.5 text-[26px] font-semibold leading-[1.12] tracking-[-0.015em] text-[#f4eee6]"
-      style="font-family: 'Cormorant Garamond', Georgia, serif;"
-    >
-      Koleksi Tas, Dompet & Sabuk Kulit Sapi Asli
-    </p>
-    <p class="mt-2 text-[12.5px] leading-relaxed text-[#bfb2a3]">
-      Produk 100% kulit sapi asli bergaransi resmi 1 tahun. Pengiriman langsung dari Gudang Utama Malang.
-    </p>
-  </div>
-
-  <div class="relative overflow-hidden border-y border-[#c89b72]/20 bg-[#140f0d]">
+  <div class="relative overflow-hidden bg-[#140f0d]">
     <div id="hero-track" class="flex transition-transform duration-700 ease-out will-change-transform">
       {
         slides.map((slide, index) => (
@@ -60,19 +45,14 @@ const { slides } = Astro.props;
               decoding={index === 0 ? 'sync' : 'async'}
               fetchpriority={index === 0 ? 'high' : undefined}
             />
-            <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#1a1411] via-[#1a1411]/25 to-transparent" />
-            <div class="absolute inset-x-0 bottom-0 p-5 pb-14 text-white">
-              <div class="flex flex-wrap items-center gap-2">
-                <span class="inline-flex rounded-sm border border-[#c89b72]/45 bg-[#1a1411]/90 px-2.5 py-1 text-[9.5px] font-bold uppercase tracking-[0.14em] text-[#e5a970]">
-                  {slide.badge}
-                </span>
-                <span class="inline-flex rounded-sm bg-[#9e2a2b] px-2 py-1 text-[9.5px] font-bold uppercase tracking-[0.1em] text-white">
-                  Hemat s/d 55%
-                </span>
-              </div>
-              <div class="mt-2.5 flex items-end justify-between gap-3">
+            <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#140f0d] via-[#140f0d]/20 to-transparent" />
+            <div class="absolute inset-x-0 bottom-0 p-5 pb-12 text-white">
+              <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#d8b38c]">
+                {slide.badge}
+              </p>
+              <div class="mt-1 flex items-end justify-between gap-3">
                 <p
-                  class="max-w-[18rem] text-[20px] font-semibold leading-tight text-[#f4eee6]"
+                  class="max-w-[18rem] text-[22px] font-semibold leading-tight text-white"
                   style="font-family: 'Cormorant Garamond', Georgia, serif;"
                 >
                   {slide.text}
@@ -80,15 +60,15 @@ const { slides } = Astro.props;
                 {slide.href ? (
                   <a
                     href={slide.href}
-                    class="inline-flex shrink-0 items-center gap-1 rounded-lg border border-[#c89b72]/50 bg-[#c89b72] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-[#1a1411] transition-colors hover:bg-[#e5a970]"
+                    class="inline-flex shrink-0 items-center gap-1.5 border border-white/80 bg-[#1a1411]/85 px-3.5 py-2 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-white transition-colors hover:bg-white hover:text-[#1a1411]"
                   >
-                    <span>Detail Produk</span>
+                    <span>Lihat Produk</span>
                     <span aria-hidden="true">→</span>
                   </a>
                 ) : (
                   <a
                     href="#produk"
-                    class="inline-flex shrink-0 items-center gap-1 rounded-lg border border-[#c89b72]/50 bg-[#c89b72] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-[#1a1411] transition-colors hover:bg-[#e5a970]"
+                    class="inline-flex shrink-0 items-center gap-1.5 border border-white/80 bg-[#1a1411]/85 px-3.5 py-2 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-white transition-colors hover:bg-white hover:text-[#1a1411]"
                   >
                     <span>Katalog</span>
                     <span aria-hidden="true">↓</span>
@@ -107,8 +87,8 @@ const { slides } = Astro.props;
             type="button"
             aria-label={`Tampilkan slide ${index + 1}`}
             class={index === 0
-              ? 'h-11 w-7 border-b-2 border-[#e5a970] bg-transparent transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white'
-              : 'h-11 w-4 border-b border-white/55 bg-transparent transition-colors hover:border-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white'}
+              ? 'h-8 w-7 border-b-2 border-white bg-transparent transition-colors focus-visible:outline-none'
+              : 'h-8 w-4 border-b border-white/45 bg-transparent transition-colors hover:border-white focus-visible:outline-none'}
           />
         ))
       }
@@ -116,18 +96,18 @@ const { slides } = Astro.props;
   </div>
 
   <!-- 3-Column Store Highlights -->
-  <div class="grid grid-cols-3 divide-x divide-[#c89b72]/15 border-b border-[#c89b72]/25 bg-[#211915] px-2 py-3 text-center">
+  <div class="grid grid-cols-3 divide-x divide-[#2e241f] border-y border-[#2e241f] bg-[#1a1411] px-2 py-3 text-center">
     <div class="px-1.5">
-      <p class="text-[11px] font-bold text-[#e5a970]">100% Kulit Sapi</p>
-      <p class="mt-0.5 text-[10px] text-[#bfb2a3]">Full-Grain & Pull-Up</p>
+      <p class="text-[10.5px] font-semibold uppercase tracking-[0.06em] text-white">100% Kulit Sapi</p>
+      <p class="mt-0.5 text-[10px] text-[#b5a697]">Material Asli</p>
     </div>
     <div class="px-1.5">
-      <p class="text-[11px] font-bold text-[#e5a970]">Garansi 1 Tahun</p>
-      <p class="mt-0.5 text-[10px] text-[#bfb2a3]">Jahitan & Resleting</p>
+      <p class="text-[10.5px] font-semibold uppercase tracking-[0.06em] text-white">Garansi 1 Tahun</p>
+      <p class="mt-0.5 text-[10px] text-[#b5a697]">Jahitan & Resleting</p>
     </div>
     <div class="px-1.5">
-      <p class="text-[11px] font-bold text-[#e5a970]">Bisa COD</p>
-      <p class="mt-0.5 text-[10px] text-[#bfb2a3]">& Transfer Mandiri</p>
+      <p class="text-[10.5px] font-semibold uppercase tracking-[0.06em] text-white">Bisa COD</p>
+      <p class="mt-0.5 text-[10px] text-[#b5a697]">& Transfer Mandiri</p>
     </div>
   </div>
 </section>
