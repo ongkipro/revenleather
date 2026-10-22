@@ -1,37 +1,60 @@
 ---
 import SiteBrand from './SiteBrand.astro';
+
+const pathname = Astro.url.pathname;
+const navItems = [
+  { label: 'Beranda', href: '/', active: pathname === '/' },
+  { label: 'Katalog', href: '/produk', active: pathname.startsWith('/produk') },
+  { label: 'Gratis Grafir', href: '/#grafir-spotlight', active: false },
+  { label: 'Tentang', href: '/tentang', active: pathname === '/tentang' },
+  { label: 'Kontak', href: '/kontak', active: pathname === '/kontak' },
+];
 ---
 
-{/* Official-store trust strip: name-then-checkmark, the way a social profile
-    signals authenticity. Blue lives only in the seal; everything else stays
-    monochrome like the rest of the storefront. */}
-<div class="border-fade-b bg-white px-4 py-2 text-center">
-  <p class="mx-auto flex max-w-[480px] items-center justify-center gap-1.5">
-    <span class="text-[10px] font-bold uppercase tracking-[0.18em] text-[#111111]">Official Store</span>
-    <svg viewBox="0 0 22 22" class="h-[15px] w-[15px] shrink-0" fill="none" aria-label="Terverifikasi" role="img">
+<div class="border-b border-[#c89b72]/15 bg-[#140f0d] px-4 py-1.5 text-center">
+  <p class="mx-auto flex max-w-[480px] items-center justify-center gap-1.5 text-[10px] tracking-[0.14em] text-[#f4eee6]">
+    <span class="font-bold uppercase">Official Store</span>
+    <svg viewBox="0 0 22 22" class="h-[14px] w-[14px] shrink-0" fill="none" aria-label="Terverifikasi" role="img">
       <path
         fill="#1d9bf0"
         d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.018-1.273.215-1.813.567s-.969.849-1.242 1.43c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.688.878.633.132 1.29.084 1.897-.138.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816z"
       />
       <path fill="#fff" d="M9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z" />
     </svg>
+    <span class="text-[#c89b72]">·</span>
+    <span class="text-[9.5px] font-medium uppercase tracking-[0.12em] text-[#d6c9b8]">100% Kulit Sapi Asli</span>
   </p>
 </div>
 
-{Astro.locals.tenant.tagline && (
-  <div class="bg-[#111111] px-4 py-2.5 text-center text-[10px] font-normal tracking-widest uppercase text-white">
-    <p class="mx-auto flex max-w-[480px] items-center justify-center gap-2 px-1">
-      <span class="relative flex h-1.5 w-1.5 items-center justify-center">
-        <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#111111] opacity-75"></span>
-        <span class="relative inline-flex h-1 w-1 rounded-full bg-[#111111]"></span>
-      </span>
-      <span>{Astro.locals.tenant.tagline}</span>
-    </p>
+<header class="sticky top-0 z-30 bg-[#1a1411] text-[#f4eee6] shadow-[0_6px_20px_rgba(0,0,0,0.22)]">
+  <div class="mx-auto flex h-[58px] max-w-[480px] items-center justify-center px-5 text-center">
+    <SiteBrand href="/" tone="light" showTagline={false} />
   </div>
-)}
-
-<header class="border-b border-[#E5E5E5] bg-white">
-  <div class="mx-auto flex h-[64px] max-w-[480px] items-center justify-center px-5 text-center">
-    <SiteBrand href="/" showTagline={false} />
-  </div>
+  <div
+    aria-hidden="true"
+    class="mx-auto h-px w-4/5 max-w-[360px]"
+    style="background: linear-gradient(90deg, transparent, rgba(200,155,114,0.55), transparent);"
+  />
+  <nav
+    aria-label="Navigasi utama"
+    class="mx-auto flex max-w-[480px] items-center justify-between gap-1 overflow-x-auto bg-[#1f1814] px-3 py-1.5 text-[11px] font-semibold tracking-[0.04em]"
+  >
+    {
+      navItems.map((item) => (
+        <a
+          href={item.href}
+          class:list={[
+            'inline-flex min-h-8 shrink-0 items-center rounded-full px-2.5 py-1 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#c89b72]',
+            item.active
+              ? 'bg-[#c89b72]/20 text-[#e5a970]'
+              : item.label.includes('Grafir')
+                ? 'text-[#e5a970] hover:bg-[#c89b72]/15'
+                : 'text-[#d6c9b8] hover:bg-white/5 hover:text-white',
+          ]}
+        >
+          {item.label}
+        </a>
+      ))
+    }
+  </nav>
 </header>

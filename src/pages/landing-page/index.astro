@@ -4,107 +4,145 @@ import Icon from '../../components/storefront/shared/Icon.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { listPublicLandingPages } from '../../lib/landing-pages';
 import { cardImageSrc } from '../../lib/image-derivative';
+import { isApprovedGrafirSlug } from '../../lib/approved-grafir';
 
 export const prerender = false;
 
 // Read-only: unlike the admin list this never reconciles the native register,
 // because a storefront request must not write to the store.
 const pages = await listPublicLandingPages(Astro.locals);
-const INITIAL_COUNT = 10;
+const INITIAL_COUNT = 12;
 ---
 
 <BaseLayout
-  title={`Halaman - ${Astro.locals.tenant.name}`}
-  description={`Daftar halaman penawaran ${Astro.locals.tenant.name}.`}
+  title={`Daftar Halaman Produk - ${Astro.locals.tenant.name}`}
+  description={`Daftar ${pages.length} halaman produk kulit sapi asli ${Astro.locals.tenant.name}.`}
   breadcrumbs={[
     { name: 'Beranda', url: '/' },
-    { name: 'Halaman', url: '/landing-page' },
+    { name: 'Halaman Produk', url: '/landing-page' },
   ]}
 >
-  <main id="konten-utama" class="min-h-screen bg-white text-[#111111]">
+  <main id="konten-utama" class="min-h-screen bg-[#faf6f1] text-[#1a1411]">
     <PageIntro
-      badge="Semua Halaman"
-      title={`Halaman ${Astro.locals.tenant.name}`}
-      description="Halaman penawaran yang sedang aktif. Pilih satu untuk melihat detail dan memesan."
-      breadcrumbs={[{ label: 'Beranda', href: '/' }, { label: 'Halaman' }]}
+      badge={`${pages.length} Halaman`}
+      title={`Halaman Produk ${Astro.locals.tenant.name}`}
+      description="Pilih produk untuk melihat spesifikasi lengkap, pilihan warna kulit, dan formulir pemesanan."
+      breadcrumbs={[{ label: 'Beranda', href: '/' }, { label: 'Halaman Produk' }]}
     />
 
-    <section aria-label="Daftar halaman" class="mx-auto max-w-[480px] px-4 py-8">
+    <section aria-label="Daftar halaman" class="mx-auto max-w-[480px] px-4 py-6">
       {pages.length > 0 ? (
         <>
-          <ul class="flex flex-col" id="landing-list">
-            {pages.map((page, index) => (
-              <li
-                class={`landing-list-item border-fade-t first:border-t-0 ${index >= INITIAL_COUNT ? 'hidden' : ''}`}
-                data-index={index}
+          <div class="mb-4">
+            <div class="relative">
+              <input
+                id="lp-search-input"
+                type="search"
+                placeholder="Cari nama produk..."
+                aria-label="Cari halaman produk"
+                class="w-full rounded-lg border border-[#dfd3c3] bg-white py-2.5 pl-9 pr-3 text-[12px] text-[#1a1411] placeholder:text-[#9c8d7e] focus:border-[#8a5a3b] focus:outline-none"
+              />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8a5a3b]"
+                aria-hidden="true"
               >
-                <a
-                  href={page.href}
-                  class="flex min-h-14 items-center justify-between gap-3 py-3.5 transition-colors hover:bg-[#F5F5F5]"
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.3-4.3"></path>
+              </svg>
+            </div>
+          </div>
+
+          <ul class="space-y-2.5" id="landing-list">
+            {pages.map((page, index) => {
+              const isGrafir = isApprovedGrafirSlug(page.slug);
+              return (
+                <li
+                  class={`landing-list-item ${index >= INITIAL_COUNT ? 'hidden' : ''}`}
+                  data-index={index}
+                  data-title={page.title.toLowerCase()}
                 >
-                  {page.image ? (
-                    <img
-                      src={cardImageSrc(page.image)}
-                      alt=""
-                      width="56"
-                      height="56"
-                      loading={index < 6 ? 'eager' : 'lazy'}
-                      decoding="async"
-                      class="size-14 shrink-0 border border-[#E5E5E5] bg-[#F5F5F5] object-cover"
-                    />
-                  ) : (
-                    <span aria-hidden="true" class="size-14 shrink-0 border border-[#E5E5E5] bg-[#F5F5F5]" />
-                  )}
-                  <span class="min-w-0 flex-1">
-                    <span class="block truncate text-sm font-semibold text-[#111111]">
-                      {page.title}
-                    </span>
-                    {page.excerpt && (
-                      <span class="mt-0.5 block truncate text-xs font-normal text-[#555555]">
-                        {page.excerpt}
-                      </span>
-                    )}
-                  </span>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    class="size-4 shrink-0 text-[#767676]"
-                    aria-hidden="true"
+                  <a
+                    href={page.href}
+                    class="group flex items-center justify-between gap-3 rounded-xl border border-[#dfd3c3] bg-white p-2.5 shadow-[0_2px_8px_rgba(26,20,17,0.03)] transition-all hover:border-[#8a5a3b]"
                   >
-                    <path d="m9 18 6-6-6-6" />
-                  </svg>
-                </a>
-              </li>
-            ))}
+                    {page.image ? (
+                      <img
+                        src={cardImageSrc(page.image)}
+                        alt={page.title}
+                        width="60"
+                        height="60"
+                        loading={index < 6 ? 'eager' : 'lazy'}
+                        decoding="async"
+                        class="size-15 shrink-0 rounded-lg border border-[#efe7dc] bg-[#f4eee6] object-cover"
+                      />
+                    ) : (
+                      <span aria-hidden="true" class="size-15 shrink-0 rounded-lg border border-[#efe7dc] bg-[#f4eee6]" />
+                    )}
+                    <span class="min-w-0 flex-1">
+                      {isGrafir && (
+                        <span class="mb-0.5 inline-block rounded bg-[#f4eee6] px-1.5 py-0.5 text-[9px] font-bold text-[#6e452b]">
+                          Gratis Grafir
+                        </span>
+                      )}
+                      <span class="block truncate text-[13px] font-bold text-[#1a1411] group-hover:text-[#8a5a3b]">
+                        {page.title}
+                      </span>
+                      {page.excerpt && (
+                        <span class="mt-0.5 block truncate text-[11px] font-normal text-[#574c43]">
+                          {page.excerpt}
+                        </span>
+                      )}
+                    </span>
+                    <span class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#f4eee6] text-[#8a5a3b] transition-colors group-hover:bg-[#1a1411] group-hover:text-[#e2b98f]">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        class="size-4"
+                        aria-hidden="true"
+                      >
+                        <path d="m9 18 6-6-6-6" />
+                      </svg>
+                    </span>
+                  </a>
+                </li>
+              );
+            })}
           </ul>
 
           {pages.length > INITIAL_COUNT && (
-            <div class="mt-8 flex flex-col items-center gap-3" id="load-more-container">
-              <p class="text-[11px] font-normal text-[#555555]">
-                Menampilkan <span id="visible-count" class="font-semibold text-[#111111]">{Math.min(INITIAL_COUNT, pages.length)}</span> dari{' '}
-                <span id="total-count" class="font-semibold text-[#111111]">{pages.length}</span> halaman
+            <div class="mt-7 flex flex-col items-center gap-3" id="load-more-container">
+              <p class="text-[11px] font-normal text-[#574c43]">
+                Menampilkan <span id="visible-count" class="font-semibold text-[#1a1411]">{Math.min(INITIAL_COUNT, pages.length)}</span> dari{' '}
+                <span id="total-count" class="font-semibold text-[#1a1411]">{pages.length}</span> produk
               </p>
               <button
                 id="load-more-btn"
                 type="button"
-                class="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-none border border-[#111111] bg-[#111111] px-6 py-2.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-white transition-colors hover:bg-[#000000] active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#111111]"
+                class="inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-[#1a1411] bg-[#1a1411] px-6 py-2.5 text-[11px] font-bold uppercase tracking-[0.1em] text-[#faf6f1] transition-colors hover:bg-[#2d221c] active:scale-[0.99]"
               >
-                <span>Lihat Halaman Lainnya</span>
-                <Icon name="lucide:chevron-down" class="h-4 w-4" aria-hidden="true" />
+                <span>Tampilkan Produk Lainnya</span>
+                <Icon name="lucide:chevron-down" class="h-4 w-4 text-[#e2b98f]" aria-hidden="true" />
               </button>
             </div>
           )}
         </>
       ) : (
-        <div class="border-fade-y py-10 text-center">
-          <h2 class="text-lg font-semibold text-[#111111]">Belum ada halaman</h2>
-          <p class="mt-2 text-sm leading-6 text-[#555555]">
-            Halaman penawaran akan muncul di sini setelah diterbitkan.
+        <div class="rounded-xl border border-[#dfd3c3] bg-white py-10 text-center">
+          <h2 class="text-lg font-semibold text-[#1a1411]">Belum ada halaman</h2>
+          <p class="mt-2 text-sm leading-6 text-[#574c43]">
+            Halaman produk akan muncul di sini setelah diterbitkan.
           </p>
         </div>
       )}
@@ -112,23 +150,46 @@ const INITIAL_COUNT = 10;
   </main>
 
   <script>
-    const INITIAL_COUNT = 10;
-    const STEP = 10;
-    let visibleCount = INITIAL_COUNT;
+    const INITIAL_COUNT = 12;
+    const STEP = 12;
+    let currentLimit = INITIAL_COUNT;
+    let query = '';
 
-    const items = document.querySelectorAll<HTMLElement>('.landing-list-item');
+    const items = Array.from(document.querySelectorAll<HTMLElement>('.landing-list-item'));
     const loadMoreBtn = document.getElementById('load-more-btn');
+    const loadMoreContainer = document.getElementById('load-more-container');
     const visibleCountEl = document.getElementById('visible-count');
+    const totalCountEl = document.getElementById('total-count');
+    const searchInput = document.getElementById('lp-search-input') as HTMLInputElement | null;
 
-    if (loadMoreBtn && items.length > 0) {
+    function renderList() {
+      const matched = items.filter((item) => {
+        const title = item.dataset.title || '';
+        return !query || title.includes(query);
+      });
+      items.forEach((item) => item.classList.add('hidden'));
+      const shown = matched.slice(0, currentLimit);
+      shown.forEach((item) => item.classList.remove('hidden'));
+
+      if (visibleCountEl) visibleCountEl.textContent = String(shown.length);
+      if (totalCountEl) totalCountEl.textContent = String(matched.length);
+      if (loadMoreContainer) {
+        loadMoreContainer.classList.toggle('hidden', matched.length <= currentLimit);
+      }
+    }
+
+    if (searchInput) {
+      searchInput.addEventListener('input', () => {
+        query = searchInput.value.trim().toLowerCase();
+        currentLimit = INITIAL_COUNT;
+        renderList();
+      });
+    }
+
+    if (loadMoreBtn) {
       loadMoreBtn.addEventListener('click', () => {
-        const nextCount = Math.min(visibleCount + STEP, items.length);
-        for (let i = visibleCount; i < nextCount; i++) {
-          items[i]?.classList.remove('hidden');
-        }
-        visibleCount = nextCount;
-        if (visibleCountEl) visibleCountEl.textContent = String(visibleCount);
-        if (visibleCount >= items.length) loadMoreBtn.classList.add('hidden');
+        currentLimit += STEP;
+        renderList();
       });
     }
   </script>

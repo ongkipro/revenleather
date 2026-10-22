@@ -1,10 +1,7 @@
 ---
-// One card for the whole storefront. The home grid grew its own with a
-// rating, a sold count and a CTA while /produk had a cleaner one; two cards
-// meant two answers to the same question. The wrapper below keeps the search
-// hooks the filter script reads - the card has no business knowing them.
 import ProductListItem from '../shared/ProductListItem.astro';
 import Icon from '../shared/Icon.astro';
+import { isApprovedGrafirSlug } from '../../../lib/approved-grafir';
 
 interface Product {
   slug: string;
@@ -32,46 +29,157 @@ interface Props {
   heading: Heading;
 }
 
-const { products, heading } = Astro.props;
-
-
-
+const { products } = Astro.props;
 const formatPrice = (val: number) => `Rp${val.toLocaleString('id-ID')}`;
+
+const grafirCount = products.filter((p) => isApprovedGrafirSlug(p.slug)).length;
+
+const categoryMap = new Map<string, number>();
+for (const p of products) {
+  const cat = (p.category || 'Koleksi Lainnya').trim();
+  categoryMap.set(cat, (categoryMap.get(cat) || 0) + 1);
+}
+const categories = [...categoryMap.entries()].sort((a, b) => b[1] - a[1]);
 ---
 
-<section id="produk" class="bg-white px-4 py-10">
-  <div class="mb-7 border-l-2 border-[#111111] pl-4">
-    <span class="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#767676]">
-      {heading.eyebrow}
+<section id="produk" class="bg-[#faf6f1] px-4 py-7">
+  <!-- Gratis Grafir Banner -->
+  {
+    grafirCount > 0 && (
+      <div
+        id="grafir-spotlight"
+        class="mb-6 overflow-hidden rounded-xl border border-[#c89b72]/35 bg-[#1a1411] text-[#f4eee6]"
+      >
+        <div class="grid grid-cols-[108px_1fr] items-stretch sm:grid-cols-[128px_1fr]">
+          <div class="relative min-h-[124px] overflow-hidden bg-[#231b16]">
+            <img
+              src="/images/reven-grafir-sample.webp"
+              alt="Sampel Gratis Grafir Laser Reven Leather"
+              width="240"
+              height="240"
+              loading="lazy"
+              decoding="async"
+              class="h-full w-full object-cover"
+            />
+          </div>
+          <div class="flex flex-col justify-between p-3.5">
+            <div>
+              <div class="flex flex-wrap items-center justify-between gap-1">
+                <span class="text-[9.5px] font-bold uppercase tracking-[0.14em] text-[#e5a970]">
+                  Layanan Gratis Grafir
+                </span>
+                <span class="rounded bg-[#c89b72]/20 px-1.5 py-0.5 text-[9px] font-bold text-[#e5a970]">
+                  <s class="mr-1 font-normal text-[#bfb2a3]">Rp37.000</s>GRATIS
+                </span>
+              </div>
+              <h2
+                class="mt-1 text-[17px] font-semibold leading-tight text-[#f4eee6]"
+                style="font-family: 'Cormorant Garamond', Georgia, serif;"
+              >
+                Gratis Ukir Nama / Inisial di {grafirCount} Produk Pilihan
+              </h2>
+              <p class="mt-1 text-[11px] leading-relaxed text-[#bfb2a3]">
+                Berlaku untuk produk bertanda Gratis Grafir dengan metode pembayaran non-COD (Transfer Bank).
+              </p>
+            </div>
+            <div class="mt-2.5">
+              <button
+                type="button"
+                id="filter-grafir-cta"
+                class="inline-flex min-h-8 cursor-pointer items-center gap-1.5 rounded-lg border border-[#c89b72]/45 bg-[#c89b72] px-3 py-1 text-[10.5px] font-bold uppercase tracking-[0.06em] text-[#1a1411] transition-colors hover:bg-[#e5a970]"
+              >
+                <span>Tampilkan {grafirCount} Produk Grafir</span>
+                <span aria-hidden="true">→</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  <!-- Catalog Heading -->
+  <div class="mb-4">
+    <span class="text-[10px] font-bold uppercase tracking-[0.16em] text-[#8a5a3b]">
+      Katalog Produk
     </span>
-    <h2 class="mt-2 text-[26px] font-semibold leading-tight tracking-[-0.035em] text-[#111111]">{heading.title}</h2>
-    <p class="mt-2 max-w-[38rem] text-[13px] leading-6 text-[#555555]">{heading.description}</p>
+    <h2
+      class="mt-0.5 text-[24px] font-semibold leading-tight text-[#1a1411]"
+      style="font-family: 'Cormorant Garamond', Georgia, serif;"
+    >
+      Semua Koleksi ({products.length})
+    </h2>
   </div>
 
-  <div class="mb-7 flex flex-col gap-3" hidden={products.length === 0}>
+  <!-- Search + Category Filter Pills -->
+  <div class="mb-5 flex flex-col gap-2.5" hidden={products.length === 0}>
     <div class="relative w-full">
       <input
         type="text"
         id="catalog-search"
-        placeholder="Cari produk pilihan Anda..."
+        placeholder="Cari tas, handbag, clutch, dompet, atau sabuk..."
         aria-label="Cari produk"
-        class="min-h-12 w-full rounded-none border border-[#E5E5E5] bg-white py-3 pl-11 pr-4 text-base text-[#111111] transition-colors placeholder:text-[#767676] focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111]"
+        class="min-h-10 w-full rounded-xl border border-[#d9cdbf] bg-white py-2 pl-9 pr-4 text-[13px] text-[#1a1411] transition-colors placeholder:text-[#8a7e72] focus:border-[#8a5a3b] focus:outline-none"
       />
       <Icon
         name="lucide:search"
-        class="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#555555]"
+        class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8a5a3b]"
         aria-hidden="true"
       />
+    </div>
+
+    <div
+      id="catalog-filter-pills"
+      role="tablist"
+      aria-label="Filter kategori produk"
+      class="flex items-center gap-1.5 overflow-x-auto pb-1 pt-0.5"
+    >
+      <button
+        type="button"
+        data-filter-pill="all"
+        aria-selected="true"
+        class="catalog-pill is-active inline-flex min-h-8 shrink-0 cursor-pointer items-center gap-1 rounded-full border border-[#1a1411] bg-[#1a1411] px-3 py-1 text-[11px] font-semibold text-[#f4eee6] transition-colors"
+      >
+        <span>Semua</span>
+        <span class="text-[10px] opacity-75">({products.length})</span>
+      </button>
+
+      {
+        grafirCount > 0 && (
+          <button
+            type="button"
+            data-filter-pill="__grafir__"
+            aria-selected="false"
+            class="catalog-pill inline-flex min-h-8 shrink-0 cursor-pointer items-center gap-1 rounded-full border border-[#c89b72] bg-[#f4eee6] px-3 py-1 text-[11px] font-semibold text-[#633d24] transition-colors hover:border-[#8a5a3b]"
+          >
+            <span>Gratis Grafir</span>
+            <span class="text-[10px] opacity-75">({grafirCount})</span>
+          </button>
+        )
+      }
+
+      {
+        categories.map(([cat, count]) => (
+          <button
+            type="button"
+            data-filter-pill={cat}
+            aria-selected="false"
+            class="catalog-pill inline-flex min-h-8 shrink-0 cursor-pointer items-center gap-1 rounded-full border border-[#d9cdbf] bg-white px-3 py-1 text-[11px] font-medium text-[#5a4a3f] transition-colors hover:border-[#8a5a3b] hover:text-[#1a1411]"
+          >
+            <span>{cat}</span>
+            <span class="text-[10px] opacity-70">({count})</span>
+          </button>
+        ))
+      }
     </div>
   </div>
 
   {
     products.length === 0 && (
-      <div class="border border-[#E5E5E5] bg-white px-5 py-10 text-center">
-        <p class="text-[13px] font-semibold text-[#111111]">Katalog sedang disiapkan</p>
-        <p class="mx-auto mt-2 max-w-[26rem] text-[12px] leading-6 text-[#555555]">
-          Belum ada produk yang diterbitkan. Produk akan muncul di sini setelah
-          ditambahkan dan varian harganya diisi dari dashboard.
+      <div class="rounded-xl border border-[#d9cdbf] bg-white px-5 py-10 text-center">
+        <p class="text-[13px] font-semibold text-[#1a1411]">Katalog sedang disiapkan</p>
+        <p class="mx-auto mt-2 max-w-[26rem] text-[12px] leading-6 text-[#5a4a3f]">
+          Belum ada produk yang diterbitkan.
         </p>
       </div>
     )
@@ -79,46 +187,50 @@ const formatPrice = (val: number) => `Rp${val.toLocaleString('id-ID')}`;
 
   <div id="product-grid" class="grid grid-cols-2 gap-3" hidden={products.length === 0}>
     {
-      products.map((product, idx) => (
-        <div
-          class:list={['product-card', idx >= 10 && 'hidden']}
-          data-category={product.category}
-          data-search={`${product.name} ${product.category} ${product.description}`.toLowerCase()}
-          data-index={idx}
-        >
-          <ProductListItem
-            product={{
-              slug: product.slug,
-              productName: product.name,
-              heroImage: product.image,
-              category: product.category,
-              price: product.price,
-              comparePrice: product.comparePrice,
-              variants: product.variants ?? [],
-            }}
-            formatPrice={formatPrice}
-          />
-        </div>
-      ))
+      products.map((product, idx) => {
+        const hasGrafir = isApprovedGrafirSlug(product.slug);
+        return (
+          <div
+            class:list={['product-card', idx >= 12 && 'hidden']}
+            data-category={product.category}
+            data-grafir={hasGrafir ? 'true' : 'false'}
+            data-search={`${product.name} ${product.category} ${product.description} ${hasGrafir ? 'gratis grafir laser nama' : ''}`.toLowerCase()}
+            data-index={idx}
+          >
+            <ProductListItem
+              product={{
+                slug: product.slug,
+                productName: product.name,
+                heroImage: product.image,
+                category: product.category,
+                price: product.price,
+                comparePrice: product.comparePrice,
+                variants: product.variants ?? [],
+              }}
+              formatPrice={formatPrice}
+            />
+          </div>
+        );
+      })
     }
   </div>
 
   <div
     id="load-more-container"
-    class="mt-8 flex flex-col items-center gap-3"
+    class="mt-7 flex flex-col items-center gap-3"
     hidden={products.length === 0}
   >
-    <p id="catalog-status" class="text-[11px] font-normal text-[#555555]">
-      Menampilkan <span id="product-visible-count">{Math.min(10, products.length)}</span> dari <span id="product-total-count">{products.length}</span> produk
+    <p id="catalog-status" class="text-[11.5px] font-medium text-[#5a4a3f]">
+      Menampilkan <span id="product-visible-count" class="font-bold text-[#1a1411]">{Math.min(12, products.length)}</span> dari <span id="product-total-count" class="font-bold text-[#1a1411]">{products.length}</span> produk
     </p>
     {
-      products.length > 10 && (
+      products.length > 12 && (
         <button
           type="button"
           id="load-more-btn"
-          class="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-none border border-[#111111] bg-[#111111] px-6 py-2.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-white transition-colors hover:bg-[#000000] active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#111111]"
+          class="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-[#1a1411] bg-[#1a1411] px-6 py-2.5 text-[11px] font-bold uppercase tracking-[0.1em] text-[#f4eee6] transition-colors hover:bg-[#2c221d] active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1a1411]"
         >
-          <span>Lihat Produk Lainnya</span>
+          <span>Tampilkan Produk Lainnya</span>
           <Icon name="lucide:chevron-down" class="h-4 w-4" aria-hidden="true" />
         </button>
       )
@@ -130,12 +242,32 @@ const formatPrice = (val: number) => `Rp${val.toLocaleString('id-ID')}`;
   function initProductCatalog() {
     const searchInput = document.getElementById('catalog-search') as HTMLInputElement | null;
     const cards = document.querySelectorAll('.product-card') as NodeListOf<HTMLElement>;
+    const pills = document.querySelectorAll('[data-filter-pill]') as NodeListOf<HTMLButtonElement>;
+    const grafirCta = document.getElementById('filter-grafir-cta');
     const loadMoreBtn = document.getElementById('load-more-btn');
     const visibleCountEl = document.getElementById('product-visible-count');
     const totalCountEl = document.getElementById('product-total-count');
 
     let currentSearch = '';
-    let visibleLimit = 10;
+    let currentFilter = 'all';
+    let visibleLimit = 12;
+
+    function syncPillStyles() {
+      pills.forEach((pill) => {
+        const active = (pill.getAttribute('data-filter-pill') || 'all') === currentFilter;
+        pill.setAttribute('aria-selected', String(active));
+        if (active) {
+          pill.className =
+            'catalog-pill is-active inline-flex min-h-8 shrink-0 cursor-pointer items-center gap-1 rounded-full border border-[#1a1411] bg-[#1a1411] px-3 py-1 text-[11px] font-semibold text-[#f4eee6] transition-colors';
+        } else if (pill.getAttribute('data-filter-pill') === '__grafir__') {
+          pill.className =
+            'catalog-pill inline-flex min-h-8 shrink-0 cursor-pointer items-center gap-1 rounded-full border border-[#c89b72] bg-[#f4eee6] px-3 py-1 text-[11px] font-semibold text-[#633d24] transition-colors hover:border-[#8a5a3b]';
+        } else {
+          pill.className =
+            'catalog-pill inline-flex min-h-8 shrink-0 cursor-pointer items-center gap-1 rounded-full border border-[#d9cdbf] bg-white px-3 py-1 text-[11px] font-medium text-[#5a4a3f] transition-colors hover:border-[#8a5a3b] hover:text-[#1a1411]';
+        }
+      });
+    }
 
     function filterAndRender() {
       let matchedCount = 0;
@@ -143,15 +275,18 @@ const formatPrice = (val: number) => `Rp${val.toLocaleString('id-ID')}`;
 
       cards.forEach((card) => {
         const searchData = card.getAttribute('data-search') || '';
-        const matchesSearch = !currentSearch || searchData.includes(currentSearch);
-        if (matchesSearch) matchedCount++;
+        const category = card.getAttribute('data-category') || '';
+        const isGrafir = card.getAttribute('data-grafir') === 'true';
 
-        // Toggle a class rather than writing `style.display`. Showing a card
-        // with `display: flex` turned the wrapper into a flex container, which
-        // sizes its `<article>` to max-content instead of the grid cell — so a
-        // product with a short title rendered a narrower card, and the square
-        // image box shrank its height to match.
-        const show = matchesSearch && currentlyShown < visibleLimit;
+        const matchesSearch = !currentSearch || searchData.includes(currentSearch);
+        const matchesCategory =
+          currentFilter === 'all' ||
+          (currentFilter === '__grafir__' ? isGrafir : category === currentFilter);
+
+        const matches = matchesSearch && matchesCategory;
+        if (matches) matchedCount++;
+
+        const show = matches && currentlyShown < visibleLimit;
         if (show) currentlyShown++;
         card.classList.toggle('hidden', !show);
       });
@@ -160,22 +295,35 @@ const formatPrice = (val: number) => `Rp${val.toLocaleString('id-ID')}`;
       if (totalCountEl) totalCountEl.textContent = String(matchedCount);
 
       if (loadMoreBtn) {
-        if (currentlyShown >= matchedCount) {
-          loadMoreBtn.style.display = 'none';
-        } else {
-          loadMoreBtn.style.display = 'inline-flex';
-        }
+        loadMoreBtn.style.display = currentlyShown >= matchedCount ? 'none' : 'inline-flex';
       }
     }
 
+    pills.forEach((pill) => {
+      pill.addEventListener('click', () => {
+        currentFilter = pill.getAttribute('data-filter-pill') || 'all';
+        visibleLimit = 12;
+        syncPillStyles();
+        filterAndRender();
+      });
+    });
+
+    grafirCta?.addEventListener('click', () => {
+      currentFilter = '__grafir__';
+      visibleLimit = 12;
+      syncPillStyles();
+      filterAndRender();
+      document.getElementById('catalog-filter-pills')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+
     searchInput?.addEventListener('input', (e) => {
       currentSearch = (e.target as HTMLInputElement).value.trim().toLowerCase();
-      visibleLimit = 10;
+      visibleLimit = 12;
       filterAndRender();
     });
 
     loadMoreBtn?.addEventListener('click', () => {
-      visibleLimit += 10;
+      visibleLimit += 12;
       filterAndRender();
     });
 

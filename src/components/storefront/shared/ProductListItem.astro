@@ -1,8 +1,7 @@
 ---
 import { cardImageSrc } from '../../../lib/image-derivative';
+import { isApprovedGrafirSlug } from '../../../lib/approved-grafir';
 
-/** The card only counts these. Requiring the full variant shape made every
- *  caller carry fields the card never reads. */
 interface ProductVariant {
   id?: string;
   label?: string;
@@ -21,10 +20,6 @@ interface Props {
     variants: ProductVariant[];
   };
   formatPrice: (value: number) => string;
-  /** Above-the-fold cards only. On /produk the first row is the page's LCP
-   *  element, and a lazy LCP image is the one thing lazy-loading must never
-   *  touch — under Slow 4G it spent 726ms of a 919ms LCP merely waiting to
-   *  be requested. The homepage grid sits below the hero and stays lazy. */
   eager?: boolean;
 }
 
@@ -34,14 +29,15 @@ const hasDiscount = comparePrice > product.price;
 const discountPercentage = hasDiscount
   ? Math.round((1 - product.price / comparePrice) * 100)
   : 0;
+const hasGrafir = isApprovedGrafirSlug(product.slug);
 ---
 
-<article class="group h-full bg-white">
+<article class="group h-full overflow-hidden rounded-xl border border-[#dfd3c3] bg-white shadow-[0_2px_10px_rgba(26,20,17,0.04)] transition-all hover:border-[#8a5a3b] hover:shadow-[0_8px_22px_rgba(26,20,17,0.09)]">
   <a
     href={`/produk/${product.slug}`}
-    class="flex h-full flex-col focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#111111]"
+    class="flex h-full flex-col focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1a1411]"
   >
-    <div class="relative aspect-square overflow-hidden border-b border-[#E5E5E5] bg-[#F5F5F5]">
+    <div class="relative aspect-square overflow-hidden border-b border-[#ebe2d6] bg-[#f4eee6]">
       <img
         src={cardImageSrc(product.heroImage)}
         alt={`Foto produk ${product.productName}`}
@@ -53,28 +49,39 @@ const discountPercentage = hasDiscount
         decoding="async"
       />
       {discountPercentage > 0 && (
-        <span class="absolute left-2 top-2 bg-[#111111] px-2 py-1 text-[9px] font-bold uppercase tracking-[0.12em] text-white">
-          -{discountPercentage}%
+        <span class="absolute left-2 top-2 rounded-md bg-[#9e2a2b] px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.08em] text-white shadow-xs">
+          Hemat {discountPercentage}%
+        </span>
+      )}
+      {hasGrafir && (
+        <span class="absolute bottom-2 left-2 inline-flex items-center rounded-md border border-[#c89b72]/45 bg-[#1a1411]/90 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-[#e5a970] backdrop-blur-xs">
+          Gratis Grafir
         </span>
       )}
     </div>
 
     <div class="flex flex-1 flex-col p-3">
-      <div class="flex items-center justify-between gap-2 text-[9px] font-semibold uppercase tracking-[0.15em] text-[#767676]">
+      <div class="flex items-center justify-between gap-1.5 text-[9.5px] font-bold uppercase tracking-[0.12em] text-[#8a5a3b]">
         <span class="min-w-0 truncate">{product.category}</span>
-        <span class="shrink-0">{product.variants.length} varian</span>
+        <span class="shrink-0 font-semibold text-[#76685b]">{product.variants.length} warna</span>
       </div>
-      <h2 class="mt-1.5 line-clamp-2 min-h-10 text-sm font-semibold leading-5 text-[#111111]">
+      <h2 class="mt-1.5 line-clamp-2 min-h-10 text-[13.5px] font-semibold leading-5 text-[#1a1411] group-hover:text-[#8a5a3b]">
         {product.productName}
       </h2>
 
-      <div class="mt-auto flex items-baseline gap-2 pt-3">
-        <p class="text-sm font-bold leading-5 text-[#111111]">{formatPrice(product.price)}</p>
-        {hasDiscount && (
-          <p class="text-[10px] leading-4 text-[#767676] line-through">
-            {formatPrice(comparePrice)}
-          </p>
-        )}
+      <div class="mt-auto pt-2.5">
+        <div class="flex flex-wrap items-baseline gap-1.5">
+          <p class="text-[14.5px] font-extrabold leading-5 text-[#1a1411]">{formatPrice(product.price)}</p>
+          {hasDiscount && (
+            <p class="text-[10.5px] leading-4 text-[#8a7e72] line-through">
+              {formatPrice(comparePrice)}
+            </p>
+          )}
+        </div>
+        <div class="mt-2 flex items-center justify-between border-t border-[#f0e8de] pt-2 text-[10.5px] font-semibold text-[#8a5a3b]">
+          <span>Lihat Produk</span>
+          <span aria-hidden="true" class="transition-transform group-hover:translate-x-0.5">→</span>
+        </div>
       </div>
     </div>
   </a>

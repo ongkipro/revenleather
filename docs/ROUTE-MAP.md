@@ -23,7 +23,7 @@ The [Modules](#modules) section is the same book read from the other side.
 | `/` | GET | public | — | `src/pages/index.astro` | `catalog` `daily-rotation` `env` `storefront-template` `tenant-content` | `product_variants` `products` `storefront_templates` `stores` | `catalog.test.ts` `daily-rotation.test.ts` `env.test.ts` `storefront-template.test.ts` `tenant-content.test.ts` |
 | `/404` | GET | public | — | `src/pages/404.astro` | `catalog` `image-derivative` | `product_variants` `products` | `catalog.test.ts` `image-derivative.test.ts` |
 | `/payment` | GET | public | — | `src/pages/payment.astro` | `format-idr` `payment-brand` | — | `format-idr.test.ts` `payment-brand.test.ts` |
-| `/produk` | GET | public | — | `src/pages/produk/index.astro` | `catalog` `format-idr` | `product_variants` `products` | `catalog.test.ts` `format-idr.test.ts` |
+| `/produk` | GET | public | — | `src/pages/produk/index.astro` | `approved-grafir` `catalog` `format-idr` | `product_variants` `products` | `catalog.test.ts` `format-idr.test.ts` |
 | `/produk/[slug]` | GET | public | — | `src/pages/produk/[slug].astro` | `catalog` `catalog-feed` `env` `form-mode` `geo` `landing-pages` `social-proof` | `landing_pages` `landing_sections` `orders` `product_variants` `products` `stores` | `catalog.test.ts` `catalog-feed.test.ts` `env.test.ts` `form-mode.test.ts` `geo.test.ts` `landing-pages.test.ts` |
 | `/thanks` | GET | public | — | `src/pages/thanks.astro` | `catalog` `cn` `public-store` `thanks-whatsapp` `ui-variants` | `product_variants` `products` `stores` | `catalog.test.ts` `cn.test.ts` `public-store.test.ts` `thanks-whatsapp.test.ts` `ui-variants.test.ts` |
 
@@ -39,7 +39,7 @@ The [Modules](#modules) section is the same book read from the other side.
 | `/sitemap` | GET | public | — | `src/pages/sitemap.astro` | `catalog` `landing-pages` | `landing_pages` `landing_sections` `product_variants` `products` | `catalog.test.ts` `landing-pages.test.ts` |
 | `/syarat-ketentuan` | GET | public | — | `src/pages/syarat-ketentuan.astro` | — | — | — |
 | `/tentang` | GET | public | — | `src/pages/tentang.astro` | — | — | — |
-| `/testimoni` | GET | public | — | `src/pages/testimoni.astro` | — | — | — |
+| `/testimoni` | GET | public | — | `src/pages/testimoni.astro` | `catalog` `image-derivative` | `product_variants` `products` | `catalog.test.ts` `image-derivative.test.ts` |
 
 ## Landing page (4)
 
@@ -47,7 +47,7 @@ The [Modules](#modules) section is the same book read from the other side.
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `/[slug]` | GET | public | — | `src/pages/[slug].astro` | `admin-session` `auth-secret` `catalog` `catalog-feed` `env` `landing-pages` `native-landing-pages` `public-store` `social-proof` | `admin_credentials` `admin_sessions` `install_secrets` `landing_pages` `landing_sections` `orders` `product_variants` `products` `stores` | `admin-session.test.ts` `auth-secret.test.ts` `catalog.test.ts` `catalog-feed.test.ts` `env.test.ts` `landing-pages.test.ts` `native-landing-pages.test.ts` `public-store.test.ts` |
 | `/contoh-landing` | GET | public | — | `src/pages/contoh-landing.astro` | `catalog` `catalog-feed` `landing-pages` | `landing_pages` `landing_sections` `product_variants` `products` | `catalog.test.ts` `catalog-feed.test.ts` `landing-pages.test.ts` |
-| `/landing-page` | GET | public | — | `src/pages/landing-page/index.astro` | `image-derivative` `landing-pages` | `landing_pages` `landing_sections` `products` | `image-derivative.test.ts` `landing-pages.test.ts` |
+| `/landing-page` | GET | public | — | `src/pages/landing-page/index.astro` | `approved-grafir` `image-derivative` `landing-pages` | `landing_pages` `landing_sections` `products` | `image-derivative.test.ts` `landing-pages.test.ts` |
 | `/solusi-terbaru` | GET | public | — | `src/pages/solusi-terbaru.astro` | — | — | — |
 
 ## Checkout form (8)
@@ -193,7 +193,7 @@ The [Modules](#modules) section is the same book read from the other side.
 
 ## Modules
 
-107 modules under `src/lib`; 7 without a sibling test.
+108 modules under `src/lib`; 8 without a sibling test.
 `used by` lists routes importing the module directly — a module used by nothing
 is either transitive (imported by another lib) or dead, and only reading tells which.
 
@@ -207,6 +207,7 @@ is either transitive (imported by another lib) or dead, and only reading tells w
 | `admin-session` | 6 | `admin_credentials` `admin_sessions` | ✓ | `/[slug]` `/hello` `/api/admin/access` `/api/admin/logout` `/api/admin/profile` |
 | `ai-content-instructions` | 2 | — | ✓ | `/api/admin/content` |
 | `api` | 3 | — | ✓ | `/api/form-config` `/api/record-abandoned-order` `/api/webhooks/autolaris` `/api/admin/abandoned-orders` `/api/admin/access` `/api/admin/analytics` `/api/admin/check` `/api/admin/expeditions` `/api/admin/health` `/api/admin/landing-pages` `/api/admin/landing-pages/[id]` `/api/admin/media` `/api/admin/notifications` `/api/admin/ongkir` `/api/admin/orders` `/api/admin/orders/[id]` `/api/admin/orders/retention` `/api/admin/payment-reconciliation` `/api/admin/plugins` `/api/admin/plugins/kelola` `/api/admin/products` `/api/admin/profile` `/api/admin/rules` `/api/admin/seller-bank-accounts` `/api/admin/settings` `/api/admin/settings/developer` `/api/admin/shipping` `/api/admin/upload-r2` |
+| `approved-grafir` | 2 | — | **none** | `/produk` `/landing-page` |
 | `auth-secret` | 1 | `install_secrets` | ✓ | `/[slug]` `/hello` `/api/install` `/api/admin/logout` |
 | `auth` | 13 | — | ✓ | `/hello` `/api/install` `/admin/dashboard` `/api/admin/access` `/api/admin/logout` `/api/admin/profile` |
 | `autolaris-client` | 20 | — | ✓ | `/api/order-status` `/api/payment-methods` `/admin/payments` `/api/admin/settings` |
@@ -215,7 +216,7 @@ is either transitive (imported by another lib) or dead, and only reading tells w
 | `capi-outbox` | 18 | `capi_event_outbox` | ✓ | `/api/meta-event` `/api/v1/tracking/events` `/api/admin/ads` |
 | `catalog-data` | 4 | — | ✓ | `/api/admin/products` |
 | `catalog-feed` | 10 | — | ✓ | `/produk/[slug]` `/[slug]` `/contoh-landing` `/full-form` `/geoipform` `/hybrid-form` `/middle-form` `/feed/google-catalog.xml` `/feed/meta-catalog.xml` `/api/form-config` `/api/v1/products` `/api/v1/products/[slug]` |
-| `catalog` | 2 | `product_variants` `products` | ✓ | `/` `/404` `/produk` `/produk/[slug]` `/thanks` `/sitemap` `/[slug]` `/contoh-landing` `/embed/form` `/full-form` `/geoipform` `/hybrid-form` `/middle-form` `/feed/google-catalog.xml` `/feed/meta-catalog.xml` `/sitemap.xml` `/api/form-config` `/api/v1/products` `/api/v1/products/[slug]` |
+| `catalog` | 2 | `product_variants` `products` | ✓ | `/` `/404` `/produk` `/produk/[slug]` `/thanks` `/sitemap` `/testimoni` `/[slug]` `/contoh-landing` `/embed/form` `/full-form` `/geoipform` `/hybrid-form` `/middle-form` `/feed/google-catalog.xml` `/feed/meta-catalog.xml` `/sitemap.xml` `/api/form-config` `/api/v1/products` `/api/v1/products/[slug]` |
 | `checkout-navigation` | 2 | — | ✓ | — |
 | `click-ids` | 17 | — | ✓ | `/api/meta-event` `/api/submit-middle-order` `/api/submit-order` `/api/v1/checkout` `/api/v1/tracking/events` |
 | `client-image` | 8 | — | ✓ | — |
@@ -244,7 +245,7 @@ is either transitive (imported by another lib) or dead, and only reading tells w
 | `headless-openapi` | 1 | — | ✓ | `/api/v1/openapi.json` |
 | `host-redirect` | 1 | — | ✓ | — |
 | `html-escape` | 1 | — | ✓ | — |
-| `image-derivative` | 1 | — | ✓ | `/404` `/landing-page` |
+| `image-derivative` | 1 | — | ✓ | `/404` `/testimoni` `/landing-page` |
 | `install` | 6 | `admin_credentials` `courier_rules` `stores` | ✓ | `/api/install` |
 | `json-ld` | 14 | — | ✓ | — |
 | `json-script` | 1 | — | ✓ | — |

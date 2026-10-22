@@ -1,7 +1,6 @@
 ---
 import HeroSection from '../home/HeroSection.astro';
 import ProductsSection from '../home/ProductsSection.astro';
-import LandingPagesSection from '../home/LandingPagesSection.astro';
 import type { TenantHomeContent } from '../../../lib/tenant-content';
 
 interface ProductCard {
@@ -22,15 +21,10 @@ interface ProductCard {
 interface Props {
   content: TenantHomeContent;
   products: ProductCard[];
-  /** Resolved by the page, not here: index.astro preloads the first slide's
-   *  image as the LCP element, so the page and the hero must read the same
-   *  list. The daily-rotation fallback lives with that preload now. */
-  heroSlides: Array<{ image: string; alt: string; badge: string; text: string }>;
+  heroSlides: Array<{ image: string; alt: string; badge: string; text: string; href?: string }>;
   sections: {
     hero: boolean;
     catalog: true;
-    // `proofs` is still accepted so a template saved before this change keeps
-    // parsing; the third slot lists landing pages now.
     proofs?: boolean;
     landingPages?: boolean;
   };
@@ -41,15 +35,52 @@ const { content, products, heroSlides, sections } = Astro.props;
 
 <main
   id="konten-utama"
-  class="relative min-h-screen overflow-x-hidden bg-white font-sans text-[#111111] antialiased"
+  class="relative min-h-screen overflow-x-hidden bg-[#faf6f1] font-sans text-[#1a1411] antialiased"
 >
   <div
     id="home"
-    class="mx-auto flex min-h-screen w-full max-w-[480px] flex-col bg-white"
+    class="mx-auto flex min-h-screen w-full max-w-[480px] flex-col bg-[#faf6f1]"
   >
     {sections.hero && <HeroSection slides={heroSlides} highlights={content.heroHighlights} content={content.hero} />}
     {sections.catalog && <ProductsSection products={products} heading={content.catalog} />}
-    {sections.landingPages !== false && <LandingPagesSection pages={content.solutions} heading={content.solutionsHeading} />}
+
+    <!-- Informasi Material, Garansi & Pengiriman -->
+    <section class="border-t border-[#dfd3c3] bg-[#f4eee6] px-4 py-7">
+      <div class="mb-4">
+        <span class="text-[10px] font-bold uppercase tracking-[0.16em] text-[#8a5a3b]">
+          Standar Produk & Layanan
+        </span>
+        <h2
+          class="mt-1 text-[22px] font-semibold leading-tight text-[#1a1411]"
+          style="font-family: 'Cormorant Garamond', Georgia, serif;"
+        >
+          Informasi Pembelian Resmi
+        </h2>
+      </div>
+
+      <div class="grid grid-cols-1 gap-2.5">
+        <div class="rounded-xl border border-[#dfd3c3] bg-white p-4">
+          <h3 class="text-[13.5px] font-bold text-[#1a1411]">100% Kulit Sapi Asli</h3>
+          <p class="mt-1 text-[12px] leading-relaxed text-[#5a4a3f]">
+            Menggunakan bahan kulit sapi asli (Full-Grain, Pull-Up, Crazy Horse, Nappa, dan Mill Leather) yang kuat dan tidak mengelupas seperti bahan sintetis.
+          </p>
+        </div>
+
+        <div class="rounded-xl border border-[#dfd3c3] bg-white p-4">
+          <h3 class="text-[13.5px] font-bold text-[#1a1411]">Garansi Resmi 1 Tahun</h3>
+          <p class="mt-1 text-[12px] leading-relaxed text-[#5a4a3f]">
+            Setiap produk dilengkapi Kartu Garansi 1 Tahun untuk jahitan, resleting, dan aksesoris logam, serta dikemas menggunakan boks Reven Leather.
+          </p>
+        </div>
+
+        <div class="rounded-xl border border-[#dfd3c3] bg-white p-4">
+          <h3 class="text-[13.5px] font-bold text-[#1a1411]">Pengiriman Malang • Transfer Mandiri & COD</h3>
+          <p class="mt-1 text-[12px] leading-relaxed text-[#5a4a3f]">
+            Dikirim dari Gudang Utama Bululawang, Kab. Malang (JNE, J&T, SiCepat, iDexpress, SAP) dengan metode pembayaran Transfer Bank Mandiri a.n. PT East Retail Network atau Bayar di Tempat (COD).
+          </p>
+        </div>
+      </div>
+    </section>
   </div>
 </main>
 
@@ -62,27 +93,11 @@ const { content, products, heroSlides, sections } = Astro.props;
     [...heroDots.children].forEach((dot, itemIndex) => {
       dot.className =
         itemIndex === index
-          ? 'h-11 w-7 border-b-2 border-white bg-transparent transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white'
+          ? 'h-11 w-7 border-b-2 border-[#e5a970] bg-transparent transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white'
           : 'h-11 w-4 border-b border-white/55 bg-transparent transition-colors hover:border-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white';
     });
   };
 
-  // The hero does not advance by itself. It used to, every 4000 ms, and that
-  // was the home page's largest measured cost: each advance paints a new
-  // full-width image, so every one is a fresh LCP candidate. Two Lighthouse
-  // runs of one unchanged build measured LCP 1.8 s and 6.3 s, the slow one
-  // resolving to an off-screen `loading="lazy"` slide.
-  //
-  // Deferring the start to `load` was tried first and did not fix it: LCP
-  // stayed at a 3.2 s median and Speed Index did not move from 6.0 s, because
-  // Speed Index integrates visual completeness over the whole trace and a page
-  // that keeps changing never reaches it. Deferring moves the cost; only
-  // stopping removes it.
-  //
-  // The dots stay, and every slide is still reachable in one tap on a 44px
-  // target. What is gone is the page rearranging itself under a reader who did
-  // not ask it to — which is also the accessible behaviour, and is why
-  // `prefers-reduced-motion` no longer has anything here to suppress.
   [...(heroDots?.children ?? [])].forEach((dot, index) => {
     dot.addEventListener('click', () => setHeroSlide(index));
   });

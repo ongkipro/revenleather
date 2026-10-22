@@ -14,10 +14,10 @@ const { items } = Astro.props;
 const rail = 'max-w-[480px]';
 ---
 
-<nav aria-label="Breadcrumb" class="border-b border-[#E5E5E5] bg-white px-4 py-1">
+<nav aria-label="Breadcrumb" class="border-b border-[#dfd3c3] bg-[#f4eee6] px-4 py-1.5">
   <div
     class={cn(
-      'mx-auto flex min-w-0 items-center gap-1.5 overflow-hidden text-[11px] text-[#555555]',
+      'mx-auto flex min-w-0 items-center gap-1.5 overflow-hidden text-[11px] text-[#574c43]',
       rail,
     )}
   >
@@ -27,14 +27,17 @@ const rail = 'max-w-[480px]';
 
         return (
           <>
-            {index > 0 && <span class="shrink-0 text-[#767676]">/</span>}
-            {item.href ? (
-              <a href={item.href} class="inline-flex min-h-6 shrink-0 items-center transition-colors hover:text-[#111111]">
+            {index > 0 && <span class="shrink-0 text-[#9c8d7e]">/</span>}
+            {item.href && !isLast ? (
+              <a
+                href={item.href}
+                class="inline-flex min-h-6 shrink-0 items-center font-medium text-[#574c43] transition-colors hover:text-[#1a1411]"
+              >
                 {item.label}
               </a>
             ) : (
               <span
-                class="min-w-0 max-w-[58%] truncate font-normal text-[#111111] sm:max-w-[65%]"
+                class="min-w-0 max-w-[65%] truncate font-semibold text-[#8a5a3b]"
                 aria-current={isLast ? 'page' : undefined}
               >
                 {item.label}

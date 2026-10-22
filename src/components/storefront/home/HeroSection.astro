@@ -1,10 +1,10 @@
 ---
-
 interface Slide {
   image: string;
   alt: string;
   badge: string;
   text: string;
+  href?: string;
 }
 
 interface Highlight {
@@ -26,9 +26,25 @@ interface Props {
 const { slides } = Astro.props;
 ---
 
-<section class="bg-white">
+<section class="bg-[#1a1411] text-[#f4eee6]">
   <h1 class="sr-only">{Astro.locals.tenant.defaultTitle}</h1>
-  <div class="relative overflow-hidden bg-white">
+
+  <div class="px-5 pb-4 pt-5">
+    <p class="inline-flex items-center rounded-md border border-[#c89b72]/30 bg-[#c89b72]/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-[#e5a970]">
+      Reven Leather Official
+    </p>
+    <p
+      class="mt-2.5 text-[26px] font-semibold leading-[1.12] tracking-[-0.015em] text-[#f4eee6]"
+      style="font-family: 'Cormorant Garamond', Georgia, serif;"
+    >
+      Koleksi Tas, Dompet & Sabuk Kulit Sapi Asli
+    </p>
+    <p class="mt-2 text-[12.5px] leading-relaxed text-[#bfb2a3]">
+      Produk 100% kulit sapi asli bergaransi resmi 1 tahun. Pengiriman langsung dari Gudang Utama Malang.
+    </p>
+  </div>
+
+  <div class="relative overflow-hidden border-y border-[#c89b72]/20 bg-[#140f0d]">
     <div id="hero-track" class="flex transition-transform duration-700 ease-out will-change-transform">
       {
         slides.map((slide, index) => (
@@ -44,14 +60,41 @@ const { slides } = Astro.props;
               decoding={index === 0 ? 'sync' : 'async'}
               fetchpriority={index === 0 ? 'high' : undefined}
             />
-            <div class="absolute inset-0 bg-gradient-to-t from-[#111111]/85 via-[#111111]/10 to-transparent" />
+            <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#1a1411] via-[#1a1411]/25 to-transparent" />
             <div class="absolute inset-x-0 bottom-0 p-5 pb-14 text-white">
-              <span class="inline-flex rounded-sm bg-[#111111] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.15em] text-white">
-                {slide.badge}
-              </span>
-              <p class="mt-3 max-w-[24rem] text-[13px] font-normal leading-5 text-white">
-                {slide.text}
-              </p>
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="inline-flex rounded-sm border border-[#c89b72]/45 bg-[#1a1411]/90 px-2.5 py-1 text-[9.5px] font-bold uppercase tracking-[0.14em] text-[#e5a970]">
+                  {slide.badge}
+                </span>
+                <span class="inline-flex rounded-sm bg-[#9e2a2b] px-2 py-1 text-[9.5px] font-bold uppercase tracking-[0.1em] text-white">
+                  Hemat s/d 55%
+                </span>
+              </div>
+              <div class="mt-2.5 flex items-end justify-between gap-3">
+                <p
+                  class="max-w-[18rem] text-[20px] font-semibold leading-tight text-[#f4eee6]"
+                  style="font-family: 'Cormorant Garamond', Georgia, serif;"
+                >
+                  {slide.text}
+                </p>
+                {slide.href ? (
+                  <a
+                    href={slide.href}
+                    class="inline-flex shrink-0 items-center gap-1 rounded-lg border border-[#c89b72]/50 bg-[#c89b72] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-[#1a1411] transition-colors hover:bg-[#e5a970]"
+                  >
+                    <span>Detail Produk</span>
+                    <span aria-hidden="true">→</span>
+                  </a>
+                ) : (
+                  <a
+                    href="#produk"
+                    class="inline-flex shrink-0 items-center gap-1 rounded-lg border border-[#c89b72]/50 bg-[#c89b72] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-[#1a1411] transition-colors hover:bg-[#e5a970]"
+                  >
+                    <span>Katalog</span>
+                    <span aria-hidden="true">↓</span>
+                  </a>
+                )}
+              </div>
             </div>
           </article>
         ))
@@ -64,11 +107,27 @@ const { slides } = Astro.props;
             type="button"
             aria-label={`Tampilkan slide ${index + 1}`}
             class={index === 0
-              ? 'h-11 w-7 border-b-2 border-white bg-transparent transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white'
+              ? 'h-11 w-7 border-b-2 border-[#e5a970] bg-transparent transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white'
               : 'h-11 w-4 border-b border-white/55 bg-transparent transition-colors hover:border-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white'}
           />
         ))
       }
+    </div>
+  </div>
+
+  <!-- 3-Column Store Highlights -->
+  <div class="grid grid-cols-3 divide-x divide-[#c89b72]/15 border-b border-[#c89b72]/25 bg-[#211915] px-2 py-3 text-center">
+    <div class="px-1.5">
+      <p class="text-[11px] font-bold text-[#e5a970]">100% Kulit Sapi</p>
+      <p class="mt-0.5 text-[10px] text-[#bfb2a3]">Full-Grain & Pull-Up</p>
+    </div>
+    <div class="px-1.5">
+      <p class="text-[11px] font-bold text-[#e5a970]">Garansi 1 Tahun</p>
+      <p class="mt-0.5 text-[10px] text-[#bfb2a3]">Jahitan & Resleting</p>
+    </div>
+    <div class="px-1.5">
+      <p class="text-[11px] font-bold text-[#e5a970]">Bisa COD</p>
+      <p class="mt-0.5 text-[10px] text-[#bfb2a3]">& Transfer Mandiri</p>
     </div>
   </div>
 </section>

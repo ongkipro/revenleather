@@ -84,6 +84,22 @@ Author & Curator: **[ongki.pro](https://ongki.pro)**
        sections, replaced it with validated inclusions, and cropped
        `/images/reven-grafir-sample.webp` (`86f3a07`) edge-to-edge on the leather
        surface so it never reads as a separate hang tag.
+- **Homepage, Header, Footer & Inner Pages Heritage Atelier Upgrade.**
+  - Upgraded `SiteHeader.astro` and `SiteBrand.astro` (removed the broken `invert`
+    filter on `/images/reven-mark.svg`, added the Official Store + Verified SVG
+    top strip and quick navigation bar: `Beranda`, `Katalog`, `✦ Gratis Grafir`,
+    `Tentang`, `Kontak`), `HeroSection.astro` (4-image leather collage, 4-metric
+    trust strip, dual CTA), `ProductListItem.astro` (dynamic `Hemat X%` crimson
+    badge, `✦ Gratis Grafir` badge on the 33 approved slugs via
+    `src/lib/approved-grafir.ts`, strikethrough `comparePrice`, and `Bisa COD`),
+    `ProductsSection.astro` (interactive category filter pills + `✦ Gratis Grafir (33)`
+    pill + search input), `CompactMarketHome.astro` (Gratis Grafir Laser
+    Spotlight, 4-card Craftsmanship Bento, 3 verified customer reviews, and 4
+    accordion FAQs), `LandingPagesSection.astro` (compact 6-item horizontal
+    cards), `SiteFooter.astro` (Espresso `#1a1411` Atelier footer with Malang
+    warehouse & Bank Mandiri `1330035981794` / COD info cards + 2-column menu),
+    and all inner pages (`/produk`, `/landing-page`, `/tentang`, `/testimoni`,
+    `/kontak`, `/pengiriman`).
 
 ---
 

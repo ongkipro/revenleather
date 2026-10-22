@@ -58,7 +58,22 @@
     (matching Meta Pixel `1568437321304661` and CAPI `content_ids` 1:1),
     `<g:price>` (`compare_price IDR`), `<g:sale_price>` (`price IDR`), and
     `.jpg` image links for Meta Commerce compatibility.
-  - Deployed to Cloudflare Worker `revenleather` (`Version ID: 39ed9fb0-1e19-4911-bfb0-47300d272cba`).
+- **Homepage, Header, Footer & Inner Pages Heritage Atelier Upgrade (`page.revenleather.com`).**
+  - Unified the storefront homepage (`/`), header (`SiteHeader.astro`, `SiteBrand.astro`),
+    footer (`SiteFooter.astro`), shared inner-page primitives (`Breadcrumb.astro`,
+    `PageIntro.astro`, `LegalPage.astro`), and all public inner pages (`/produk`,
+    `/landing-page`, `/tentang`, `/testimoni`, `/kontak`, `/pengiriman`) onto the
+    **Reven Leather Heritage Atelier** aesthetic (`#1a1411` Espresso, `#faf6f1`
+    Paper, `#f4eee6` Cream, `#c89b72` Caramel Gold, `#8a5a3b` Walnut, `#9e2a2b`
+    Crimson, `Cormorant Garamond` serif + `Inter` sans).
+  - Added interactive category & `✦ Gratis Grafir (33)` filter pills + instant
+    search on both the homepage (`ProductsSection.astro`) and `/produk`, a
+    dedicated Gratis Grafir Laser Spotlight section (`CompactMarketHome.astro`)
+    using `/images/reven-grafir-sample.webp`, verified customer review showcase
+    with `#1d9bf0` Verified SVG badges on `/` and `/testimoni`, and complete
+    Malang warehouse (`Bululawang, Kab. Malang 65171`) & official payment info
+    (`Bank Mandiri 1330035981794 a.n. PT East Retail Network` + `COD`) across
+    `SiteFooter.astro`, `/tentang`, `/kontak`, and `/pengiriman`.
 
 ## 2026-10-21 — 1.7.3–1.7.4: uploads and province-scoped product pages cached at the edge; zvarashop back on the product line
 

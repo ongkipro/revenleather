@@ -6,35 +6,120 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 <BaseLayout
   shell="storefront"
   title={`Tentang ${Astro.locals.tenant.name}`}
-  description={`Profil dan informasi tentang ${Astro.locals.tenant.name}.`}
+  description={`Profil resmi ${Astro.locals.tenant.name} (PT East Retail Network). Produsen dompet, tas, dan ikat pinggang kulit sapi asli di Kabupaten Malang, Jawa Timur.`}
   breadcrumbs={[
     { name: 'Beranda', url: '/' },
     { name: 'Tentang Kami', url: '/tentang' },
   ]}
 >
-  <main id="konten-utama" class="min-h-screen bg-[#FAFAFA] text-[#16191F]">
+  <main id="konten-utama" class="min-h-screen bg-[#faf6f1] text-[#1a1411]">
     <PageIntro
-      badge="Tentang Kami"
+      badge="Profil Resmi"
       title={`Tentang ${Astro.locals.tenant.name}`}
-      description={Astro.locals.tenant.description}
+      description="Informasi produk, standar material kulit sapi asli, layanan grafir nama, dan operasional pengiriman Reven Leather."
       breadcrumbs={[{ label: 'Beranda', href: '/' }, { label: 'Tentang Kami' }]}
     />
 
-    <section class="mx-auto max-w-[480px] px-5 py-8">
-      <div class="border-b border-[#EAEDED] pb-6">
-        <p class="text-[11px] font-normal uppercase tracking-[0.12em] text-[#232F3E]">Profil Toko</p>
-        <h2 class="mt-2 text-[22px] font-semibold tracking-[-0.02em] text-[#16191F]">
-          Selamat datang di {Astro.locals.tenant.name}
+    <section class="mx-auto max-w-[480px] space-y-5 px-4 py-7">
+      <!-- Brand Profile -->
+      <article class="rounded-xl border border-[#dfd3c3] bg-white p-5 shadow-[0_2px_10px_rgba(26,20,17,0.03)]">
+        <span class="text-[10px] font-bold uppercase tracking-[0.14em] text-[#8a5a3b]">
+          Material & Produksi
+        </span>
+        <h2 class="mt-1.5 font-serif text-[20px] font-bold leading-[1.2] text-[#1a1411]">
+          100% Kulit Sapi Asli dari Kabupaten Malang, Jawa Timur
         </h2>
-        <div class="mt-4 space-y-4 text-[14px] leading-7 text-[#545B64]">
+        <div class="mt-3 space-y-3 text-[13px] leading-[1.7] text-[#574c43]">
           <p>
-            {Astro.locals.tenant.description}
+            <strong>{Astro.locals.tenant.name}</strong> memproduksi tas selempang, handbag, clutch, dompet, dan ikat pinggang berbahan 100% kulit sapi asli yang berbasis di Kabupaten Malang, Jawa Timur.
           </p>
           <p>
-            Jelajahi katalog kami untuk menemukan produk yang Anda butuhkan.
+            Bahan yang digunakan meliputi kulit sapi jenis <em>Full-Grain</em>, <em>Pull-Up</em>, <em>Crazy Horse</em>, <em>Nappa</em>, dan <em>Mill Leather</em> yang memiliki ketahanan tinggi dan tidak mudah mengelupas seperti bahan sintetis (PU).
+          </p>
+        </div>
+      </article>
+
+      <!-- 4 Fact Cards -->
+      <div class="grid grid-cols-2 gap-2.5">
+        <div class="rounded-xl border border-[#dfd3c3] bg-white p-4">
+          <p class="font-serif text-[17px] font-bold text-[#8a5a3b]">100% Kulit Sapi</p>
+          <p class="mt-1 text-[12px] font-bold text-[#1a1411]">Material Asli</p>
+          <p class="mt-1 text-[11px] leading-[1.55] text-[#574c43]">
+            Menggunakan lembaran kulit sapi asli dengan aksesoris resleting dan kancing logam.
+          </p>
+        </div>
+        <div class="rounded-xl border border-[#dfd3c3] bg-white p-4">
+          <p class="font-serif text-[17px] font-bold text-[#8a5a3b]">33 Produk</p>
+          <p class="mt-1 text-[12px] font-bold text-[#1a1411]">Gratis Grafir Nama</p>
+          <p class="mt-1 text-[11px] leading-[1.55] text-[#574c43]">
+            Layanan ukir laser nama atau inisial gratis pada 33 produk bertanda Gratis Grafir.
+          </p>
+        </div>
+        <div class="rounded-xl border border-[#dfd3c3] bg-white p-4">
+          <p class="font-serif text-[17px] font-bold text-[#8a5a3b]">1 Tahun</p>
+          <p class="mt-1 text-[12px] font-bold text-[#1a1411]">Garansi Resmi</p>
+          <p class="mt-1 text-[11px] leading-[1.55] text-[#574c43]">
+            Garansi 1 tahun mencakup keaslian bahan kulit, jahitan, dan fungsi resleting.
+          </p>
+        </div>
+        <div class="rounded-xl border border-[#dfd3c3] bg-white p-4">
+          <p class="font-serif text-[17px] font-bold text-[#8a5a3b]">Malang</p>
+          <p class="mt-1 text-[12px] font-bold text-[#1a1411]">Gudang Pengiriman</p>
+          <p class="mt-1 text-[11px] leading-[1.55] text-[#574c43]">
+            Dikirim langsung dari Gudang Utama Bululawang, Kab. Malang ke seluruh Indonesia.
           </p>
         </div>
       </div>
+
+      <!-- Laser Engraving Rules -->
+      <article class="rounded-xl border border-[#3a2d24] bg-[#1a1411] p-5 text-[#faf6f1]">
+        <span class="inline-block rounded bg-[#c89b72]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[#e2b98f]">
+          Ketentuan Layanan Grafir
+        </span>
+        <h2 class="mt-2 font-serif text-[19px] font-bold text-white">
+          Gratis Grafir Laser Nama di 33 Produk Pilihan
+        </h2>
+        <p class="mt-2 text-[12.5px] leading-[1.65] text-[#cfc2b4]">
+          Layanan ukir laser nama atau inisial diberikan tanpa biaya tambahan untuk <strong>33 produk</strong> yang memiliki label <strong>Gratis Grafir</strong>. Pesanan dengan grafir nama diproses menggunakan metode pembayaran <strong>Transfer Bank Mandiri</strong> (non-COD).
+        </p>
+        <div class="mt-4">
+          <a
+            href="/produk?filter=grafir"
+            class="inline-flex min-h-10 items-center justify-center rounded-lg bg-[#c89b72] px-4 py-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#1a1411] transition-colors hover:bg-[#d8ae86]"
+          >
+            Lihat 33 Produk Gratis Grafir
+          </a>
+        </div>
+      </article>
+
+      <!-- Official Company & Warehouse -->
+      <article class="rounded-xl border border-[#dfd3c3] bg-white p-5 shadow-[0_2px_10px_rgba(26,20,17,0.03)]">
+        <h2 class="font-serif text-[18px] font-bold text-[#1a1411]">
+          Identitas Perusahaan & Operasional
+        </h2>
+        <dl class="mt-3 divide-y divide-[#efe7dc] text-[12.5px]">
+          <div class="flex justify-between gap-4 py-2.5">
+            <dt class="text-[#574c43]">Nama Brand</dt>
+            <dd class="text-right font-semibold text-[#1a1411]">Reven Leather Official</dd>
+          </div>
+          <div class="flex justify-between gap-4 py-2.5">
+            <dt class="text-[#574c43]">Badan Usaha</dt>
+            <dd class="text-right font-semibold text-[#1a1411]">PT East Retail Network</dd>
+          </div>
+          <div class="flex justify-between gap-4 py-2.5">
+            <dt class="text-[#574c43]">Gudang Utama</dt>
+            <dd class="text-right font-semibold text-[#1a1411]">Bululawang, Kab. Malang, Jawa Timur 65171</dd>
+          </div>
+          <div class="flex justify-between gap-4 py-2.5">
+            <dt class="text-[#574c43]">Rekening Resmi</dt>
+            <dd class="text-right font-semibold text-[#1a1411]">Mandiri 1330035981794 (PT East Retail Network)</dd>
+          </div>
+          <div class="flex justify-between gap-4 py-2.5">
+            <dt class="text-[#574c43]">Metode Pembayaran</dt>
+            <dd class="text-right font-semibold text-[#1a1411]">Transfer Bank Mandiri & COD (Bayar di Tempat)</dd>
+          </div>
+        </dl>
+      </article>
     </section>
   </main>
 </BaseLayout>
