@@ -86,6 +86,9 @@ const firstFormSectionId = formSections[0]?.id;
 const htmlCarriesH1 = page.sections.some(
   (section) => section.type === 'html' && /<h1[\s>]/i.test(section.content_html ?? ''),
 );
+const htmlCarriesToast = page.sections.some(
+  (section) => section.type === 'html' && /id=["']rv-toast["']/i.test(section.content_html ?? ''),
+);
 const firstHeadlineSectionId = htmlCarriesH1
   ? undefined
   : page.sections.find(
@@ -164,11 +167,13 @@ const productSchemaJson = JSON.stringify(productSchema).replace(/</g, '\\u003c')
       first section: merchants often paste a whole page into one HTML section,
       and treating that as the hero kept the toast hidden everywhere. */}
   <div data-landing-hero aria-hidden="true" class="pointer-events-none absolute inset-x-0 top-0 h-screen"></div>
-  <SocialProofToast
-    orderCount={socialProofOrders}
-    heroSelector="[data-landing-hero]"
-    formSelector="#checkout-form"
-  />
+  {!htmlCarriesToast && (
+    <SocialProofToast
+      orderCount={socialProofOrders}
+      heroSelector="[data-landing-hero]"
+      formSelector="#checkout-form"
+    />
+  )}
 
   {needsHiddenH1 && <h1 class="sr-only">{metaTitle}</h1>}
 
