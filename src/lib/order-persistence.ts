@@ -13,6 +13,7 @@ export type PersistOrderInput = {
   customerName: string;
   customerPhone: string;
   customerEmail?: string;
+  customerNote?: string;
   address: string;
   province: string;
   city: string;
@@ -758,6 +759,19 @@ export async function persistOrder(
         );
       }
       throw new Error("Order gagal disimpan.");
+    }
+    const customerNote = String(input.customerNote || "").trim().slice(0, 160);
+    if (customerNote) {
+      try {
+        const noteStmt = database
+          .prepare("UPDATE orders SET lead_follow_up_note = ? WHERE id = ?")
+          .bind(customerNote, row.id);
+        if (typeof noteStmt?.run === "function") {
+          await noteStmt.run();
+        }
+      } catch {
+        // Fail-open: never block a committed order if the note column is unavailable in a test double.
+      }
     }
     // Recorded here rather than in each of the three checkout routes that call
     // this, so a new entry point cannot forget it. Fail-open by contract: the

@@ -41,9 +41,23 @@ const productCatalog = products.map((item) => ({
   hideFooter={true}
   noindex
 >
-  <link slot="head" rel="preconnect" href="https://fonts.googleapis.com" />
   <link slot="head" rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link slot="head" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;1,600&display=swap" media="print" onload="this.media='all'" />
+  <style is:inline slot="head">
+    @font-face {
+      font-family: 'Cormorant Garamond';
+      font-style: normal;
+      font-weight: 600;
+      font-display: swap;
+      src: url(https://fonts.gstatic.com/s/cormorantgaramond/v21/co3umX5slCNuHLi8bLeY9MK7whWMhyjYqXtK.woff2) format('woff2');
+    }
+    @font-face {
+      font-family: 'Cormorant Garamond';
+      font-style: italic;
+      font-weight: 600;
+      font-display: swap;
+      src: url(https://fonts.gstatic.com/s/cormorantgaramond/v21/co3smX5slCNuHLi8bLeY9MK7whWMhyjYrGFEsdtdc62E6zd58jDOjw.woff2) format('woff2');
+    }
+  </style>
   <script is:inline slot="head">
     if (window.location.search) {
       window.history.replaceState(null, '', `${window.location.pathname}${window.location.hash}`);
@@ -161,6 +175,11 @@ const productCatalog = products.map((item) => ({
             —
           </h3>
           <p id="variant-label" class="mt-1 text-[13.5px] font-semibold leading-5 text-[#8a5a3b]">—</p>
+          <p
+            id="grafir-badge"
+            hidden
+            class="mt-1.5 inline-flex items-center gap-1.5 border border-[#c89b72]/60 bg-[#faf3eb] px-2.5 py-0.5 text-[11.5px] font-semibold text-[#633d24]"
+          ></p>
           <p id="product-headline" class="mt-1 line-clamp-2 text-[12px] leading-5 text-[#5a4a3f]"></p>
         </div>
       </div>
@@ -181,6 +200,11 @@ const productCatalog = products.map((item) => ({
         </div>
         <div id="product-subtotal-row" hidden>
           <span>Subtotal produk</span><span id="product-subtotal">—</span>
+        </div>
+        <div id="thanks-grafir-row" hidden class="flex justify-between gap-3 px-4 py-3 text-[13px]">
+          <span class="text-[#5a4a3f]">Gratis Grafir Laser</span><span class="font-semibold text-[#8a5a3b]"
+            ><s class="mr-1 font-normal text-[#685b4f]">Rp37.000</s>GRATIS</span
+          >
         </div>
         <div class="flex justify-between gap-3 px-4 py-3 text-[13px]">
           <span class="text-[#5a4a3f]">Ongkos kirim</span><span id="shipping-cost" class="font-medium text-[#1a1411]"
@@ -231,6 +255,12 @@ const productCatalog = products.map((item) => ({
         <div id="area-row" class="grid grid-cols-[112px_1fr] gap-3 py-3">
           <span class="text-[#5a4a3f]">Area</span><span id="area-display" class="text-right font-medium text-[#1a1411]"
             >—</span
+          >
+        </div>
+        <div id="customer-note-row" hidden class="grid grid-cols-[112px_1fr] gap-3 py-3">
+          <span class="text-[#5a4a3f]">Catatan</span><span
+            id="customer-note-display"
+            class="text-right font-semibold text-[#633d24]">—</span
           >
         </div>
       </div>
@@ -583,6 +613,8 @@ const productCatalog = products.map((item) => ({
     const name = pick('name', 'Bapak/Ibu');
     const phone = pick('phone', '-');
     const address = pick('address', '-');
+    const grafirText = pick('grafir_text', '').trim();
+    const customerNote = pick('customer_note', grafirText ? `Grafir: ${grafirText}` : '').trim();
     const district = pick('district', '');
     const city = pick('city', '');
     const province = pick('province', '');
@@ -633,6 +665,26 @@ const productCatalog = products.map((item) => ({
     document.getElementById('product-name').textContent = productName;
     document.getElementById('variant-label').textContent = variantLabel;
     document.getElementById('quantity-badge').textContent = `Qty ${quantity}`;
+    const applyCustomerNote = (rawNote, rawGrafir) => {
+      const noteValue = String(rawNote || '').trim();
+      const grafirValue = String(rawGrafir || '').trim() || (noteValue.replace(/^Grafir:\s*/i, '').trim() !== noteValue ? noteValue.replace(/^Grafir:\s*/i, '').trim() : '');
+      const grafirBadgeEl = document.getElementById('grafir-badge');
+      const thanksGrafirRowEl = document.getElementById('thanks-grafir-row');
+      const noteRowEl = document.getElementById('customer-note-row');
+      const noteDisplayEl = document.getElementById('customer-note-display');
+      if (grafirValue) {
+        if (grafirBadgeEl) {
+          grafirBadgeEl.textContent = `✦ Gratis Grafir: ${grafirValue}`;
+          grafirBadgeEl.hidden = false;
+        }
+        if (thanksGrafirRowEl) thanksGrafirRowEl.hidden = false;
+      }
+      if (noteValue && noteRowEl && noteDisplayEl) {
+        noteDisplayEl.textContent = noteValue;
+        noteRowEl.hidden = false;
+      }
+    };
+    applyCustomerNote(customerNote, grafirText);
     const headlineEl = document.getElementById('product-headline');
     if (productHeadline) headlineEl.textContent = productHeadline;
     else headlineEl.hidden = true;
@@ -806,6 +858,7 @@ const productCatalog = products.map((item) => ({
       wa.dataset.productName = productName || '';
       wa.dataset.variantLabel = variantLabel || '';
       wa.dataset.quantity = String(quantity);
+      wa.dataset.customerNote = customerNote;
       wa.dataset.paymentMethod = paymentMethod;
       wa.dataset.leadOnly = leadOnly ? '1' : '0';
     } else {
@@ -847,6 +900,13 @@ const productCatalog = products.map((item) => ({
           if (!Number(productPrice) && serverProduct > 0) {
             document.getElementById('product-price').textContent = fmt(serverProduct);
           }
+          if (data?.customer_note) {
+            applyCustomerNote(data.customer_note, '');
+            if (wa) {
+              wa.dataset.customerNote = String(data.customer_note);
+              window.dispatchEvent(new CustomEvent('ps:thanks-note-updated'));
+            }
+          }
 
           // A transaction can expire or fail after this page was first opened,
           // and sessionStorage still says "unpaid". /payment already treats
@@ -887,19 +947,25 @@ const productCatalog = products.map((item) => ({
     const wa = document.getElementById('wa-confirm') as HTMLAnchorElement | null;
     if (wa?.dataset.phone) {
       const d = wa.dataset;
-      const url = thanksWhatsappUrl(
-        d.phone || '',
-        buildThanksWhatsappMessage({
-          storeName: d.storeName || '',
-          orderNumber: d.orderNumber || '',
-          customerName: d.customerName || '',
-          productName: d.productName || '',
-          variantLabel: d.variantLabel || '',
-          quantity: Number(d.quantity) || 1,
-        }),
-      );
-      if (url) wa.href = url;
-      else wa.hidden = true;
+      const syncWaHref = () => {
+        const nextUrl = thanksWhatsappUrl(
+          d.phone || '',
+          buildThanksWhatsappMessage({
+            storeName: d.storeName || '',
+            orderNumber: d.orderNumber || '',
+            customerName: d.customerName || '',
+            productName: d.productName || '',
+            variantLabel: d.variantLabel || '',
+            quantity: Number(d.quantity) || 1,
+            customerNote: d.customerNote || '',
+          }),
+        );
+        if (nextUrl) wa.href = nextUrl;
+        else wa.hidden = true;
+        return nextUrl;
+      };
+      const url = syncWaHref();
+      window.addEventListener('ps:thanks-note-updated', syncWaHref);
 
       if (
         shouldAutoRedirectToWhatsapp({

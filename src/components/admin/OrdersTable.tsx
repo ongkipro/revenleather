@@ -110,6 +110,7 @@ export type OrderItem = {
   providerDispatchError: string | null;
   providerOrderId: string | null;
   adClickIds?: string | null;
+  customerNote?: string | null;
 };
 
 type OrderRow = {
@@ -146,6 +147,7 @@ type OrderRow = {
   provider_dispatch_error?: string | null;
   provider_order_id?: string | null;
   ad_click_ids?: string | null;
+  customer_note?: string | null;
 };
 
 type OrdersPagination = {
@@ -217,6 +219,7 @@ const mapOrder = (row: OrderRow): OrderItem => ({
   providerDispatchError: row.provider_dispatch_error || null,
   providerOrderId: row.provider_order_id || null,
   adClickIds: row.ad_click_ids || null,
+  customerNote: row.customer_note || null,
 });
 
 const shippingLabels = SHIPPING_STATUS_LABELS;
@@ -1383,6 +1386,11 @@ export function OrdersTable({ initialOrders }: { initialOrders?: OrderItem[] }) 
                         {order.variantName}
                       </p>
                     )}
+                    {order.customerNote && (
+                      <p className="mt-1 inline-flex max-w-full items-center truncate rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-xs font-semibold text-amber-900">
+                        {order.customerNote}
+                      </p>
+                    )}
                     <p className="mt-1 font-semibold text-slate-950 text-sm">
                       {formatCurrency(order.totalAmount)}
                     </p>
@@ -1598,6 +1606,14 @@ export function OrdersTable({ initialOrders }: { initialOrders?: OrderItem[] }) 
                       {order.variantName && (
                         <p className="text-xs text-slate-500 truncate max-w-[180px] ml-auto mt-0.5">
                           {order.variantName}
+                        </p>
+                      )}
+                      {order.customerNote && (
+                        <p
+                          className="mt-1 inline-flex max-w-[180px] items-center truncate rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-xs font-semibold text-amber-900"
+                          title={order.customerNote}
+                        >
+                          {order.customerNote}
                         </p>
                       )}
                       <p className="mt-1 font-semibold text-slate-950 text-sm">

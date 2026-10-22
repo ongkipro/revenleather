@@ -108,7 +108,8 @@ if (database?.prepare) {
           '' AS dispatchReason,
           orders.provider_dispatch_error AS providerDispatchError,
           orders.provider_order_id AS providerOrderId,
-          orders.ad_click_ids AS adClickIds
+          orders.ad_click_ids AS adClickIds,
+          orders.lead_follow_up_note AS customerNote
         FROM orders
         WHERE orders.shipping_status <> 'abandoned'
         ORDER BY orders.id DESC

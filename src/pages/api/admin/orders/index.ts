@@ -81,6 +81,7 @@ type OrderRow = {
   receiver_risk_label: string | null;
   receiver_refused_at: string | null;
   ad_click_ids: string | null;
+  customer_note: string | null;
   created_at: string;
 };
 
@@ -307,6 +308,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
           CASE WHEN json_valid(receiver_performance_json)
             THEN json_extract(receiver_performance_json, '$.at') END AS receiver_refused_at,
           ad_click_ids,
+          lead_follow_up_note AS customer_note,
           created_at
         FROM orders
         ${whereClause}
@@ -405,6 +407,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
           receiver_delivery_rate: row.receiver_delivery_rate,
           receiver_risk_label: row.receiver_risk_label,
           ad_click_ids: row.ad_click_ids,
+          customer_note: row.customer_note || null,
           created_at: row.created_at,
         };
       }),

@@ -6,6 +6,7 @@ import { getRuntimeEnv } from '../lib/env';
 import { getTenantHomeContent } from '../lib/tenant-content';
 import { resolveStorefrontTemplate } from '../lib/storefront-template';
 import { dailySeed, pickDaily } from '../lib/daily-rotation';
+const toCardImage = (u = '') => /^(?:https?:\/\/[^/]+)?\/assets\/uploads\//i.test(u) && !/-sm\.[a-z0-9]+$/i.test(u) ? u.replace(/(\.[a-z0-9]+)$/i, '-sm$1') : u;
 
 const database = getRuntimeEnv(Astro.locals)?.OMS_DB;
 const [catalog, homeResolution, templateResolution] = await Promise.all([
@@ -70,7 +71,7 @@ const itemList = {
   title={homepageTitle}
   description={Astro.locals.tenant.description}
   image={heroSlides[0]?.image ?? Astro.locals.tenant.logo}
-  preloadImages={heroSlides[0]?.image}
+  preloadImages={heroSlides[0]?.image ? toCardImage(heroSlides[0].image) : undefined}
   itemList={ready ? itemList : undefined}
 >
   {

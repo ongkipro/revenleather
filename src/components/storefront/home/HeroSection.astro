@@ -1,4 +1,6 @@
 ---
+import { cardImageSrc } from '../../../lib/image-derivative';
+
 interface Slide {
   image: string;
   alt: string;
@@ -35,11 +37,11 @@ const { slides } = Astro.props;
         slides.map((slide, index) => (
           <article class="relative min-w-full">
             <img
-              src={slide.image}
+              src={cardImageSrc(slide.image)}
               alt={`${slide.alt} - ${Astro.locals.tenant.name}`}
               title={slide.badge}
-              width="600"
-              height="600"
+              width="480"
+              height="480"
               class="aspect-square w-full object-cover object-center"
               loading={index === 0 ? 'eager' : 'lazy'}
               decoding={index === 0 ? 'sync' : 'async'}

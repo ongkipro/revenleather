@@ -50,8 +50,27 @@
        **automatically disables COD (`cod`)** in `syncVisiblePaymentOptions()`,
        switches to Transfer Bank (`manual_transfer`), displays
        `Gratis Grafir Laser: "<Teks>" (GRATIS)` in `Ringkasan Pemesanan`, and
-       appends `[GRAFIR: <Teks>]` to `address` on order submission. Switching
-       back to `Tanpa Grafir` immediately restores COD availability.
+       stores `customer_note` (`Grafir: <Teks>`) in the order note column
+       (`orders.lead_follow_up_note`) while keeping `address` 100% clean so the
+       grafir note is **never pushed to Mengantar**. Switching back to
+       `Tanpa Grafir` immediately restores COD availability.
+    3. **`/thanks`, `/payment`, WhatsApp Confirmation & Admin Orders Output:**
+       - `/thanks` (`src/pages/thanks.astro`) renders `#grafir-badge`
+         (`✦ Gratis Grafir: <Teks>`) under the product card,
+         `#thanks-grafir-row` (`Gratis Grafir Laser | Rp37.000 GRATIS`) in the
+         payment summary, and `#customer-note-row` (`Catatan | Grafir: <Teks>`)
+         in the shipping details (recovered from both `sessionStorage` and
+         `/api/order-status`).
+       - `buildThanksWhatsappMessage()` (`src/lib/thanks-whatsapp.ts`) appends
+         `Catatan: Grafir: <Teks>` right under `Produk: ...` in the WhatsApp
+         message sent to admin.
+       - `/payment` (`src/pages/payment.astro`) displays `Catatan Pesanan` in the
+         payment breakdown and links directly to `/thanks#o=...&t=...` for
+         confirmation.
+       - Admin Orders (`OrdersTable.tsx` & `OrderDetail.tsx`) surface
+         `customer_note` (`Catatan Pesanan / Grafir`) with a 1-tap copy button
+         and an explicit workshop-only label confirming it is not sent to
+         Mengantar.
   - `GeoIpResolvedForm.astro` passes `province={resolvedProvince}` to
     `FormHybridContent.astro`; `src/scripts/form-hybrid.ts` keeps
     `#payment-method-block` hidden until a shipping district (`locationId`) is
@@ -82,13 +101,21 @@
   - Removed the redundant `<LandingPagesSection />` from the homepage (since
     every `/produk/<slug>` page is already the promo/landing page) and deleted
     `/testimoni` (`src/pages/testimoni.astro`).
-  - `SiteFooter.astro` uses a centered minimalist layout with 5 core links
-    (`Katalog`, `Gratis Grafir`, `Pengiriman`, `Tentang`, `Kontak`) and places
-    `Kebijakan Privasi · Syarat & Ketentuan` directly in the bottom copyright
-    row for Meta & Google Ads compliance.
+  - `SiteFooter.astro` uses a centered minimalist layout with 4 core links
+    (`Katalog`, `Pengiriman`, `Tentang`, `Kontak`) and places
+    `Kebijakan Privasi · Syarat & Ketentuan · Sitemap` directly in the bottom
+    copyright row for Meta & Google Ads compliance.
   - `ProductListItem.astro` renders compact dynamic spacing in the order:
     **Category → 1-line truncated Title (`truncate`) → `★★★★★ 4.9 (xx+ terjual)`
-    → Price & Compare Price**.
+    → Price & Compare Price**, using the 480×480 `-sm.webp` R2 derivative via
+    `cardImageSrc()` (`src/lib/image-derivative.ts`) and WCAG AA-compliant
+    strikethrough contrast (`#685b4f`).
+  - **PageSpeed & Web Vitals Hardening:** `HeroSection.astro`, `src/pages/index.astro`,
+    and `src/pages/[slug].astro` preload and serve `-sm.webp` derivatives for
+    LCP hero images, inline `@font-face` (`font-display: swap`) for Cormorant
+    Garamond to eliminate render-blocking Google Fonts CSS chains, compress
+    `/images/reven-grafir-sample.webp` (`147 KB` → `24 KB`), and apply
+    `content-visibility: auto` on below-the-fold `.product-card` grids.
 
 ## 2026-10-21 — 1.7.3–1.7.4: uploads and province-scoped product pages cached at the edge; zvarashop back on the product line
 

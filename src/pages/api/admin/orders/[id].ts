@@ -96,6 +96,7 @@ type OrderRow = {
   stock_restored_at: string | null;
   ad_click_ids: string | null;
   source_page_path: string | null;
+  customer_note: string | null;
   created_at: string;
   warehouse_name: string | null;
   pickup_address_id: string | null;
@@ -182,6 +183,7 @@ async function loadOrder(database: D1Database, rawOrderKey: string) {
       o.receiver_performance_checked_at,
       o.ad_click_ids,
       o.source_page_path,
+      o.lead_follow_up_note AS customer_note,
       o.stock_restored_at,
       o.created_at,
       w.name AS warehouse_name,
@@ -311,6 +313,7 @@ export const GET: APIRoute = async ({ params, locals }) => {
         receiver_performance_checked_at: order.receiver_performance_checked_at,
         ad_click_ids: order.ad_click_ids,
         source_page_path: order.source_page_path,
+        customer_note: order.customer_note || null,
         created_at: order.created_at,
         // Absent unless the Kelola plugin is active; OrderDetail then shows no panel.
         kelola: await activeKelolaConfig(db, locals).then((config) =>

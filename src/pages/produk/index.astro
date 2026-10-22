@@ -93,6 +93,8 @@ const availableGroups = categoryOrder.filter((g) => (groupCounts.get(g) || 0) > 
             >
               <button
                 type="button"
+                role="tab"
+                aria-selected="true"
                 data-page-filter="all"
                 class="page-cat-pill shrink-0 cursor-pointer rounded-none border border-[#1a1411] bg-[#1a1411] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-white transition-colors"
               >
@@ -101,6 +103,8 @@ const availableGroups = categoryOrder.filter((g) => (groupCounts.get(g) || 0) > 
               {grafirCount > 0 && (
                 <button
                   type="button"
+                  role="tab"
+                  aria-selected="false"
                   data-page-filter="grafir"
                   class="page-cat-pill shrink-0 cursor-pointer rounded-none border border-[#8a5a3b] bg-[#f4eee6] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5c3a21] transition-colors hover:bg-[#ebe1d4]"
                 >
@@ -110,6 +114,8 @@ const availableGroups = categoryOrder.filter((g) => (groupCounts.get(g) || 0) > 
               {availableGroups.map((group) => (
                 <button
                   type="button"
+                  role="tab"
+                  aria-selected="false"
                   data-page-filter={group}
                   class="page-cat-pill shrink-0 cursor-pointer rounded-none border border-[#cfc3b4] bg-white px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.06em] text-[#4a3f36] transition-colors hover:border-[#1a1411] hover:text-[#1a1411]"
                 >
@@ -186,6 +192,7 @@ const availableGroups = categoryOrder.filter((g) => (groupCounts.get(g) || 0) > 
     function setPillActive(targetFilter: string) {
       pills.forEach((pill) => {
         const isSelected = pill.dataset.pageFilter === targetFilter;
+        pill.setAttribute('aria-selected', String(isSelected));
         if (isSelected) {
           pill.className =
             'page-cat-pill shrink-0 cursor-pointer rounded-none border border-[#1a1411] bg-[#1a1411] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-white transition-colors';

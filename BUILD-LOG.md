@@ -8,6 +8,11 @@ Author & Curator: **[ongki.pro](https://ongki.pro)**
 
 ## 2026-10-23 — Reven Leather (`page.revenleather.com`): 79-LP Grafir/Non-Grafir segmentation, dynamic compare-price calibration, Full-Form checkout hardening, Gratis Grafir COD-disable mechanism, and classic sharp storefront UI
 
+- **Gratis Grafir Order Note (`customer_note` → `orders.lead_follow_up_note`), `/thanks` & WhatsApp Output, and PageSpeed Hardening.**
+  - Moved Gratis Grafir text out of `orders.address` into the dedicated order note column (`orders.lead_follow_up_note` via `customer_note` in `src/lib/order-schema.ts`, `src/pages/api/submit-order.ts`, `src/lib/order-persistence.ts`, and `src/lib/order-status.ts`) so `address` stays pure and Grafir notes are never pushed to Mengantar (`src/lib/mengantar-dispatch.ts`).
+  - Updated `src/pages/thanks.astro`, `src/pages/payment.astro`, and `src/lib/thanks-whatsapp.ts` (`+ src/lib/thanks-whatsapp.test.ts`) to display the Gratis Grafir badge (`✦ Gratis Grafir: <Teks>`), `Gratis Grafir Laser (Rp37.000 GRATIS)` summary line, `Catatan` shipping row, and `Catatan: Grafir: <Teks>` WhatsApp confirmation line.
+  - Surfaced `customer_note` across `/admin/orders` (`src/pages/api/admin/orders/index.ts`, `src/pages/admin/orders/index.astro`, `src/components/admin/OrdersTable.tsx`) and `/admin/orders/[id]` (`src/pages/api/admin/orders/[id].ts`, `src/components/admin/OrderDetail.tsx`) with a 1-tap copy button and internal workshop label.
+  - Optimized Lighthouse Performance & Accessibility (100/100) across `/` and `/produk/<slug>`: `cardImageSrc()` in `src/lib/image-derivative.ts` rewrites `page.revenleather.com/assets/uploads/...` product cards & hero images to `-sm.webp` (~14–21 KB 480×480 R2 derivatives), compressed `/images/reven-grafir-sample.webp` from 147 KB to 24 KB, replaced render-blocking Google Fonts stylesheet links on `[slug].astro` and `thanks.astro` with inline `@font-face` (`font-display: swap`), wrapped `[slug].astro` in `<main id="konten-utama">`, added `role="tab"` to `tablist` filter buttons, and darkened strikethrough compare-price text to `#685b4f` for WCAG AA contrast.
 - **Grafir vs Non-Grafir segmentation across 79 landing pages.** Audited the 28
   reference images in Google Drive `letak grafir tas` against the 79 active
   products in `revenleather-d1`. The 33 approved grafir landing pages render the

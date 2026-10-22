@@ -11,6 +11,10 @@ test("an uploaded image gets a card-sized sibling", () => {
     cardImageSrc("/assets/uploads/2026-08-18/a-b-c.png"),
     "/assets/uploads/2026-08-18/a-b-c-sm.png",
   );
+  assert.equal(
+    cardImageSrc("https://page.revenleather.com/assets/uploads/2026-10-08/8ffc1e2cbbaee0f3.webp"),
+    "https://page.revenleather.com/assets/uploads/2026-10-08/8ffc1e2cbbaee0f3-sm.webp",
+  );
 });
 
 test("anything that is not an upload is left exactly as it is", () => {

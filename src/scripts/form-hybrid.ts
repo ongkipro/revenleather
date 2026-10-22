@@ -1978,12 +1978,9 @@ function initHybridOrderFormInstance(formRoot: HTMLElement) {
     const customerPhone = normalizePhone(
       String(fd.get("customer_phone") || ""),
     );
-    const rawAddress = String(fd.get("address") || "").trim();
-    const grafirNote = getGrafirText();
-    const address =
-      isGrafirRequested() && grafirNote && !rawAddress.includes("[GRAFIR:")
-        ? `${rawAddress} [GRAFIR: ${grafirNote}]`.slice(0, 500)
-        : rawAddress;
+    const address = String(fd.get("address") || "").trim();
+    const grafirNote = isGrafirRequested() ? getGrafirText() : "";
+    const customerNote = grafirNote ? `Grafir: ${grafirNote}` : "";
     const checked = getSelectedVariant();
 
     const requiredFields = Array.from(
@@ -2098,6 +2095,7 @@ function initHybridOrderFormInstance(formRoot: HTMLElement) {
               ? state.sellerBankAccountId || undefined
               : undefined,
           customer_phone: customerPhone,
+          customer_note: customerNote || undefined,
           address,
           district: state.location.district,
           payment_method: state.paymentMethod,
@@ -2235,6 +2233,8 @@ function initHybridOrderFormInstance(formRoot: HTMLElement) {
       name: customerName,
       phone: customerPhone,
       address,
+      grafir_text: grafirNote,
+      customer_note: customerNote,
       product_id: String(config.productId || ''),
       product_name: config.productName,
       product_price: price,

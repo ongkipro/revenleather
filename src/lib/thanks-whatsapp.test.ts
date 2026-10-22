@@ -32,8 +32,13 @@ test("the message names the invoice, the buyer and the product with its variant"
 
 test("a missing field is left out, never rendered as a blank label", () => {
   const message = buildThanksWhatsappMessage({ ...order, orderNumber: "", customerName: " ", variantLabel: "Bensu - Pupuk Cair Organik", quantity: 0 });
-  assert.doesNotMatch(message, /No\. Invoice|Nama:/);
+  assert.doesNotMatch(message, /No\. Invoice|Nama:|Catatan:/);
   assert.match(message, /Produk: Bensu - Pupuk Cair Organik x1\n\nMohon/, "a variant equal to the product is not repeated");
+});
+
+test("an optional customer note (such as Gratis Grafir) is included below the product line", () => {
+  const message = buildThanksWhatsappMessage({ ...order, customerNote: "Grafir: R. Pratama" });
+  assert.match(message, /Produk: Bensu - Pupuk Cair Organik \(1 Liter\) x2\nCatatan: Grafir: R\. Pratama\n\nMohon/);
 });
 
 test("the link normalises an Indonesian number and refuses a broken one", () => {

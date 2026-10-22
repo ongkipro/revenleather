@@ -36,6 +36,7 @@ export type PublicOrderStatus = {
    * so a later catalogue edit cannot restate a past order's value.
    */
   product_value: number;
+  customer_note?: string;
   payment: PublicPaymentStatus | null;
 };
 
@@ -46,6 +47,7 @@ type PublicOrderStatusRow = {
   payment_method?: string;
   payment_status?: string;
   shipping_status?: string;
+  lead_follow_up_note?: string | null;
   seller_bank_code?: string | null;
   seller_bank_name?: string | null;
   seller_account_holder?: string | null;
@@ -83,6 +85,7 @@ export async function loadPublicOrderStatus(
         o.payment_method,
         o.payment_status,
         o.shipping_status,
+        o.lead_follow_up_note,
         o.seller_bank_code,
         o.seller_bank_name,
         o.seller_account_holder,
@@ -126,6 +129,7 @@ export async function loadPublicOrderStatus(
     status: orderRow.shipping_status || "pending",
     total_amount: Number(orderRow.total_amount ?? 0),
     product_value: Number(orderRow.product_value ?? 0),
+    ...(orderRow.lead_follow_up_note ? { customer_note: orderRow.lead_follow_up_note } : {}),
     payment:
       orderRow.channel_code ||
       orderRow.payment_method === "manual_transfer" ||

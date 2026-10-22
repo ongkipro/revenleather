@@ -17,6 +17,7 @@ export const orderSubmitSchema = z.object({
     }),
   ),
   customer_email: z.string().trim().email('Email pembayaran tidak valid').max(160).optional().or(z.literal('')),
+  customer_note: z.string().trim().max(160).optional().or(z.literal('')),
   address: z.string().trim().min(10, 'Alamat lengkap minimal 10 karakter').max(500),
   district: z.string().trim().min(2, 'Kecamatan harus diisi').max(120),
   province: z.string().trim().min(2, 'Provinsi harus diisi').max(120),

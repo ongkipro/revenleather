@@ -121,6 +121,7 @@ type Order = {
   receiver_performance_checked_at: string | null;
   ad_click_ids?: string | null;
   source_page_path?: string | null;
+  customer_note?: string | null;
   created_at: string;
   kelola?: KelolaSync | null;
   payment: PaymentDetails | null;
@@ -1425,6 +1426,40 @@ export function OrderDetail({ invoice }: { invoice: string }) {
                     </div>
                   </div>
                 ))
+              )}
+              {order.customer_note && (
+                <div className="bg-amber-50/70 p-4 sm:px-5 flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <span className="inline-flex items-center rounded border border-amber-200 bg-amber-100/80 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider text-amber-900">
+                      Catatan Pesanan / Grafir
+                    </span>
+                    <p className="mt-1.5 text-sm font-semibold text-slate-900 break-words">
+                      {order.customer_note}
+                    </p>
+                    <p className="mt-0.5 text-xs text-slate-500">
+                      Catatan internal produksi workshop — tidak dikirim ke Mengantar.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      void copyToClipboard(
+                        order.customer_note || "",
+                        "customer_note",
+                        "Catatan pesanan",
+                      )
+                    }
+                    className="inline-flex min-h-8 shrink-0 items-center gap-1.5 rounded-lg border border-amber-200 bg-white px-2.5 text-xs font-semibold text-amber-900 hover:bg-amber-50"
+                    title="Salin catatan pesanan"
+                  >
+                    {copiedTarget === "customer_note" ? (
+                      <Check className="size-3.5 text-emerald-600" />
+                    ) : (
+                      <Copy className="size-3.5" />
+                    )}
+                    {copiedTarget === "customer_note" ? "Tersalin" : "Salin"}
+                  </button>
+                </div>
               )}
             </CardContent>
           </Card>

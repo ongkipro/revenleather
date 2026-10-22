@@ -16,6 +16,7 @@ export type ThanksWhatsappOrder = {
   productName: string;
   variantLabel: string;
   quantity: number;
+  customerNote?: string;
 };
 
 /** Timing of the automatic hand-off, in milliseconds. */
@@ -39,11 +40,13 @@ export function buildThanksWhatsappMessage(order: ThanksWhatsappOrder): string {
   ]
     .filter(Boolean)
     .join(" ");
+  const note = String(order.customerNote || "").trim();
   const lines = [
     `Halo ${order.storeName.trim() || "Admin"}, saya sudah memesan:`,
     order.orderNumber.trim() ? `No. Invoice: ${order.orderNumber.trim()}` : "",
     order.customerName.trim() ? `Nama: ${order.customerName.trim()}` : "",
     `Produk: ${item}`,
+    note ? `Catatan: ${note}` : "",
     "",
     "Mohon segera diproses ya 🙏",
   ];

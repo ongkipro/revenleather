@@ -313,6 +313,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         (data.payment_method !== "cod"
           ? buyerEmail(null, customerPhone, locals.tenant.siteUrl)
           : undefined),
+      customerNote: data.customer_note || undefined,
       address: data.address,
       province: data.province,
       city: String(body.city || "")

@@ -94,6 +94,10 @@ if (Array.from(Astro.url.searchParams.keys()).some((key) => key !== 'preview')) 
               <dt id="payment-admin-fee-label" class="text-[#555555]">Biaya Layanan</dt>
               <dd id="payment-admin-fee" class="font-semibold text-[#111111]">—</dd>
             </div>
+            <div id="payment-note-row" class="flex items-center justify-between gap-4 border-t border-[#E5E5E5] pt-2" hidden>
+              <dt class="text-[#555555]">Catatan Pesanan</dt>
+              <dd id="payment-note-value" class="font-semibold text-[#111111]">—</dd>
+            </div>
           </dl>
         </div>
 
@@ -199,6 +203,14 @@ if (Array.from(Astro.url.searchParams.keys()).some((key) => key !== 'preview')) 
             <span id="payment-monitor-copy">Tim toko memeriksa pembayaran di dashboard AutoLaris dan memperbarui status di CMS. Halaman ini menyegarkan status tiap menit, lalu otomatis berpindah ke halaman terima kasih setelah pembayaran dikonfirmasi.</span>
           </div>
         </div>
+        <a
+          id="thanks-summary-link"
+          href="/thanks"
+          hidden
+          class="mt-4 flex min-h-11 w-full items-center justify-center gap-2 rounded-none border border-[#111111] bg-white px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-[#111111] transition-colors hover:bg-[#F5F5F5]"
+        >
+          <span>Lihat Detail Pesanan & Konfirmasi Admin</span>
+        </a>
       </section>
     </div>
   </main>
@@ -231,6 +243,7 @@ if (Array.from(Astro.url.searchParams.keys()).some((key) => key !== 'preview')) 
       is_paid?: boolean;
       order_number?: string;
       payment_status?: string;
+      customer_note?: string;
       payment?: PaymentDetails | null;
       error?: string;
     };
@@ -280,6 +293,14 @@ if (Array.from(Astro.url.searchParams.keys()).some((key) => key !== 'preview')) 
     const statusToken = text(stored.status_token);
     let orderNumber = text(stored.order_id || orderPk);
     let currentStatus = text(stored.payment_status || 'pending').toLowerCase();
+    let customerNote = text(stored.customer_note || (stored.grafir_text ? `Grafir: ${text(stored.grafir_text)}` : ''));
+    const thanksSummaryLink = document.getElementById('thanks-summary-link') as HTMLAnchorElement | null;
+    if (thanksSummaryLink && (orderPk || orderNumber)) {
+      thanksSummaryLink.hidden = false;
+      thanksSummaryLink.href = orderPk && statusToken
+        ? `/thanks#o=${encodeURIComponent(orderPk)}&t=${encodeURIComponent(statusToken)}`
+        : '/thanks';
+    }
     let payment: PaymentDetails = {
       channel_code: text(stored.payment_channel),
       fee_bearer: text(stored.payment_fee_bearer) === 'seller' ? 'seller' : 'buyer',
@@ -554,7 +575,7 @@ if (Array.from(Astro.url.searchParams.keys()).some((key) => key !== 'preview')) 
               ? 'Salin nomor Virtual Account, lalu bayar melalui aplikasi m-Banking atau ATM.'
               : 'Ikuti instruksi pembayaran di bawah ini.';
 
-      breakdownEl.hidden = !(amount || adminFee);
+      breakdownEl.hidden = !(amount || adminFee || customerNote);
       amountLabelEl.textContent = sellerBearsFee ? 'Pesanan + ongkir' : 'Nominal Pesanan';
       amountEl.textContent = formatRp(sellerBearsFee ? payment.total_amount : amount);
       adminFeeLabelEl.textContent = sellerBearsFee ? 'Biaya Layanan (seller)' : 'Biaya Layanan';
@@ -563,6 +584,12 @@ if (Array.from(Astro.url.searchParams.keys()).some((key) => key !== 'preview')) 
         : adminFee
           ? formatRp(adminFee)
           : 'Rp0';
+      const noteRowEl = document.getElementById('payment-note-row');
+      const noteValEl = document.getElementById('payment-note-value');
+      if (noteRowEl && noteValEl) {
+        noteRowEl.hidden = !customerNote;
+        noteValEl.textContent = customerNote || '—';
+      }
 
       const paid = ['paid', 'settled', 'success'].includes(currentStatus);
       const failed = ['failed', 'expired'].includes(currentStatus) || Boolean(payment.error);
@@ -789,6 +816,7 @@ if (Array.from(Astro.url.searchParams.keys()).some((key) => key !== 'preview')) 
         const data = await response.json() as StatusResponse;
         if (!response.ok || data.success === false) throw new Error(data.error || 'Status pembayaran tidak tersedia.');
         orderNumber = text(data.order_number || orderNumber);
+        if (data.customer_note) customerNote = text(data.customer_note);
         if (data.is_paid) {
           // Paid is paid, whatever the instruction row says about itself.
           redirectToThanks();
