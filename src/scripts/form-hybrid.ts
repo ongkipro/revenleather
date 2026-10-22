@@ -350,12 +350,30 @@ function initHybridOrderFormInstance(formRoot: HTMLElement) {
   const summaryCompare = formRoot.querySelector("#summary-compare");
   const summaryPriceValue = formRoot.querySelector("#summary-price-value");
   const summaryCompareRow = formRoot.querySelector<HTMLElement>("#summary-compare-row");
+  const summaryGrafirRow = formRoot.querySelector<HTMLElement>("#summary-grafir-row");
+  const summaryGrafirValue = formRoot.querySelector("#summary-grafir-value");
   const summaryShipping = formRoot.querySelector("#summary-shipping");
   const summaryAdminFeeRow = formRoot.querySelector<HTMLElement>("#summary-admin-fee-row");
   const summaryAdminFeeLabel = formRoot.querySelector("#summary-admin-fee-label");
   const summaryAdminFee = formRoot.querySelector("#summary-admin-fee");
   const summaryTotalNote = formRoot.querySelector("#summary-total-note");
   const summaryTotal = formRoot.querySelector("#summary-total");
+  const grafirInputWrap = formRoot.querySelector<HTMLElement>("#grafir-input-wrap");
+  const grafirTextInput = formRoot.querySelector<HTMLInputElement>(
+    '[data-field="grafir-text"]',
+  );
+  const grafirChoiceInputs = Array.from(
+    formRoot.querySelectorAll<HTMLInputElement>('input[name="grafir_choice"]'),
+  );
+  const isGrafirRequested = () =>
+    form.querySelector<HTMLInputElement>('input[name="grafir_choice"]:checked')
+      ?.value === "custom";
+  const getGrafirText = () =>
+    isGrafirRequested()
+      ? String(grafirTextInput?.value || "")
+          .replace(/\s{2,}/g, " ")
+          .trim()
+      : "";
   const districtSearchContainer = formRoot.querySelector(
     "#district-search-container",
   ) as HTMLDivElement | null;
@@ -717,6 +735,8 @@ function initHybridOrderFormInstance(formRoot: HTMLElement) {
         disabled: true,
         label: submitButton.dataset.loadingLabel || "Memproses Pesanan...",
       };
+    if (isGrafirRequested() && !getGrafirText())
+      return { disabled: true, label: "Isi Nama / Inisial Grafir Dulu" };
     if (missing === "name")
       return { disabled: true, label: "Lengkapi Nama Terlebih Dahulu" };
     if (missing === "phone")
@@ -816,6 +836,19 @@ function initHybridOrderFormInstance(formRoot: HTMLElement) {
       return;
     }
 
+    if (name === "grafir_text") {
+      if (!isGrafirRequested()) {
+        field.setCustomValidity("");
+        return;
+      }
+      if (!value)
+        field.setCustomValidity("Maaf, teks nama / inisial grafir belum diisi.");
+      else if (value.length > 24)
+        field.setCustomValidity("Maaf, teks grafir maksimal 24 karakter.");
+      else field.setCustomValidity("");
+      return;
+    }
+
     if (name === "district") {
       if (!value)
         field.setCustomValidity("Maaf, kecamatan / area Anda belum terisi.");
@@ -911,7 +944,8 @@ function initHybridOrderFormInstance(formRoot: HTMLElement) {
     (item.sellerBankAccountId || null) === state.sellerBankAccountId;
 
   const syncVisiblePaymentOptions = () => {
-    state.visiblePaymentOptions = isCodDisabledByProvince()
+    const codDisabled = isCodDisabledByProvince() || isGrafirRequested();
+    state.visiblePaymentOptions = codDisabled
       ? state.paymentOptions.filter((item) => item.paymentMethod !== "cod")
       : [...state.paymentOptions];
 
@@ -990,6 +1024,13 @@ function initHybridOrderFormInstance(formRoot: HTMLElement) {
     const comparePrice = Number(checked?.dataset.compare || productPrice);
     const hasDiscount = comparePrice > productPrice;
     summaryCompareRow?.toggleAttribute("hidden", !hasDiscount);
+    const wantsGrafir = isGrafirRequested();
+    const grafirText = getGrafirText();
+    summaryGrafirRow?.toggleAttribute("hidden", !wantsGrafir);
+    setNodeText(
+      summaryGrafirValue,
+      grafirText ? `"${grafirText}" (GRATIS)` : "GRATIS",
+    );
     setNodeText(summaryLabel, checked?.dataset.label || config.productName);
     setNodeText(summaryCompare, fmt(comparePrice));
     setNodeText(summaryPriceValue, fmt(productPrice));
@@ -1839,6 +1880,45 @@ function initHybridOrderFormInstance(formRoot: HTMLElement) {
         setFieldError(field, "");
       });
     });
+  if (grafirTextInput) {
+    ensureFieldFeedback(grafirTextInput);
+    grafirTextInput.addEventListener("input", () => {
+      setIdValidationMessage(grafirTextInput);
+      if (getGrafirText()) {
+        setFieldError(grafirTextInput, "");
+      }
+      syncSummary();
+      syncSubmitButton();
+    });
+    grafirTextInput.addEventListener("blur", () => {
+      if (isGrafirRequested()) {
+        validateField(grafirTextInput);
+      }
+      syncSummary();
+      syncSubmitButton();
+    });
+  }
+  grafirChoiceInputs.forEach((radio) => {
+    radio.addEventListener("change", () => {
+      if (!radio.checked) return;
+      const wantsGrafir = isGrafirRequested();
+      const prevMethod = state.paymentMethod;
+      if (grafirInputWrap) grafirInputWrap.hidden = !wantsGrafir;
+      if (grafirTextInput) {
+        grafirTextInput.required = wantsGrafir;
+        if (!wantsGrafir) {
+          grafirTextInput.setCustomValidity("");
+          setFieldError(grafirTextInput, "");
+        } else {
+          setTimeout(() => grafirTextInput.focus(), 40);
+        }
+      }
+      renderPaymentOptions();
+      if (state.locationId && state.paymentMethod !== prevMethod) {
+        loadShippingOptions();
+      }
+    });
+  });
 
   fetch("/api/geo-province", { cache: "no-store" })
     .then(async (r) => {
@@ -1898,7 +1978,12 @@ function initHybridOrderFormInstance(formRoot: HTMLElement) {
     const customerPhone = normalizePhone(
       String(fd.get("customer_phone") || ""),
     );
-    const address = String(fd.get("address") || "").trim();
+    const rawAddress = String(fd.get("address") || "").trim();
+    const grafirNote = getGrafirText();
+    const address =
+      isGrafirRequested() && grafirNote && !rawAddress.includes("[GRAFIR:")
+        ? `${rawAddress} [GRAFIR: ${grafirNote}]`.slice(0, 500)
+        : rawAddress;
     const checked = getSelectedVariant();
 
     const requiredFields = Array.from(
