@@ -52,21 +52,21 @@ const countLabel = orderCount.toLocaleString('id-ID');
   class="pointer-events-none fixed left-1/2 top-4 z-40 w-[calc(100%-2rem)] max-w-[360px] -translate-x-1/2 -translate-y-16 scale-95 opacity-0"
 >
   <div
-    class="flex items-center gap-3 rounded-2xl border border-[#E5E5E5] bg-white py-2.5 pl-2.5 pr-4 shadow-[0_10px_28px_rgba(17,17,17,0.14),0_2px_6px_rgba(17,17,17,0.06)]"
+    class="flex items-center gap-3 rounded-2xl border border-[#c89b72]/35 bg-[#1a1411]/95 py-2.5 pl-2.5 pr-4 shadow-[0_12px_28px_rgba(0,0,0,0.32),0_2px_6px_rgba(0,0,0,0.18)] backdrop-blur-md"
   >
-    <div class="relative grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#eef4fc] text-[#2c6ecb]">
+    <div class="relative grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#c89b72]/15 text-[#e5a970]">
       <Icon name="lucide:shopping-bag" class="h-5 w-5" />
       {/* "Live" marker: these are real orders, so it may say so. */}
       <span class="absolute -right-0.5 -top-0.5 grid h-3 w-3 place-items-center">
-        <span data-social-proof-ping class="absolute h-full w-full rounded-full bg-[#2c6ecb]/50"></span>
-        <span class="relative h-2.5 w-2.5 rounded-full bg-[#2c6ecb] ring-2 ring-white"></span>
+        <span data-social-proof-ping class="absolute h-full w-full rounded-full bg-[#e5a970]/50"></span>
+        <span class="relative h-2.5 w-2.5 rounded-full bg-[#e5a970] ring-2 ring-[#1a1411]"></span>
       </span>
     </div>
     <div class="min-w-0 flex-1 text-left">
-      <p class="truncate text-[13.5px] leading-tight text-[#111111]">
-        <strong class="font-semibold">{countLabel} orang</strong> memesan
+      <p class="truncate text-[13.5px] leading-tight text-[#f4eee6]">
+        <strong class="font-semibold text-[#e5a970]">{countLabel} orang</strong> memesan
       </p>
-      <p class="mt-0.5 truncate text-[12px] leading-tight text-[#555555]">dalam 24 jam terakhir</p>
+      <p class="mt-0.5 truncate text-[12px] leading-tight text-[#bfb2a3]">dalam 24 jam terakhir</p>
     </div>
   </div>
 </div>
