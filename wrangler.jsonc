@@ -121,6 +121,9 @@
     // public/images/ with the store's own brand assets.
     "PUBLIC_SITE_LOGO": "/images/reven-logo.webp",
 
+    // Header mark beside the store name (AdsBookCMS 1.7.5+).
+    "PUBLIC_SITE_BRAND_MARK": "/images/reven-mark.svg",
+
     // Must match #rrggbb or the code falls back to its own default.
     "PUBLIC_SITE_THEME_COLOR": "#111111",
 
