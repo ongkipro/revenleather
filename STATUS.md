@@ -1,6 +1,6 @@
 # STATUS — AdsBookCMS
 
-> Verified against disk: 2026-10-23 (1.7.8 on revenleather `page.revenleather.com` @ `a23c737`; 1.7.4 on zvarashop; 1.7.2 on beranda-tani, numaskin-adbook, taniniaga, agritani-shop, zanobyshop)
+> Verified against disk: 2026-10-23 (1.7.8 on revenleather `page.revenleather.com` @ `029b725`; 1.7.4 on zvarashop; 1.7.2 on beranda-tani, numaskin-adbook, taniniaga, agritani-shop, zanobyshop)
 
 ## 2026-10-23 — Reven Leather (`page.revenleather.com`): 79-LP Grafir/Non-Grafir rollout, dynamic compare-price tiers, full-form checkout, XML feeds & Ads tracking
 
@@ -32,14 +32,15 @@
   **`40%` (13 / 33)**, **`45%` (13 / 26)**, **`49%` (13 / 38)**, and **`55%`
   (13 / 36)**.
 - **Full-Form Checkout (`{"mode": "full"}`) & Shipping/Payment Hardening
-  (`a23c737`).** Every form section in `landing_sections` is set to
+  (`029b725`).** Every form section in `landing_sections` is set to
   `{"mode": "full"}` while preserving `stores.cod_disabled_province_codes`
   (`PA,PB,PD,PT,PE,PS,MA,MU,NT,KU,SR,GO,KR,AC,BE`). `GeoIpResolvedForm.astro`
   passes `province={resolvedProvince}` to `FormHybridContent.astro`;
   `src/scripts/form-hybrid.ts` keeps `#payment-method-block` hidden until a
   shipping district (`locationId`) is selected, orders Transfer Bank / Virtual
-  Account above `COD (Bayar di Tempat)`, renders a single Transfer/VA option
-  directly as a flat radio row without an accordion while using a collapsible
+  Account / online options first and places `COD (Bayar di Tempat)` at the very
+  bottom (final option), renders a single Transfer/VA option (`length === 1`)
+  directly as a flat radio row without collapse & show while using a collapsible
   group when more than one option is active (`Transfer Bank MANDIRI`
   `1330035981794` a.n. `PT East Retail Network`, `seller_bank_account_id = 5`),
   defaults COD-eligible provinces to `cod` unless the buyer manually chose
@@ -57,7 +58,7 @@
     (matching Meta Pixel `1568437321304661` and CAPI `content_ids` 1:1),
     `<g:price>` (`compare_price IDR`), `<g:sale_price>` (`price IDR`), and
     `.jpg` image links for Meta Commerce compatibility.
-  - Deployed to Cloudflare Worker `revenleather` (`Version ID: d13df382-a058-4694-ba37-99fca3be9cf4`).
+  - Deployed to Cloudflare Worker `revenleather` (`Version ID: 39ed9fb0-1e19-4911-bfb0-47300d272cba`).
 
 ## 2026-10-21 — 1.7.3–1.7.4: uploads and province-scoped product pages cached at the edge; zvarashop back on the product line
 

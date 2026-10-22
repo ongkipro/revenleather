@@ -1,6 +1,6 @@
 # BUILD LOG: AdsBookCMS
 
-> Verified against disk: 2026-10-23 @ `a23c737`
+> Verified against disk: 2026-10-23 @ `029b725`
 
 Author & Curator: **[ongki.pro](https://ongki.pro)**
 
@@ -24,7 +24,7 @@ Author & Curator: **[ongki.pro](https://ongki.pro)**
   variants, `Rp1.000` on 2 variants) so `parseShortcodes` in
   `src/lib/landing-pages.ts` and the XML feeds (`/feed/meta-catalog.xml`,
   `/feed/google-catalog.xml`) emit exact dynamic discounts across all 6 tiers.
-- **Full-Form checkout (`{"mode": "full"}`) & shipping/payment bug fixes (`a23c737`).**
+- **Full-Form checkout (`{"mode": "full"}`) & shipping/payment bug fixes (`029b725`).**
   Switched all 79 `landing_sections` form blocks to `{"mode": "full"}` while
   keeping `stores.cod_disabled_province_codes`
   (`PA,PB,PD,PT,PE,PS,MA,MU,NT,KU,SR,GO,KR,AC,BE`) intact. Diagnosed and fixed
