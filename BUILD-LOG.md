@@ -1,6 +1,6 @@
 # BUILD LOG: AdsBookCMS
 
-> Verified against disk: 2026-10-23 @ `35724d0`
+> Verified against disk: 2026-10-23 @ `a23c737`
 
 Author & Curator: **[ongki.pro](https://ongki.pro)**
 
@@ -24,7 +24,7 @@ Author & Curator: **[ongki.pro](https://ongki.pro)**
   variants, `Rp1.000` on 2 variants) so `parseShortcodes` in
   `src/lib/landing-pages.ts` and the XML feeds (`/feed/meta-catalog.xml`,
   `/feed/google-catalog.xml`) emit exact dynamic discounts across all 6 tiers.
-- **Full-Form checkout (`{"mode": "full"}`) & shipping/payment UX (`761a08a`).**
+- **Full-Form checkout (`{"mode": "full"}`) & shipping/payment UX (`a23c737`).**
   Switched all 79 `landing_sections` form blocks to `{"mode": "full"}` while
   keeping `stores.cod_disabled_province_codes`
   (`PA,PB,PD,PT,PE,PS,MA,MU,NT,KU,SR,GO,KR,AC,BE`) intact. Fixed three checkout
@@ -40,9 +40,9 @@ Author & Curator: **[ongki.pro](https://ongki.pro)**
      bank/VA option is active.
   2. Selecting a COD-eligible province defaults back to `cod` unless the buyer
      explicitly clicked another payment option (`userPickedPaymentMethod`).
-  3. `#district-picked` renders the street address (`#shipping-address-line`)
-     above the resolved Kecamatan (`#district-picked-subtitle`, e.g.
-     `Sukodadi, Lamongan, Jawa Timur 62253`) under `Kirim ke` (hiding
+  3. `#district-picked` renders the street address (`#shipping-address-line`,
+     regular weight) above the bold resolved Kecamatan (`#district-picked-subtitle`,
+     e.g. `Sukodadi, Lamongan, Jawa Timur 62253`) under `Kirim ke` (hiding
      `#shipping-address-line` only while the street address input is still blank
      so `"Alamat lengkap belum diisi."` never appears), and clears
      `#district-help` once the quote succeeds so the shipping cost is displayed
