@@ -98,7 +98,6 @@ export const FAMILY_ORDER: readonly RouteFamily[] = [
 const CONTENT_PAGES = new Set([
   "/tentang",
   "/kontak",
-  "/testimoni",
   "/sitemap",
   "/disclaimer",
   "/kebijakan-privasi",

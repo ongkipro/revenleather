@@ -1,8 +1,13 @@
-# Release and Deployment — AdsBookCMS
+# Release and Deployment — Reven Leather (`page.revenleather.com` / AdsBookCMS Install)
 
-> Verified against disk: 2026-10-09 @ `8213409` + deploy-builds-first working tree
+> Verified against disk: 2026-10-23 @ `241da00`
 
 This document is the single owner of how a change reaches production. It replaces the previous `VERSION.md` runbook and the deleted `AUTO_UPDATE_DEPLOY.md`, which between them described three mutually exclusive release models, none of which matched the one workflow that exists.
+
+> **⚠️ AI AGENT GUARDRAIL WHEN UPDATING FROM `adsbookcms`:**
+> This repository (`revenleather`) is the live install for **`https://page.revenleather.com`**.
+> 1. **Never push or copy Reven Leather changes back to `adsbookcms`.**
+> 2. **When pulling/adopting a new `adsbookcms` release into `revenleather`, DO NOT blind-overwrite the custom Reven Leather files listed in `AGENTS.md` §0 and `docs/UPDATE-PATH-OWNERSHIP.md` §"Reven Leather Protected Customizations"** (including `src/lib/approved-grafir.ts`, `ProductListItem.astro`, `SiteBrand.astro`, `SiteHeader.astro`, `SiteFooter.astro`, `HeroSection.astro`, `ProductsSection.astro`, `CompactMarketHome.astro`, `FormHybridContent.astro`, `GeoIpResolvedForm.astro`, `src/scripts/form-hybrid.ts`, `src/lib/shipping-quote.ts`, and the deleted `src/pages/testimoni.astro` route). Hand-merge any upstream changes into those files and run `npm run route-map && npm test && npm run check && npm run build` before deploying.
 
 ---
 

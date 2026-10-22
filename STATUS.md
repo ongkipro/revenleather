@@ -1,17 +1,21 @@
-# STATUS — AdsBookCMS
+# STATUS — AdsBookCMS (`revenleather` / `page.revenleather.com`)
 
-> Verified against disk: 2026-10-23 (1.7.8 on revenleather `page.revenleather.com` @ `029b725`; 1.7.4 on zvarashop; 1.7.2 on beranda-tani, numaskin-adbook, taniniaga, agritani-shop, zanobyshop)
+> Verified against disk: 2026-10-23 (1.7.8 on revenleather `page.revenleather.com` @ `241da00`; 1.7.4 on zvarashop; 1.7.2 on beranda-tani, numaskin-adbook, taniniaga, agritani-shop, zanobyshop)
 
-## 2026-10-23 — Reven Leather (`page.revenleather.com`): 79-LP Grafir/Non-Grafir rollout, dynamic compare-price tiers, full-form checkout, XML feeds & Ads tracking
+> **⚠️ AI AGENT UPDATE WARNING (`revenleather` vs `adsbookcms`):**
+> `revenleather` (`https://page.revenleather.com`) contains custom storefront, product card, footer, and checkout rules that **must never be pushed to `adsbookcms`** and **must never be overwritten when adopting a new `adsbookcms` release**. Before copying or merging any upstream `adsbookcms` update into this repository, read `AGENTS.md` §0 and `docs/UPDATE-PATH-OWNERSHIP.md` §"Reven Leather Protected Customizations", preserve all Reven Leather files/rules, keep `src/pages/testimoni.astro` deleted, and run `npm run route-map && npm test && npm run check && npm run build`.
+
+## 2026-10-23 — Reven Leather (`page.revenleather.com`): 79-LP Grafir/Non-Grafir rollout, dynamic compare-price tiers, full-form checkout, Gratis Grafir COD-disable mechanism, classic sharp UI & Ads tracking
 
 - **79 Landing Pages Segmented (33 Approved Grafir vs 46 Non-Grafir).** All 79
   published landing pages in `revenleather-d1` (`landing_pages` + `landing_sections`)
   are synchronized:
   - **33 Approved Grafir LPs** (mapped from the 28 validated Google Drive
-    `letak grafir tas` references) carry the Hero `✎ GRATIS GRAFIR NAMA / BRAND`
-    pill, full-width `.grafir-spot` (`✦ GRATIS GRAFIR LASER`,
+    `letak grafir tas` references in `src/lib/approved-grafir.ts`, supporting both
+    `reven-*` LP slugs and `products.slug`) carry the Hero `GRATIS GRAFIR NAMA / BRAND`
+    pill, full-width `.grafir-spot` (`GRATIS GRAFIR LASER`,
     `PREMIUM GRAFIR LASER`, `<s>Rp37.000</s> GRATIS HARI INI`, full-bleed
-    `/images/reven-grafir-sample.webp`, and 3-column borderless strip:
+    `/images/reven-grafir-sample.webp`, and 3-column strip:
     `Nama Pribadi` | `Inisial Monogram` | `Brand / Komunitas`), full-width
     `.offer-card` with `Premium Grafir Laser (<s>Rp37.000</s> GRATIS)`, 5-item
     `.box` grid, and 2-level `.rv-sticky` (`[HEMAT {{discount_percent}}] • Gratis Grafir`).
@@ -19,11 +23,10 @@
     `.offer-card` (3 validated inclusions: `100% Kulit Sapi Asli Bersertifikat`,
     `Box Kemasan Eksklusif Reven Leather`, `Garansi Resmi 1 Tahun & Bisa COD`),
     `.box` (`2×2` standard grid), and `.rv-sticky` (`[HEMAT {{discount_percent}}] • Bisa COD`).
-  - **Shared UI across all 79 LPs:** Customer reviews replace
-    the text pill with the inline `#1d9bf0` Verified SVG badge after the buyer
-    name, `.quote-wrap` centers on `var(--cream)` with `✦` ornament, and
-    `.rv-color` uses word-count headlines (`Dua / Tiga / Empat / Lima pilihan warna, satu standar kriya.`)
-    with 3D radial leather gradients.
+  - **Shared UI across all 79 LPs:** Hero `.deal-meta` displays simplified
+    `4.9 • 1.5rb+ terjual` (without `/5`), customer reviews render the inline
+    `#1d9bf0` Verified SVG badge after the buyer name, and all AI-slop phrases
+    are cleaned from both `landing_pages.meta_description` and `landing_sections.content_html`.
 - **Dynamic Compare-Price (`compare_price`) Calibration (`30%`–`55%`).** All 208
   rows in `product_variants` keep their selling `price` (`harga non-coret`)
   untouched while `compare_price` (`harga coret`) is calibrated to clean IDR
@@ -31,49 +34,61 @@
   6 exact tiers: **`30%` (14 products / 34 variants)**, **`35%` (13 / 41)**,
   **`40%` (13 / 33)**, **`45%` (13 / 26)**, **`49%` (13 / 38)**, and **`55%`
   (13 / 36)**.
-- **Full-Form Checkout (`{"mode": "full"}`) & Shipping/Payment Hardening
-  (`029b725`).** Every form section in `landing_sections` is set to
-  `{"mode": "full"}` while preserving `stores.cod_disabled_province_codes`
-  (`PA,PB,PD,PT,PE,PS,MA,MU,NT,KU,SR,GO,KR,AC,BE`). `GeoIpResolvedForm.astro`
-  passes `province={resolvedProvince}` to `FormHybridContent.astro`;
-  `src/scripts/form-hybrid.ts` keeps `#payment-method-block` hidden until a
-  shipping district (`locationId`) is selected, orders Transfer Bank / Virtual
-  Account / online options first and places `COD (Bayar di Tempat)` at the very
-  bottom (final option), renders a single Transfer/VA option (`length === 1`)
-  directly as a flat radio row without collapse & show while using a collapsible
-  group when more than one option is active (`Transfer Bank MANDIRI`
-  `1330035981794` a.n. `PT East Retail Network`, `seller_bank_account_id = 5`),
-  defaults COD-eligible provinces to `cod` unless the buyer manually chose
-  another method, orders the full street address (`#shipping-address-line`,
-  regular weight) above the bold resolved Kecamatan (`#district-picked-subtitle`,
-  `Kecamatan, Kota, Provinsi Kodepos`) inside `Kirim ke` (hiding
-  `#shipping-address-line` only while the street address is still blank), and
-  clears `#district-help` once the shipping quote succeeds so shipping cost is
-  shown once in `Ringkasan Pemesanan`.
-  `src/lib/shipping-quote.ts` degrades gracefully when `courier_rules` is empty
-  or a single subdistrict quote fails when a city fallback is available.
+- **Full-Form Checkout (`{"mode": "full"}`), Optional Gratis Grafir COD-Disable
+  Mechanism & Shipping/Payment Hardening (`241da00`).**
+  - Every form section in `landing_sections` is set to `{"mode": "full"}` while
+    preserving `stores.cod_disabled_province_codes`
+    (`PA,PB,PD,PT,PE,PS,MA,MU,NT,KU,SR,GO,KR,AC,BE`).
+  - **Optional Gratis Grafir Selector (`FormHybridContent.astro` + `src/scripts/form-hybrid.ts`):**
+    On the 33 products where `isApprovedGrafirSlug(product.slug)` is true, the
+    checkout form renders a `Gratis Grafir Nama / Inisial (Opsional)` block right
+    under `Pilih Varian`:
+    1. **`Tanpa Grafir` (Default):** Buyer ignores/skips engraving — **COD remains
+       fully allowed** (alongside Transfer Bank).
+    2. **`+ Gratis Grafir Nama / Inisial (GRATIS • Non-COD)`:** Reveals the
+       required `#grafir-input-wrap` input (`grafir_text`, max 24 chars),
+       **automatically disables COD (`cod`)** in `syncVisiblePaymentOptions()`,
+       switches to Transfer Bank (`manual_transfer`), displays
+       `Gratis Grafir Laser: "<Teks>" (GRATIS)` in `Ringkasan Pemesanan`, and
+       appends `[GRAFIR: <Teks>]` to `address` on order submission. Switching
+       back to `Tanpa Grafir` immediately restores COD availability.
+  - `GeoIpResolvedForm.astro` passes `province={resolvedProvince}` to
+    `FormHybridContent.astro`; `src/scripts/form-hybrid.ts` keeps
+    `#payment-method-block` hidden until a shipping district (`locationId`) is
+    selected, orders Transfer Bank / Virtual Account / online options first and
+    places `COD (Bayar di Tempat)` at the very bottom (final option), renders a
+    single Transfer/VA option (`length === 1`) directly as a flat radio row
+    without collapse & show while using a collapsible group when more than one
+    option is active (`Transfer Bank MANDIRI` `1330035981794` a.n.
+    `PT East Retail Network`, `seller_bank_account_id = 5`), defaults
+    COD-eligible provinces to `cod` unless the buyer manually chose another
+    method or selected Gratis Grafir, orders the full street address
+    (`#shipping-address-line`, regular weight) above the bold resolved Kecamatan
+    (`#district-picked-subtitle`, `Kecamatan, Kota, Provinsi Kodepos`) inside
+    `Kirim ke`, and clears `#district-help` once the shipping quote succeeds.
 - **XML Catalog Feeds & Ads Signal Contract (`page.revenleather.com`).**
   - `/feed/meta-catalog.xml` and `/feed/google-catalog.xml` serve all **79
     products** (`200 OK`), emitting immutable 5-digit `products.id` as `<g:id>`
     (matching Meta Pixel `1568437321304661` and CAPI `content_ids` 1:1),
     `<g:price>` (`compare_price IDR`), `<g:sale_price>` (`price IDR`), and
     `.jpg` image links for Meta Commerce compatibility.
-- **Homepage, Header, Footer & Inner Pages Heritage Atelier Upgrade (`page.revenleather.com`).**
-  - Unified the storefront homepage (`/`), header (`SiteHeader.astro`, `SiteBrand.astro`),
-    footer (`SiteFooter.astro`), shared inner-page primitives (`Breadcrumb.astro`,
-    `PageIntro.astro`, `LegalPage.astro`), and all public inner pages (`/produk`,
-    `/landing-page`, `/tentang`, `/testimoni`, `/kontak`, `/pengiriman`) onto the
-    **Reven Leather Heritage Atelier** aesthetic (`#1a1411` Espresso, `#faf6f1`
-    Paper, `#f4eee6` Cream, `#c89b72` Caramel Gold, `#8a5a3b` Walnut, `#9e2a2b`
-    Crimson, `Cormorant Garamond` serif + `Inter` sans).
-  - Added interactive category & `✦ Gratis Grafir (33)` filter pills + instant
-    search on both the homepage (`ProductsSection.astro`) and `/produk`, a
-    dedicated Gratis Grafir Laser Spotlight section (`CompactMarketHome.astro`)
-    using `/images/reven-grafir-sample.webp`, verified customer review showcase
-    with `#1d9bf0` Verified SVG badges on `/` and `/testimoni`, and complete
-    Malang warehouse (`Bululawang, Kab. Malang 65171`) & official payment info
-    (`Bank Mandiri 1330035981794 a.n. PT East Retail Network` + `COD`) across
-    `SiteFooter.astro`, `/tentang`, `/kontak`, and `/pengiriman`.
+- **Classic Sharp Storefront, Minimalist Footer & Clean Copy (`page.revenleather.com`).**
+  - Unified the storefront homepage (`/`), header (`SiteHeader.astro`,
+    `SiteBrand.astro` with white `brightness-0 invert` logo on `#1a1411` dark
+    backgrounds), footer (`SiteFooter.astro`), product cards
+    (`ProductListItem.astro`), and inner pages (`/produk`, `/tentang`,
+    `/kontak`, `/pengiriman`) onto classic sharp (`rounded-none`) geometry with
+    zero AI-slop copy.
+  - Removed the redundant `<LandingPagesSection />` from the homepage (since
+    every `/produk/<slug>` page is already the promo/landing page) and deleted
+    `/testimoni` (`src/pages/testimoni.astro`).
+  - `SiteFooter.astro` uses a centered minimalist layout with 5 core links
+    (`Katalog`, `Gratis Grafir`, `Pengiriman`, `Tentang`, `Kontak`) and places
+    `Kebijakan Privasi · Syarat & Ketentuan` directly in the bottom copyright
+    row for Meta & Google Ads compliance.
+  - `ProductListItem.astro` renders compact dynamic spacing in the order:
+    **Category → 1-line truncated Title (`truncate`) → `★★★★★ 4.9 (xx+ terjual)`
+    → Price & Compare Price**.
 
 ## 2026-10-21 — 1.7.3–1.7.4: uploads and province-scoped product pages cached at the edge; zvarashop back on the product line
 

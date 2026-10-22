@@ -1,12 +1,12 @@
 # BUILD LOG: AdsBookCMS
 
-> Verified against disk: 2026-10-23 @ `029b725`
+> Verified against disk: 2026-10-23 @ `241da00`
 
 Author & Curator: **[ongki.pro](https://ongki.pro)**
 
 ---
 
-## 2026-10-23 — Reven Leather (`page.revenleather.com`): 79-LP Grafir/Non-Grafir segmentation, dynamic compare-price calibration, and Full-Form checkout hardening
+## 2026-10-23 — Reven Leather (`page.revenleather.com`): 79-LP Grafir/Non-Grafir segmentation, dynamic compare-price calibration, Full-Form checkout hardening, Gratis Grafir COD-disable mechanism, and classic sharp storefront UI
 
 - **Grafir vs Non-Grafir segmentation across 79 landing pages.** Audited the 28
   reference images in Google Drive `letak grafir tas` against the 79 active
@@ -84,22 +84,16 @@ Author & Curator: **[ongki.pro](https://ongki.pro)**
        sections, replaced it with validated inclusions, and cropped
        `/images/reven-grafir-sample.webp` (`86f3a07`) edge-to-edge on the leather
        surface so it never reads as a separate hang tag.
-- **Homepage, Header, Footer & Inner Pages Heritage Atelier Upgrade.**
-  - Upgraded `SiteHeader.astro` and `SiteBrand.astro` (removed the broken `invert`
-    filter on `/images/reven-mark.svg`, added the Official Store + Verified SVG
-    top strip and quick navigation bar: `Beranda`, `Katalog`, `✦ Gratis Grafir`,
-    `Tentang`, `Kontak`), `HeroSection.astro` (4-image leather collage, 4-metric
-    trust strip, dual CTA), `ProductListItem.astro` (dynamic `Hemat X%` crimson
-    badge, `✦ Gratis Grafir` badge on the 33 approved slugs via
-    `src/lib/approved-grafir.ts`, strikethrough `comparePrice`, and `Bisa COD`),
-    `ProductsSection.astro` (interactive category filter pills + `✦ Gratis Grafir (33)`
-    pill + search input), `CompactMarketHome.astro` (Gratis Grafir Laser
-    Spotlight, 4-card Craftsmanship Bento, 3 verified customer reviews, and 4
-    accordion FAQs), `LandingPagesSection.astro` (compact 6-item horizontal
-    cards), `SiteFooter.astro` (Espresso `#1a1411` Atelier footer with Malang
-    warehouse & Bank Mandiri `1330035981794` / COD info cards + 2-column menu),
-    and all inner pages (`/produk`, `/landing-page`, `/tentang`, `/testimoni`,
-    `/kontak`, `/pengiriman`).
+  6. **Feature — Optional Gratis Grafir Selector with Automatic COD Disable (`FormHybridContent.astro` + `src/scripts/form-hybrid.ts`):**
+     - On the 33 approved Gratis Grafir products (`isApprovedGrafirSlug(product.slug)`), added an optional `Gratis Grafir Nama / Inisial (Opsional)` selector directly below `Pilih Varian`:
+       - `Tanpa Grafir` (default): buyer ignores engraving and **COD remains allowed** alongside Transfer Bank.
+       - `+ Gratis Grafir Nama / Inisial (GRATIS • Non-COD)`: reveals the required `grafir_text` field (max 24 chars), **automatically disables `cod`** in `syncVisiblePaymentOptions()`, switches to Transfer Bank, displays `Gratis Grafir Laser: "<Teks>" (GRATIS)` in `Ringkasan Pemesanan`, and appends `[GRAFIR: <Teks>]` to `address` on submit.
+- **Classic Sharp Storefront (`rounded-none`), Minimalist Footer & AI-Slop Removal.**
+  - Cleaned all AI-slop phrases from `landing_pages.meta_description` and `landing_sections.content_html` across all 79 products in local and remote D1, and simplified `.deal-meta` rating display from `4.9 /5 • 1.5rb+ terjual` to `4.9 • 1.5rb+ terjual` (as well as `src/pages/produk/[slug].astro`).
+  - Updated `SiteBrand.astro` with `brightness-0 invert` when `tone === 'light'` so the single-color `reven-mark.svg` renders crisp white on dark `#1a1411` backgrounds.
+  - Updated `ProductListItem.astro` to classic sharp (`rounded-none`) geometry with dynamic compact spacing: **Category → 1-line truncated Title (`truncate`) → `★★★★★ 4.9 (xx+ terjual)` → Price & Compare Price**, plus `Gratis Grafir` badge across all 33 approved products (`isApprovedGrafirSlug` supporting both `reven-*` LP slugs and `products.slug`).
+  - Upgraded the Gratis Grafir spotlight in `ProductsSection.astro` to a full-width `16:9` `/images/reven-grafir-sample.webp` visual, removed the redundant `<LandingPagesSection />` from `CompactMarketHome.astro`, deleted `src/pages/testimoni.astro` (`/testimoni`), and simplified `SiteFooter.astro` to a minimalist centered layout with `Kebijakan Privasi · Syarat & Ketentuan` placed in the copyright bar for Ads compliance.
+  - Recorded explicit AI agent update guardrails in `AGENTS.md` §0, `docs/UPDATE-PATH-OWNERSHIP.md`, `STATUS.md`, and `RELEASE.md` so future `adsbookcms` updates never overwrite Reven Leather's custom storefront or checkout rules.
 
 ---
 

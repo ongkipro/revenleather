@@ -3,12 +3,9 @@ import SiteBrand from './SiteBrand.astro';
 
 const footerLinks = [
   { label: 'Katalog', href: '/produk' },
-  { label: 'Tentang', href: '/tentang' },
-  { label: 'Ulasan', href: '/testimoni' },
-  { label: 'Kontak', href: '/kontak' },
   { label: 'Pengiriman', href: '/pengiriman' },
-  { label: 'Privasi', href: '/kebijakan-privasi' },
-  { label: 'Syarat', href: '/syarat-ketentuan' },
+  { label: 'Tentang', href: '/tentang' },
+  { label: 'Kontak', href: '/kontak' },
 ];
 ---
 
@@ -22,7 +19,7 @@ const footerLinks = [
 
     <nav
       aria-label="Tautan footer"
-      class="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 border-y border-[#2e241f] py-3.5 text-[11px] font-medium uppercase tracking-[0.08em] text-[#cfc2b4] w-full"
+      class="mt-5 flex w-full flex-wrap items-center justify-center gap-x-5 gap-y-2 border-y border-[#2e241f] py-3.5 text-[11px] font-medium uppercase tracking-[0.08em] text-[#cfc2b4]"
     >
       {
         footerLinks.map((item) => (
@@ -36,8 +33,30 @@ const footerLinks = [
       }
     </nav>
 
-    <p class="mt-5 text-[10.5px] tracking-[0.06em] text-[#8a7c6f]">
-      © {new Date().getFullYear()} {Astro.locals.tenant.name} · PT East Retail Network
-    </p>
+    <div class="mt-5 flex flex-col items-center gap-1.5 text-[10.5px] tracking-[0.04em] text-[#8a7c6f]">
+      <p>© {new Date().getFullYear()} {Astro.locals.tenant.name} · PT East Retail Network</p>
+      <div class="flex flex-wrap items-center justify-center gap-2 text-[#a69788]" aria-label="Tautan legal">
+        <a
+          href="/kebijakan-privasi"
+          class="transition-colors hover:text-[#f4eee6] focus-visible:outline-none"
+        >
+          Kebijakan Privasi
+        </a>
+        <span class="text-[#4a3b32]" aria-hidden="true">·</span>
+        <a
+          href="/syarat-ketentuan"
+          class="transition-colors hover:text-[#f4eee6] focus-visible:outline-none"
+        >
+          Syarat &amp; Ketentuan
+        </a>
+        <span class="text-[#4a3b32]" aria-hidden="true">·</span>
+        <a
+          href="/sitemap"
+          class="transition-colors hover:text-[#f4eee6] focus-visible:outline-none"
+        >
+          Sitemap
+        </a>
+      </div>
+    </div>
   </div>
 </footer>
