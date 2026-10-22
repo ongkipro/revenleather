@@ -121,16 +121,6 @@ type CheckoutState = {
 
 const FALLBACK_PAYMENT_OPTIONS: PaymentOption[] = [
   {
-    code: "cod",
-    adminFee: 0,
-    adminFeeRate: 0,
-    adminFeeVatRate: 0.11,
-    feeBearer: "buyer",
-    paymentMethod: "cod",
-    label: "COD (Bayar di Tempat)",
-    desc: "Bayar tunai saat barang tiba",
-  },
-  {
     code: "MANUAL_5",
     sellerBankAccountId: 5,
     bankCode: "MANDIRI",
@@ -142,6 +132,16 @@ const FALLBACK_PAYMENT_OPTIONS: PaymentOption[] = [
     paymentMethod: "manual_transfer",
     label: "Transfer Bank MANDIRI",
     desc: "Tanpa biaya admin · a.n. PT East Retail Network",
+  },
+  {
+    code: "cod",
+    adminFee: 0,
+    adminFeeRate: 0,
+    adminFeeVatRate: 0.11,
+    feeBearer: "buyer",
+    paymentMethod: "cod",
+    label: "COD (Bayar di Tempat)",
+    desc: "Bayar tunai saat barang tiba",
   },
 ];
 const parsePaymentOptions = (payload: unknown): PaymentOption[] => {
@@ -1404,8 +1404,8 @@ function initHybridOrderFormInstance(formRoot: HTMLElement) {
         },
       );
     }
-    appendPaymentRows(codOptions);
     appendPaymentRows(otherDirectOptions);
+    appendPaymentRows(codOptions);
 
     syncSummary();
     syncSubmitButton();
