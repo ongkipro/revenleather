@@ -32,10 +32,12 @@ Author & Curator: **[ongki.pro](https://ongki.pro)**
   `src/components/storefront/forms/FormHybridContent.astro`,
   `src/components/storefront/forms/GeoIpResolvedForm.astro`, and
   `src/lib/shipping-quote.ts`:
-  1. `#payment-method-block` is now visible immediately and renders single-bank
-     `Transfer Bank MANDIRI` (`1330035981794` a.n. `PT East Retail Network`)
-     directly as a top-level radio option beside `COD (Bayar di Tempat)` rather
-     than hiding it inside a collapsed accordion.
+  1. `#payment-method-block` stays hidden until a shipping district (`locationId`)
+     is selected, orders Transfer Bank / Virtual Account above `COD (Bayar di Tempat)`,
+     and renders a single bank/VA option (`Transfer Bank MANDIRI` `1330035981794`
+     a.n. `PT East Retail Network`) directly as a flat radio row without a
+     show/collapse wrapper while using the collapsible group when more than one
+     bank/VA option is active.
   2. Selecting a COD-eligible province defaults back to `cod` unless the buyer
      explicitly clicked another payment option (`userPickedPaymentMethod`).
   3. `#district-picked` places the resolved Kecamatan

@@ -36,16 +36,18 @@
   `{"mode": "full"}` while preserving `stores.cod_disabled_province_codes`
   (`PA,PB,PD,PT,PE,PS,MA,MU,NT,KU,SR,GO,KR,AC,BE`). `GeoIpResolvedForm.astro`
   passes `province={resolvedProvince}` to `FormHybridContent.astro`;
-  `src/scripts/form-hybrid.ts` keeps `#payment-method-block` visible from initial
-  render, renders single-account `Transfer Bank MANDIRI` (`1330035981794` a.n.
-  `PT East Retail Network`, `seller_bank_account_id = 5`) directly as a top-level
-  radio row beside `COD (Bayar di Tempat)`, defaults COD-eligible provinces to
-  `cod` unless the buyer manually chose another method, promotes the selected
-  Kecamatan (`#district-picked-subtitle`) to the bold primary line under
-  `Kirim ke`, and shows live green shipping confirmation (`✓ Estimasi ongkir ...`)
-  in `#district-help`. `src/lib/shipping-quote.ts` degrades gracefully when
-  `courier_rules` is empty or a single subdistrict quote fails when a city
-  fallback is available.
+  `src/scripts/form-hybrid.ts` keeps `#payment-method-block` hidden until a
+  shipping district (`locationId`) is selected, orders Transfer Bank / Virtual
+  Account above `COD (Bayar di Tempat)`, renders a single Transfer/VA option
+  directly as a flat radio row without an accordion while using a collapsible
+  group when more than one option is active (`Transfer Bank MANDIRI`
+  `1330035981794` a.n. `PT East Retail Network`, `seller_bank_account_id = 5`),
+  defaults COD-eligible provinces to `cod` unless the buyer manually chose
+  another method, promotes the selected Kecamatan (`#district-picked-subtitle`)
+  to the bold primary line under `Kirim ke`, and shows live green shipping
+  confirmation (`✓ Estimasi ongkir ...`) in `#district-help`.
+  `src/lib/shipping-quote.ts` degrades gracefully when `courier_rules` is empty
+  or a single subdistrict quote fails when a city fallback is available.
 - **XML Catalog Feeds & Ads Signal Contract (`page.revenleather.com`).**
   - `/feed/meta-catalog.xml` and `/feed/google-catalog.xml` serve all **79
     products** (`200 OK`), emitting immutable 5-digit `products.id` as `<g:id>`

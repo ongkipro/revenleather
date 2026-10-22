@@ -863,7 +863,7 @@ function initHybridOrderFormInstance(formRoot: HTMLElement) {
   };
 
   const syncPaymentFields = () => {
-    if (paymentMethodBlock) paymentMethodBlock.hidden = false;
+    if (paymentMethodBlock) paymentMethodBlock.hidden = !state.locationId;
   };
 
   const resetShippingState = () => {
@@ -1393,7 +1393,6 @@ function initHybridOrderFormInstance(formRoot: HTMLElement) {
       paymentOptionsEl.appendChild(group);
     };
 
-    appendPaymentRows(codOptions);
     appendPaymentRows(qrisOptions);
     if (manualBankOptions.length === 1) {
       appendPaymentRows(manualBankOptions);
@@ -1421,6 +1420,7 @@ function initHybridOrderFormInstance(formRoot: HTMLElement) {
         },
       );
     }
+    appendPaymentRows(codOptions);
     appendPaymentRows(otherDirectOptions);
 
     syncSummary();
