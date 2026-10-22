@@ -8,7 +8,19 @@ export type CmsVersionInfo = {
 };
 
 export const CMS_VERSION: CmsVersionInfo = {
-  version: "1.5.11",
+  version: "1.7.4",
+  // 1.7.4: product and landing pages are cached per province at the edge; cache hits skip the schema check.
+  // 1.7.3: uploaded images (R2) are kept a day in the Workers cache and answered before D1 and R2.
+  // 1.7.2: Inter is declared only as optional faces (latin, latin-ext); the package swap faces are gone.
+  // 1.7.1: Inter latin faces use font-display optional, so text never changes font mid-read (CLS).
+  // 1.7.0: two-minute edge cache for anonymous storefront HTML; Inter preloaded (CLS).
+  // 1.6.5: http to https in the Worker; PUBLIC_ALIAS_HOSTS 301s older domains to the canonical one.
+  // 1.6.4: a middle-form COD order is handed to WhatsApp from /thanks; clearer buyer-number note.
+  // 1.6.3: CRM templates name the variant, quantity and unit price; no invented strike price; cron heartbeat signal.
+  // 1.6.2: a Receiver Score refusal at any age is retried hourly; the refusal names its key.
+  // 1.6.1: Kelola failure count turns red; "Plugin" stays lit on a plugin's settings page.
+  // 1.6.0: first-party plugins (ADR-028); Kelola CRM becomes the first plugin, off per store.
+  // 1.5.12: optional Kelola CRM push — orders as sales, abandoned orders as follow-up leads.
   // 1.5.11: a script-carrier image in merchant html fails without a request.
   // 1.5.10: deploy preflight refuses when production lists native landings the register does not.
   channel: "production",
@@ -23,8 +35,8 @@ export const CMS_VERSION: CmsVersionInfo = {
   // 1.5.1: browser Meta events ordered behind the single pixel init.
   // 1.5.0: migrations 0056-0061, GA4 ecommerce payload, variant id over SKU,
   // mobile order button, deploy builds before upload (BUILD-LOG 2026-10-11).
-  releaseTag: "2026.10-landing-hero-h1",
+  releaseTag: "2026.10-plugins",
   coreEngine: "Astro 7 SSR + Cloudflare Workers",
-  schemaVersion: 62,
-  lastUpdated: "2026-10-19",
+  schemaVersion: 67,
+  lastUpdated: "2026-10-21",
 };
