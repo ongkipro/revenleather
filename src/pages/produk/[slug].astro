@@ -192,23 +192,20 @@ const productSchemaJson = JSON.stringify(productSchema).replace(/</g, '\\u003c')
       </p>
 
       <!-- Rating & Sold Claims -->
-      <div class="mt-3 flex items-center gap-3 text-[12px] text-[#555555]">
+      <div class="mt-3 flex items-center gap-1.5 text-[12px] text-[#555555]">
         {
           hasAggregateRating && (
-            <>
-              <div class="flex items-center gap-1.5">
-                <RatingStars
-                  rating={ratingValue}
-                  starClass="h-[13px] w-[13px]"
-                  label={`Rating produk ${formattedRating} dari 5 bintang`}
-                />
-                <span class="font-semibold text-[#111111]">{formattedRating}</span>
-              </div>
-              <span>{reviewCount} penilaian</span>
-            </>
+            <div class="flex items-center gap-1.5">
+              <RatingStars
+                rating={ratingValue}
+                starClass="h-[13px] w-[13px]"
+                label={`Rating produk ${formattedRating} dari 5 bintang`}
+              />
+              <span class="font-semibold text-[#111111]">{formattedRating}</span>
+            </div>
           )
         }
-        {hasAggregateRating && hasSoldCount && <span class="h-3 w-px bg-[#E5E5E5]" />}
+        {hasAggregateRating && hasSoldCount && <span class="text-[#767676]" aria-hidden="true">•</span>}
         {hasSoldCount && <span class="font-normal text-[#767676]">{soldLabel}</span>}
       </div>
 
