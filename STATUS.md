@@ -43,9 +43,11 @@
   group when more than one option is active (`Transfer Bank MANDIRI`
   `1330035981794` a.n. `PT East Retail Network`, `seller_bank_account_id = 5`),
   defaults COD-eligible provinces to `cod` unless the buyer manually chose
-  another method, promotes the selected Kecamatan (`#district-picked-subtitle`)
-  to the bold primary line under `Kirim ke`, and shows live green shipping
-  confirmation (`✓ Estimasi ongkir ...`) in `#district-help`.
+  another method, orders the full street address (`#shipping-address-line`)
+  above the resolved Kecamatan (`#district-picked-subtitle`) inside `Kirim ke`
+  (hiding `#shipping-address-line` only while the street address is still blank),
+  and clears `#district-help` once the shipping quote succeeds so shipping cost
+  is shown once in `Ringkasan Pemesanan`.
   `src/lib/shipping-quote.ts` degrades gracefully when `courier_rules` is empty
   or a single subdistrict quote fails when a city fallback is available.
 - **XML Catalog Feeds & Ads Signal Contract (`page.revenleather.com`).**

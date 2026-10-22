@@ -450,7 +450,7 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
-#district-picked-subtitle {
+#shipping-address-line {
   margin: 0.45rem 0 0;
   color: #111111;
   font-size: 0.8125rem;
@@ -458,7 +458,10 @@
   line-height: 1.45;
   overflow-wrap: anywhere;
 }
-#shipping-address-line {
+#shipping-address-line[hidden] {
+  display: none;
+}
+#district-picked-subtitle {
   margin: 0.2rem 0 0;
   color: #555555;
   font-size: 0.75rem;
@@ -466,8 +469,11 @@
   line-height: 1.45;
   overflow-wrap: anywhere;
 }
-#shipping-address-line[hidden] {
-  display: none;
+#shipping-address-line[hidden] + #district-picked-subtitle {
+  margin-top: 0.45rem;
+  color: #111111;
+  font-size: 0.8125rem;
+  font-weight: 700;
 }
 .district-edit-button {
   appearance: none;

@@ -40,12 +40,13 @@ Author & Curator: **[ongki.pro](https://ongki.pro)**
      bank/VA option is active.
   2. Selecting a COD-eligible province defaults back to `cod` unless the buyer
      explicitly clicked another payment option (`userPickedPaymentMethod`).
-  3. `#district-picked` places the resolved Kecamatan
-     (`Sukodono, Sragen, Jawa Tengah 57263`) as the primary bold line under
-     `Kirim ke`, hides `#shipping-address-line` until the street address is
-     typed (removing the misleading `"Alamat lengkap belum diisi."` headline),
-     and prints live green shipping confirmation (`✓ Estimasi ongkir ...`) in
-     `#district-help`.
+  3. `#district-picked` renders the street address (`#shipping-address-line`)
+     above the resolved Kecamatan (`#district-picked-subtitle`, e.g.
+     `Sukodadi, Lamongan, Jawa Timur 62253`) under `Kirim ke` (hiding
+     `#shipping-address-line` only while the street address input is still blank
+     so `"Alamat lengkap belum diisi."` never appears), and clears
+     `#district-help` once the quote succeeds so the shipping cost is displayed
+     solely in `Ringkasan Pemesanan`.
 
 ---
 

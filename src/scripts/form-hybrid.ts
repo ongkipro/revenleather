@@ -1119,15 +1119,7 @@ function initHybridOrderFormInstance(formRoot: HTMLElement) {
         syncHiddenLocationFields();
       }
       applyShippingOptions(cachedShipping.items);
-      const bestCached = cachedShipping.items[0];
-      if (bestCached) {
-        const courierLabel =
-          bestCached.name || bestCached.shipment_provider_code || "Kurir";
-        setDistrictHelp(
-          `✓ Estimasi ongkir ${fmt(bestCached.shipping_cost)} (${courierLabel})`,
-          "success",
-        );
-      }
+      setDistrictHelp("", "neutral");
       syncSubmitButton();
       return;
     }
@@ -1192,15 +1184,7 @@ function initHybridOrderFormInstance(formRoot: HTMLElement) {
         source: "api",
       });
       applyShippingOptions(sortedItems);
-      const best = sortedItems[0];
-      if (best) {
-        const courierLabel =
-          best.name || best.shipment_provider_code || "Kurir";
-        setDistrictHelp(
-          `✓ Estimasi ongkir ${fmt(best.shipping_cost)} (${courierLabel})`,
-          "success",
-        );
-      }
+      setDistrictHelp("", "neutral");
     } catch {
       applyShippingOptions([]);
       setDistrictHelp(
