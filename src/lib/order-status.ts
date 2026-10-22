@@ -37,6 +37,9 @@ export type PublicOrderStatus = {
    */
   product_value: number;
   customer_note?: string;
+  city?: string;
+  province?: string;
+  postal_code?: string;
   payment: PublicPaymentStatus | null;
 };
 
@@ -48,6 +51,9 @@ type PublicOrderStatusRow = {
   payment_status?: string;
   shipping_status?: string;
   lead_follow_up_note?: string | null;
+  city?: string | null;
+  province?: string | null;
+  postal_code?: string | null;
   seller_bank_code?: string | null;
   seller_bank_name?: string | null;
   seller_account_holder?: string | null;
@@ -86,6 +92,9 @@ export async function loadPublicOrderStatus(
         o.payment_status,
         o.shipping_status,
         o.lead_follow_up_note,
+        o.city,
+        o.province,
+        o.postal_code,
         o.seller_bank_code,
         o.seller_bank_name,
         o.seller_account_holder,
@@ -130,6 +139,9 @@ export async function loadPublicOrderStatus(
     total_amount: Number(orderRow.total_amount ?? 0),
     product_value: Number(orderRow.product_value ?? 0),
     ...(orderRow.lead_follow_up_note ? { customer_note: orderRow.lead_follow_up_note } : {}),
+    ...(orderRow.city ? { city: orderRow.city } : {}),
+    ...(orderRow.province ? { province: orderRow.province } : {}),
+    ...(orderRow.postal_code ? { postal_code: orderRow.postal_code } : {}),
     payment:
       orderRow.channel_code ||
       orderRow.payment_method === "manual_transfer" ||

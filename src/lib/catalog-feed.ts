@@ -113,7 +113,7 @@ export function defaultCatalogContentId(product: {
  * WebP otherwise, so a store with no JPEG copies is served exactly what it was
  * before. Google accepts either.
  */
-const UPLOADED_WEBP = /^(\/assets\/uploads\/\d{4}-\d{2}-\d{2}\/[0-9a-f-]+)\.webp$/i;
+const UPLOADED_WEBP = /^((?:https?:\/\/[^/?#]+)?\/assets\/uploads\/\d{4}-\d{2}-\d{2}\/[0-9a-f-]+)\.webp$/i;
 
 export function feedImagePath(path: string): string {
   return path.replace(UPLOADED_WEBP, "$1.jpg");
@@ -163,7 +163,9 @@ function buildCatalogXml(
     const heroImage = feedImagePath(product.heroImage);
     const imageLink = heroImage.startsWith("http") ? heroImage : `${origin}${heroImage}`;
 
-    const variant = product.variants[0];
+    const variant = product.variants.reduce((low, candidate) =>
+      candidate.price < low.price ? candidate : low,
+    );
     // One row that predates the five-digit scheme must not take the catalog
     // down. The strict identity rule still governs what gets published — an
     // unpublishable row is left out — but the feed is an aggregate, and
@@ -177,7 +179,8 @@ function buildCatalogXml(
     const salePriceXml = hasSale
       ? `\n      <g:sale_price>${escapeXml(`${variant.price} IDR`)}</g:sale_price>`
       : "";
-    const itemDescription = product.seoDescription || product.headline || product.description || siteDescription;
+    const rawDescription = product.seoDescription || product.headline || product.description || siteDescription;
+    const itemDescription = rawDescription.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 
     itemsXml += `
     <item>

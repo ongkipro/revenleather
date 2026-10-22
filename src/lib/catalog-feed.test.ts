@@ -198,7 +198,9 @@ test("the Meta feed carries no identifier claim either", () => {
 
 test("feeds link the JPEG sibling of an uploaded WebP, since Meta takes JPEG or PNG only", () => {
   const upload = "/assets/uploads/2026-10-08/bd4cac38-d36e-4285-9811-532ebecdb3de.webp";
+  const fullUrlUpload = "https://page.revenleather.com/assets/uploads/2026-10-08/30a60cc5-e465-479d-8a39-c9c1b78f0515.webp";
   assert.equal(feedImagePath(upload), upload.replace(/\.webp$/, ".jpg"));
+  assert.equal(feedImagePath(fullUrlUpload), fullUrlUpload.replace(/\.webp$/, ".jpg"));
   // Anything that is not an asset-route upload is left as the merchant set it.
   for (const other of ["/images/adsbook-mark.webp", "https://r2.example.com/pompa.webp", "/assets/uploads/2026-10-08/x.png"]) {
     assert.equal(feedImagePath(other), other);

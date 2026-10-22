@@ -246,6 +246,7 @@ export function getAdTaxonomy(
   title?: string | null,
   description?: string | null
 ): AdTaxonomy {
+  const titleOnly = (title || "").toLowerCase().trim();
   const name = [category, title].filter(Boolean).join(" ").toLowerCase().trim();
   const body = (description || "").toLowerCase().trim();
 
@@ -257,14 +258,17 @@ export function getAdTaxonomy(
   let tied = false;
   for (const pool of [TAXONOMY_RULES.filter((r) => !r.fallback), TAXONOMY_RULES.filter((r) => r.fallback)]) {
     let bestScore = 0;
+    let bestTitleScore = 0;
     for (const rule of pool) {
       const score = scoreRule(rule, name, body);
       if (score < MIN_SCORE) continue;
-      if (score > bestScore) {
+      const titleScore = scoreRule(rule, titleOnly, "");
+      if (score > bestScore || (score === bestScore && titleScore > bestTitleScore)) {
         bestScore = score;
+        bestTitleScore = titleScore;
         bestRule = rule;
         tied = false;
-      } else if (score === bestScore) {
+      } else if (score === bestScore && titleScore === bestTitleScore) {
         tied = true;
       }
     }

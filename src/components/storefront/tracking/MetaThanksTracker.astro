@@ -90,10 +90,10 @@ const { tenantName } = Astro.props;
     const contentId = productId;
     const phone = pick('phone', '');
     const name = pick('name', '');
-    const province = pick('province', '');
-    const city = pick('city', '');
+    let province = pick('province', '');
+    let city = pick('city', '');
     const district = pick('district', '');
-    const postalCode = pick('postal_code', '');
+    let postalCode = pick('postal_code', '');
     const productPrice = pickNum('product_price', pickNum('value', 1));
     const quantity = Math.max(1, pickNum('quantity', 1));
     let conversionValue = productPrice * quantity;
@@ -133,7 +133,11 @@ const { tenantName } = Astro.props;
         finalEventId = String(statusData.order_number || '').trim();
         if (!finalEventId) return;
         verifiedPaymentStatus = String(statusData.payment_status || verifiedPaymentStatus).toLowerCase();
-        if (paymentMethod !== 'cod' && !statusData.is_paid) return;
+        const effectivePaymentMethod = String(statusData.payment_method || paymentMethod).toLowerCase();
+        if (effectivePaymentMethod !== 'cod' && !statusData.is_paid) return;
+        if (!city && statusData.city) city = String(statusData.city).trim();
+        if (!province && statusData.province) province = String(statusData.province).trim();
+        if (!postalCode && statusData.postal_code) postalCode = String(statusData.postal_code).trim();
         // Report the goods, not the invoice. `product_value` is the chosen
         // variant's price times its quantity, summed from `order_items` — it
         // excludes shipping, the COD service fee and its VAT, and the payment
@@ -242,7 +246,7 @@ const { tenantName } = Astro.props;
           item_id: productId,
           item_name: productName,
           item_variant: pick('variant_unique_id', '') || undefined,
-          transaction_id: orderId || undefined,
+          transaction_id: orderId || finalEventId || undefined,
           event_id: finalEventId,
         });
       } catch (error) {
@@ -284,7 +288,7 @@ const { tenantName } = Astro.props;
               country: 'ID',
             },
           };
-          window.__PS_PUSH_GOOGLE_CONVERSION__(Number(conversionValue || 1), orderId || undefined, googleUserData);
+          window.__PS_PUSH_GOOGLE_CONVERSION__(Number(conversionValue || 1), orderId || finalEventId || undefined, googleUserData);
         }
       } catch (error) {
         console.error('google-ads-purchase', error);

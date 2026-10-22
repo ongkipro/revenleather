@@ -7,6 +7,12 @@
 
 ## 2026-10-23 — Reven Leather (`page.revenleather.com`): 79-LP Grafir/Non-Grafir rollout, dynamic compare-price tiers, full-form checkout, Gratis Grafir COD-disable mechanism, classic sharp UI & Ads tracking
 
+- **Google & Meta Catalog XML (`/feed/google-catalog.xml`, `/feed/meta-catalog.xml`) & Full-Form Advanced Matching Hardening:**
+  - `feedImagePath()` in `src/lib/catalog-feed.ts` now rewrites same-origin absolute `/assets/uploads/...webp` URLs as well as relative paths to `.jpg` (`79/79` items in both feeds now emit `.jpg` `g:image_link`s), selects the lowest-priced variant (`variants.reduce`) so `<g:price>` / `<g:sale_price>` match `[slug].astro`'s displayed price, and strips HTML/newlines from `<g:description>`.
+  - `getAdTaxonomy()` in `src/lib/ad-taxonomy.ts` breaks ties between category and product title using title keyword hits (`Reven Helsinki Leather Laptop Bag` resolves to `Tas & Dompet > Tas Laptop` + `travel & luggage > briefcases & laptop bags` instead of `Umum > Sling Bag`).
+  - `src/scripts/form-hybrid.ts` & `src/scripts/form-middle.ts`: `AddToCart` and `InitiateCheckout` now send full `city` (`ct`), `province` (`st`), `district`, `postal_code` (`zp`), `country` (`id`), `customer_name` (`fn`/`ln`), `customer_phone` (`ph`), and `external_id` to both CAPI (`/api/meta-event`) and browser Pixel (`fbq.instance.pixelsByID[pixelId].userData`), fire `InitiateCheckout` once both customer identity and shipping district/postal code resolve, include `contents` on Pixel funnel events, and push Google Ads Enhanced Conversions `gtag('set', 'user_data', ...)` with SHA-256 E.164 phone, first/last name, `city`, `region`, `postal_code`, and `country: 'ID'`.
+  - `src/lib/order-status.ts` & `MetaThanksTracker.astro`: `/api/order-status` returns `city`, `province`, and `postal_code` so `/thanks` backfills full Advanced Matching & Enhanced Conversion address signals even when opened via fragment locator (`#o=...&t=...`) without `sessionStorage`, and falls back `transaction_id` to `finalEventId` (`order_number`).
+
 - **79 Landing Pages Segmented (33 Approved Grafir vs 46 Non-Grafir).** All 79
   published landing pages in `revenleather-d1` (`landing_pages` + `landing_sections`)
   are synchronized:

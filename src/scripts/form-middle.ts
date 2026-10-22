@@ -122,19 +122,27 @@ function initMiddleOrderFormInstance(
       external_id:
         getCookieValue(META_EXTERNAL_ID_COOKIE) || extraUserData?.external_id,
     });
-    const signature = JSON.stringify(advancedMatching);
+    const cleanMatching = Object.fromEntries(
+      Object.entries(advancedMatching).filter(
+        ([key, value]) => key !== "client_user_agent" && Boolean(value),
+      ),
+    );
+    const signature = JSON.stringify(cleanMatching);
     if ((window as any).__META_AM_SIGNATURE__ === signature) return;
     (window as any).__META_AM_SIGNATURE__ = signature;
-    // Routed into the one init `MetaPixelBase` owns, never a second `fbq('init')`.
-    // fbevents honours advanced matching once per pixel id and discards later
-    // calls silently, so this used to hash a full matching object and throw it
-    // away. On a form page the pixel has already initialised by the time the
-    // buyer types anything, so this returns false and the browser leg keeps the
-    // `external_id` it was initialised with — the phone and name still reach
-    // Meta on the CAPI leg, which reads them server-side and is not subject to
-    // this constraint. Deleting the call instead would lose the one case that
-    // does land: a buyer who fills the form before the pixel has initialised.
-    (window as any).__PS_META_INIT__?.(advancedMatching);
+    const initialized = (window as any).__PS_META_INIT__?.(cleanMatching);
+    if (!initialized) {
+      const pixelState = (window as any).fbq?.instance?.pixelsByID?.[
+        String(pixelId)
+      ];
+      if (
+        pixelState &&
+        typeof pixelState.userData === "object" &&
+        pixelState.userData !== null
+      ) {
+        Object.assign(pixelState.userData, cleanMatching);
+      }
+    }
   };
   const postMetaEvent = (payload: Record<string, unknown>) =>
     fetch("/api/meta-event", {
@@ -232,6 +240,7 @@ function initMiddleOrderFormInstance(
     void trackMeta("AddToCart", {
       ...(customerName ? { customer_name: customerName } : {}),
       ...(customerPhone ? { customer_phone: customerPhone } : {}),
+      ...(province ? { province } : {}),
       country: "id",
     });
   };
@@ -731,6 +740,7 @@ function initMiddleOrderFormInstance(
       void trackMeta("InitiateCheckout", {
         customer_name: customerName,
         customer_phone: customerPhone,
+        ...(province ? { province } : {}),
         country: "id",
       });
     }
@@ -862,6 +872,7 @@ function initMiddleOrderFormInstance(
       name: customerName,
       phone: customerPhone,
       address,
+      province: province || "",
       product_id: String(productId || ''),
       product_name: productName,
       product_price: price,

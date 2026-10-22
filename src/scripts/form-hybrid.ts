@@ -1,4 +1,8 @@
-import { buildMetaAdvancedMatching } from "../lib/meta-identity.ts";
+import {
+  buildMetaAdvancedMatching,
+  sha256Hex,
+  toE164Digits,
+} from "../lib/meta-identity.ts";
 import { META_EXTERNAL_ID_COOKIE } from "../lib/click-ids.ts";
 import { formatIdr } from "../lib/format-idr";
 import { normalizePhone } from "../lib/validation";
@@ -413,19 +417,74 @@ function initHybridOrderFormInstance(formRoot: HTMLElement) {
       external_id:
         getCookieValue(META_EXTERNAL_ID_COOKIE) || extraUserData?.external_id,
     });
-    const signature = JSON.stringify(advancedMatching);
+    const cleanMatching = Object.fromEntries(
+      Object.entries(advancedMatching).filter(
+        ([key, value]) => key !== "client_user_agent" && Boolean(value),
+      ),
+    );
+    const signature = JSON.stringify(cleanMatching);
     if ((window as any).__META_AM_SIGNATURE__ === signature) return;
     (window as any).__META_AM_SIGNATURE__ = signature;
     // Routed into the one init `MetaPixelBase` owns, never a second `fbq('init')`.
-    // fbevents honours advanced matching once per pixel id and discards later
-    // calls silently, so this used to hash a full matching object and throw it
-    // away. On a form page the pixel has already initialised by the time the
-    // buyer types anything, so this returns false and the browser leg keeps the
-    // `external_id` it was initialised with — the phone and name still reach
-    // Meta on the CAPI leg, which reads them server-side and is not subject to
-    // this constraint. Deleting the call instead would lose the one case that
-    // does land: a buyer who fills the form before the pixel has initialised.
-    (window as any).__PS_META_INIT__?.(advancedMatching);
+    // When the pixel has already initialised on page load, merge the newly
+    // resolved customer hashes (`ph`, `fn`, `ln`, `ct`, `st`, `zp`, `country`)
+    // directly into `fbq.instance.pixelsByID[pixelId].userData` so browser
+    // `AddToCart` and `InitiateCheckout` beacons carry the same full key set
+    // as the server CAPI leg without issuing a duplicate `fbq('init')`.
+    const initialized = (window as any).__PS_META_INIT__?.(cleanMatching);
+    if (!initialized) {
+      const pixelState = (window as any).fbq?.instance?.pixelsByID?.[
+        String(pixelId)
+      ];
+      if (
+        pixelState &&
+        typeof pixelState.userData === "object" &&
+        pixelState.userData !== null
+      ) {
+        Object.assign(pixelState.userData, cleanMatching);
+      }
+    }
+    if (typeof (window as any).gtag === "function" && extraUserData) {
+      const googleText = (val: unknown) => {
+        const cleaned = String(val ?? "").trim().toLowerCase();
+        return cleaned || undefined;
+      };
+      const nameParts = String(extraUserData.customer_name ?? "")
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
+      const normalizedPhone = toE164Digits(
+        String(extraUserData.customer_phone ?? ""),
+      );
+      const firstName = googleText(nameParts[0]);
+      const lastName =
+        nameParts.length > 1
+          ? googleText(nameParts.slice(1).join(" "))
+          : undefined;
+      const hashOpt = (val: string | undefined) =>
+        val ? sha256Hex(val).catch(() => undefined) : Promise.resolve(undefined);
+      const [hashedPhone, hashedFirst, hashedLast] = await Promise.all([
+        hashOpt(normalizedPhone ? `+${normalizedPhone}` : undefined),
+        hashOpt(firstName),
+        hashOpt(lastName),
+      ]);
+      const city = googleText(extraUserData.city);
+      const region = googleText(extraUserData.province);
+      const postalCode = googleText(extraUserData.postal_code);
+      if (hashedPhone || hashedFirst || city || region || postalCode) {
+        (window as any).gtag("set", "user_data", {
+          ...(hashedPhone ? { sha256_phone_number: hashedPhone } : {}),
+          address: {
+            ...(hashedFirst ? { sha256_first_name: hashedFirst } : {}),
+            ...(hashedLast ? { sha256_last_name: hashedLast } : {}),
+            ...(city ? { city } : {}),
+            ...(region ? { region } : {}),
+            ...(postalCode ? { postal_code: postalCode } : {}),
+            country: "ID",
+          },
+        });
+      }
+    }
   };
 
   const trackMeta = async (
@@ -447,6 +506,9 @@ function initHybridOrderFormInstance(formRoot: HTMLElement) {
         {
           content_name: meta.contentName,
           content_ids: meta.contentId ? [meta.contentId] : undefined,
+          contents: meta.contentId
+            ? [{ id: meta.contentId, quantity: 1, item_price: meta.value }]
+            : undefined,
           content_type: "product",
           value: meta.value,
           currency: "IDR",
@@ -508,15 +570,48 @@ function initHybridOrderFormInstance(formRoot: HTMLElement) {
     return customerName.length >= 3 && isValidWa62(customerPhone);
   };
 
-  const maybeTrackAddToCart = (force = false) => {
-    if (!force && !hasQualifiedIdentity()) return;
-    const customerName = customerNameInput?.value.trim() || "";
-    const customerPhone = normalizePhone(phoneInput?.value || "");
-    void trackMeta("AddToCart", {
+  const buildCheckoutUserData = (
+    overrideName?: string,
+    overridePhone?: string,
+  ) => {
+    const customerName = (
+      overrideName ??
+      customerNameInput?.value ??
+      ""
+    ).trim();
+    const customerPhone = normalizePhone(
+      overridePhone ?? phoneInput?.value ?? "",
+    );
+    const province =
+      state?.selectedProvince ||
+      state?.location?.province ||
+      state?.geoProvince ||
+      config.province ||
+      "";
+    const city = state?.selectedCity || state?.location?.city || "";
+    const district = state?.location?.district || "";
+    const postalCode =
+      state?.selectedPostalCode || state?.location?.postal_code || "";
+    return {
       ...(customerName ? { customer_name: customerName } : {}),
       ...(customerPhone ? { customer_phone: customerPhone } : {}),
+      ...(province ? { province } : {}),
+      ...(city ? { city } : {}),
+      ...(district ? { district } : {}),
+      ...(postalCode ? { postal_code: postalCode } : {}),
       country: "id",
-    });
+    };
+  };
+
+  const maybeTrackAddToCart = (force = false) => {
+    if (!force && !hasQualifiedIdentity()) return;
+    void trackMeta("AddToCart", buildCheckoutUserData());
+  };
+
+  const maybeTrackInitiateCheckout = () => {
+    if (!hasQualifiedIdentity() || !state?.location || !state?.locationId)
+      return;
+    void trackMeta("InitiateCheckout", buildCheckoutUserData());
   };
   const abandonedCapture = new AbandonedLeadCaptureGate(
     readAbandonedLeadFingerprints(sessionStorage),
@@ -1162,6 +1257,7 @@ function initHybridOrderFormInstance(formRoot: HTMLElement) {
       applyShippingOptions(cachedShipping.items);
       setDistrictHelp("", "neutral");
       syncSubmitButton();
+      maybeTrackInitiateCheckout();
       return;
     }
 
@@ -1226,6 +1322,7 @@ function initHybridOrderFormInstance(formRoot: HTMLElement) {
       });
       applyShippingOptions(sortedItems);
       setDistrictHelp("", "neutral");
+      maybeTrackInitiateCheckout();
     } catch {
       applyShippingOptions([]);
       setDistrictHelp(
@@ -1836,6 +1933,7 @@ function initHybridOrderFormInstance(formRoot: HTMLElement) {
     customerNameInput.value = String(customerNameInput.value || "").trim();
     validateField(customerNameInput);
     maybeTrackAddToCart();
+    if (!state.shippingLoading) maybeTrackInitiateCheckout();
     maybeRecordAbandonedLead();
   });
   customerNameInput?.addEventListener("invalid", () =>
@@ -1864,6 +1962,7 @@ function initHybridOrderFormInstance(formRoot: HTMLElement) {
     phoneInput.value = normalizePhone(phoneInput.value);
     validateField(phoneInput);
     maybeTrackAddToCart();
+    if (!state.shippingLoading) maybeTrackInitiateCheckout();
     maybeRecordAbandonedLead();
   });
   form
@@ -2044,15 +2143,12 @@ function initHybridOrderFormInstance(formRoot: HTMLElement) {
     phoneInput.value = customerPhone;
     maybeTrackAddToCart();
     if (hasQualifiedIdentity()) {
-      void trackMeta("InitiateCheckout", {
-        customer_name: customerName,
-        customer_phone: customerPhone,
-        country: "id",
-        province: state.selectedProvince || state.location?.province,
-        city: state.selectedCity || state.location?.city,
-        district: state.location?.district,
-        postal_code: state.selectedPostalCode || state.location?.postal_code,
-      });
+      const checkoutUserData = buildCheckoutUserData(
+        customerName,
+        customerPhone,
+      );
+      void ensureMetaAdvancedMatching(checkoutUserData);
+      void trackMeta("InitiateCheckout", checkoutUserData);
     }
     const price = Number(checked.dataset.price || 0);
     const label = String(checked.dataset.label || config.productName);

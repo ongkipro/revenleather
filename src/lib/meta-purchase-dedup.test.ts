@@ -243,6 +243,36 @@ test("the browser Pixel's Purchase advanced-matching object hashes city, state, 
   assert.equal(capiUserData.country, "id");
 });
 
+test("Purchase backfills city, province and postal_code from /api/order-status when sessionStorage is partial", async () => {
+  const run = await runTracker(
+    {
+      success: true,
+      order_number: "INV-10042",
+      payment_status: "unpaid",
+      payment_method: "cod",
+      is_paid: false,
+      total_amount: 189_000,
+      city: "Surabaya",
+      province: "Jawa Timur",
+      postal_code: "60241",
+    },
+    {
+      city: "",
+      province: "",
+      postal_code: "",
+    },
+  );
+
+  const advancedMatching = run.pixelInitCalls[0];
+  assert.equal(advancedMatching.ct, await sha256Hex("surabaya"));
+  assert.equal(advancedMatching.st, await sha256Hex("jawatimur"));
+  assert.equal(advancedMatching.zp, await sha256Hex("60241"));
+  const capiUserData = run.postedPayloads[0].user_data as Record<string, unknown>;
+  assert.equal(capiUserData.city, "Surabaya");
+  assert.equal(capiUserData.province, "Jawa Timur");
+  assert.equal(capiUserData.postal_code, "60241");
+});
+
 test("Purchase keeps one stable first-party external_id across Pixel and CAPI", async () => {
   const externalId = "0123456789abcdef0123456789abcdef";
   const run = await runTracker(

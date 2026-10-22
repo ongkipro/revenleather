@@ -52,6 +52,7 @@ test("leather goods land in their own category, not the handbag parent", () => {
     ["Handbag & Clutch", "Reven Dewa Exclusive Handbag", 3032, "travel & luggage > handbags & wallets"],
     ["Totebag", "Reven Arcen Multi-Pocket Totebag", 3032, "travel & luggage > handbags & wallets > totes"],
     ["Laptop Sleeve", "Reven Amba Sleeve L", undefined, "travel & luggage > briefcases & laptop bags"],
+    ["Sling Bag", "Reven Helsinki Leather Laptop Bag", undefined, "travel & luggage > briefcases & laptop bags"],
     ["Aksesoris Kulit", "Reven Premium Leather Balm Care", 628, "home > cleaning supplies > shoe care"],
     ["Aksesoris Kulit", "Reven Pentador Phone Bag", 6551, "travel & luggage > handbags & wallets"],
   ];
