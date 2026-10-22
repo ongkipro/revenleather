@@ -129,7 +129,7 @@ const availableGroups = categoryOrder.filter((g) => (groupCounts.get(g) || 0) > 
                   data-index={index}
                   data-group={group}
                   data-grafir={isGrafir ? '1' : '0'}
-                  data-name={product.name.toLowerCase()}
+                  data-name={(product.productName || '').toLowerCase()}
                 >
                   <ProductListItem product={product} formatPrice={formatIdr} eager={index < 4} />
                 </div>

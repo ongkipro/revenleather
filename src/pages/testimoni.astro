@@ -2,15 +2,17 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PageIntro from '../components/storefront/shared/PageIntro.astro';
 import { getStorefrontProducts } from '../lib/catalog';
+import { getRuntimeEnv } from '../lib/env';
 import { cardImageSrc } from '../lib/image-derivative';
 
 const products = await getStorefrontProducts(Astro.locals);
 
 interface AggregatedReview {
   author: string;
+  city: string;
+  variant: string;
   rating: number;
   comment: string;
-  date?: string;
   productName: string;
   productSlug: string;
   productImage: string;
@@ -18,19 +20,66 @@ interface AggregatedReview {
 }
 
 const allReviews: AggregatedReview[] = [];
-for (const product of products) {
-  for (const rev of product.reviews || []) {
-    if (rev.comment && rev.author) {
-      allReviews.push({
-        author: rev.author,
-        rating: rev.rating || 5,
-        comment: rev.comment,
-        date: rev.date,
-        productName: product.name,
-        productSlug: product.slug,
-        productImage: product.images[0] || '',
-        category: product.category,
-      });
+
+const database = getRuntimeEnv(Astro.locals)?.OMS_DB as D1Database | undefined;
+if (database?.prepare) {
+  try {
+    const res = await database
+      .prepare(
+        `SELECT lp.slug, ls.content_html
+         FROM landing_sections ls
+         INNER JOIN landing_pages lp ON lp.id = ls.landing_page_id
+         WHERE ls.type = 'html' AND lp.is_active = 1 AND ls.content_html LIKE '%class="rcard"%'
+         LIMIT 40`,
+      )
+      .all<{ slug: string; content_html: string }>();
+
+    const productBySlug = new Map(products.map((p) => [p.slug, p]));
+    for (const row of res.results ?? []) {
+      const prod = productBySlug.get(row.slug);
+      if (!prod) continue;
+      const cards = row.content_html.match(/<article class="rcard">[\s\S]*?<\/article>/g) ?? [];
+      const firstCard = cards[0];
+      if (!firstCard) continue;
+      const authorMatch = firstCard.match(/<div class="ruser"><span>([^<]+)<\/span>/);
+      const cityMatch = firstCard.match(/<span class="rcity">([^<]+)<\/span>/);
+      const varMatch = firstCard.match(/<span class="rvar">(?:<i[^>]*><\/i>)?([^<]+)<\/span>/);
+      const textMatch = firstCard.match(/<p class="rtext">([^<]+)<\/p>/);
+      if (authorMatch && textMatch) {
+        allReviews.push({
+          author: authorMatch[1].trim(),
+          city: (cityMatch?.[1] || '').replace(/^[•·\s]+/, '').trim(),
+          variant: (varMatch?.[1] || '').trim(),
+          rating: 5,
+          comment: textMatch[1].replace(/^[“"]+|[”"]+$/g, '').trim(),
+          productName: prod.productName,
+          productSlug: prod.slug,
+          productImage: prod.heroImage || prod.image || '',
+          category: prod.category,
+        });
+      }
+    }
+  } catch {
+    // Fallback to product.reviews if D1 query fails
+  }
+}
+
+if (allReviews.length === 0) {
+  for (const product of products) {
+    for (const rev of product.reviews || []) {
+      if (rev.comment && rev.name) {
+        allReviews.push({
+          author: rev.name,
+          city: rev.location || '',
+          variant: '',
+          rating: rev.rating || 5,
+          comment: rev.comment,
+          productName: product.productName,
+          productSlug: product.slug,
+          productImage: product.heroImage || product.image || '',
+          category: product.category,
+        });
+      }
     }
   }
 }
@@ -49,7 +98,7 @@ const displayedReviews = allReviews.slice(0, 36);
 >
   <main id="konten-utama" class="min-h-screen bg-[#faf6f1] text-[#1a1411]">
     <PageIntro
-      badge={`${allReviews.length} Ulasan`}
+      badge={`Ulasan Pembeli`}
       title={`Ulasan Pembeli ${Astro.locals.tenant.name}`}
       description="Ulasan dari pembeli produk tas, dompet, dan ikat pinggang kulit sapi asli Reven Leather."
       breadcrumbs={[{ label: 'Beranda', href: '/' }, { label: 'Ulasan Pembeli' }]}
@@ -67,7 +116,7 @@ const displayedReviews = allReviews.slice(0, 36);
             <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
           </div>
           <p class="mt-1 text-[11px] text-[#574c43]">
-            Total <strong>{allReviews.length}</strong> ulasan produk
+            Menampilkan <strong>{displayedReviews.length}</strong> ulasan pilihan dari 79 produk
           </p>
         </div>
         <div class="rounded-lg border border-[#efe7dc] bg-[#faf6f1] px-3 py-2.5 text-right">
@@ -106,6 +155,7 @@ const displayedReviews = allReviews.slice(0, 36);
                     d="M10.54 16.2L6.8 12.46l1.41-1.42 2.26 2.26 4.8-5.23 1.47 1.36-6.2 6.77z"
                   />
                 </svg>
+                {rev.city && <span class="text-[10.5px] text-[#76685b]">· {rev.city}</span>}
               </div>
               <div class="flex items-center gap-0.5 text-[11px] text-[#d97706]">
                 {Array.from({ length: rev.rating }).map(() => (
@@ -113,6 +163,10 @@ const displayedReviews = allReviews.slice(0, 36);
                 ))}
               </div>
             </div>
+
+            {rev.variant && (
+              <p class="mt-1 text-[10.5px] font-medium text-[#8a5a3b]">{rev.variant}</p>
+            )}
 
             <p class="mt-2 text-[12.5px] leading-[1.65] text-[#574c43]">
               “{rev.comment}”
