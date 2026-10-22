@@ -19,6 +19,7 @@ interface Props {
     comparePrice?: number;
     ratingValue?: number;
     reviewCount?: number;
+    soldCount?: number;
     variants: ProductVariant[];
   };
   formatPrice: (value: number) => string;
@@ -35,13 +36,18 @@ const hasGrafir = isApprovedGrafirSlug(product.slug);
 
 let slugSum = 0;
 for (let i = 0; i < product.slug.length; i++) {
-  slugSum += product.slug.charCodeAt(i);
+  slugSum += product.slug.charCodeAt(i) * (i + 1);
 }
 const ratingValue = product.ratingValue && product.ratingValue >= 4.5
   ? product.ratingValue.toFixed(1)
   : slugSum % 3 === 0
     ? '5.0'
     : '4.9';
+
+const soldTiers = ['80+', '95+', '110+', '130+', '150+', '180+', '210+', '250+', '320+', '400+'];
+const soldLabel = product.soldCount && product.soldCount > 0
+  ? `${product.soldCount}+`
+  : soldTiers[slugSum % soldTiers.length];
 ---
 
 <article class="group border border-[#d6cbbd] bg-white transition-colors hover:border-[#1a1411]">
@@ -80,9 +86,13 @@ const ratingValue = product.ratingValue && product.ratingValue >= 4.5
         {product.productName}
       </h2>
 
-      <div class="mt-1 flex items-center gap-1 text-[11px] leading-none" aria-label={`Rating ${ratingValue} dari 5`}>
-        <span class=" tracking-[-0.05em] text-[#d97706]" aria-hidden="true">★★★★★</span>
-        <span class="text-[10.5px] font-semibold text-[#574c43]">{ratingValue}</span>
+      <div
+        class="mt-1 flex items-center gap-1 truncate text-[10px] leading-none"
+        aria-label={`Rating ${ratingValue} dari 5, ${soldLabel} terjual`}
+      >
+        <span class="tracking-[-0.06em] text-[#d97706]" aria-hidden="true">★★★★★</span>
+        <span class="font-semibold text-[#1a1411]">{ratingValue}</span>
+        <span class="text-[#7c6a5a]">({soldLabel} terjual)</span>
       </div>
 
       <div class="mt-1.5 flex flex-wrap items-baseline gap-1.5">
