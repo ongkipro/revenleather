@@ -1,6 +1,6 @@
 # BUILD LOG: AdsBookCMS
 
-> Verified against disk: 2026-10-23 @ `761a08a`
+> Verified against disk: 2026-10-23 @ `35724d0`
 
 Author & Curator: **[ongki.pro](https://ongki.pro)**
 
@@ -16,8 +16,7 @@ Author & Curator: **[ongki.pro](https://ongki.pro)**
   `<s>Rp37.000</s> GRATIS HARI INI` in `.grafir-spot` and `.offer-card`, and
   `Gratis Grafir` in `.rv-sticky`. The remaining 46 non-grafir landing pages
   strip every grafir badge, spotlight, bento tile, and box card while keeping the
-  shared 2-level sticky bar, product-thumbnail social proof toast, and inline
-  Verified SVG review badge.
+  shared 2-level sticky bar and inline Verified SVG review badge.
 - **Dynamic `compare_price` across 6 discount tiers (`30%`, `35%`, `40%`, `45%`,
   `49%`, `55%`).** Previously 65 of 79 products sat at `30%` and 13 at `29%`.
   Updated `product_variants.compare_price` across all 208 variants (leaving

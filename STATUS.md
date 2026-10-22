@@ -1,6 +1,6 @@
 # STATUS — AdsBookCMS
 
-> Verified against disk: 2026-10-23 (1.7.8 on revenleather `page.revenleather.com` @ `761a08a`; 1.7.4 on zvarashop; 1.7.2 on beranda-tani, numaskin-adbook, taniniaga, agritani-shop, zanobyshop)
+> Verified against disk: 2026-10-23 (1.7.8 on revenleather `page.revenleather.com` @ `35724d0`; 1.7.4 on zvarashop; 1.7.2 on beranda-tani, numaskin-adbook, taniniaga, agritani-shop, zanobyshop)
 
 ## 2026-10-23 — Reven Leather (`page.revenleather.com`): 79-LP Grafir/Non-Grafir rollout, dynamic compare-price tiers, full-form checkout, XML feeds & Ads tracking
 
@@ -19,8 +19,7 @@
     `.offer-card` (3 validated inclusions: `100% Kulit Sapi Asli Bersertifikat`,
     `Box Kemasan Eksklusif Reven Leather`, `Garansi Resmi 1 Tahun & Bisa COD`),
     `.box` (`2×2` standard grid), and `.rv-sticky` (`[HEMAT {{discount_percent}}] • Bisa COD`).
-  - **Shared UI across all 79 LPs:** Social Proof Toast uses each product's own
-    40×40 Hero studio thumbnail (`0 KB` extra payload), customer reviews replace
+  - **Shared UI across all 79 LPs:** Customer reviews replace
     the text pill with the inline `#1d9bf0` Verified SVG badge after the buyer
     name, `.quote-wrap` centers on `var(--cream)` with `✦` ornament, and
     `.rv-color` uses word-count headlines (`Dua / Tiga / Empat / Lima pilihan warna, satu standar kriya.`)
@@ -53,7 +52,7 @@
     (matching Meta Pixel `1568437321304661` and CAPI `content_ids` 1:1),
     `<g:price>` (`compare_price IDR`), `<g:sale_price>` (`price IDR`), and
     `.jpg` image links for Meta Commerce compatibility.
-  - Deployed to Cloudflare Worker `revenleather` (`Version ID: 92f9c14f-addc-4553-a663-99f045b75cb5`).
+  - Deployed to Cloudflare Worker `revenleather` (`Version ID: 2bc16cfb-7a4a-4f63-9d2b-8961640f35bd`).
 
 ## 2026-10-21 — 1.7.3–1.7.4: uploads and province-scoped product pages cached at the edge; zvarashop back on the product line
 
