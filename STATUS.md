@@ -5,6 +5,16 @@
 > **⚠️ AI AGENT UPDATE WARNING (`revenleather` vs `adsbookcms`):**
 > `revenleather` (`https://page.revenleather.com`) contains custom storefront, product card, footer, and checkout rules that **must never be pushed to `adsbookcms`** and **must never be overwritten when adopting a new `adsbookcms` release**. Before copying or merging any upstream `adsbookcms` update into this repository, read `AGENTS.md` §0 and `docs/UPDATE-PATH-OWNERSHIP.md` §"Reven Leather Protected Customizations", preserve all Reven Leather files/rules, keep `src/pages/testimoni.astro` deleted, and run `npm run route-map && npm test && npm run check && npm run build`.
 
+## 2026-10-24 — 1.7.13: manual transfer confirmation sends the Purchase
+
+- Audit of revenleather D1, last 30 days: every `INV-` COD order (136/136) has
+  a `sent` CAPI Purchase, fbc on 59 of the last 60. The 41 without one are
+  `ABN-` abandoned leads, correctly. All 12 `manual_transfer` orders sat
+  `pending` with no Purchase: the dashboard had no way to mark them paid.
+- **1.7.13** adds "Transfer Diterima" to the order detail page for an unpaid
+  manual transfer; the PATCH that marks it paid enqueues the server CAPI
+  Purchase (TRACKING_SPECS §13). COD stays on `/thanks` by the owner's choice.
+
 ## 2026-10-23 — Reven Leather (`page.revenleather.com`): 79-LP Grafir/Non-Grafir rollout, dynamic compare-price tiers, full-form checkout, Gratis Grafir COD-disable mechanism, classic sharp UI & Ads tracking
 
 - **Google & Meta Catalog XML (`/feed/google-catalog.xml`, `/feed/meta-catalog.xml`) & Full-Form Advanced Matching Hardening:**
