@@ -29,10 +29,58 @@ interface ChangelogRelease {
 // changelog.test.ts fails when version.ts moves without a matching entry here.
 const CHANGELOG_RELEASES: ChangelogRelease[] = [
   {
+    version: "1.7.11",
+    date: "23 Oktober 2026",
+    releaseTag: "2026.10-plugins",
+    isLatest: true,
+    highlight: "Halaman produk lebih cepat terbuka, termasuk saat dilayani dari server luar negeri.",
+    changes: [
+      {
+        title: "Halaman produk membaca database lebih sedikit",
+        description: "Katalog kini dibaca sekali per kunjungan dan bacaan yang tidak saling bergantung dijalankan bersamaan. Waktu tunggu halaman produk sebelum mulai tampil jadi lebih singkat, terutama bila Cloudflare melayani pengunjung dari server di Amerika.",
+      },
+      {
+        title: "Worker berjalan dekat database (Smart Placement)",
+        description: "Template wrangler.jsonc kini menyalakan Smart Placement. Toko yang sudah terpasang perlu menambahkannya di wrangler.jsonc sendiri; deploy preflight akan mengingatkan bila belum.",
+      },
+    ],
+  },
+  {
+    version: "1.7.10",
+    date: "23 Oktober 2026",
+    releaseTag: "2026.10-plugins",
+    highlight: "Panel Siapkan Toko kini memperingatkan saat tidak ada kurir aktif.",
+    changes: [
+      {
+        title: "Langkah wajib: aktifkan minimal satu kurir",
+        description: "Bila semua kurir dimatikan, checkout tidak bisa menghitung ongkir dan pembeli hanya melihat pesan gagal. Panel Siapkan Toko di dashboard kini menampilkan langkah ini dengan tautan langsung ke halaman Ekspedisi.",
+      },
+    ],
+  },
+  {
+    version: "1.7.9",
+    date: "23 Oktober 2026",
+    releaseTag: "2026.10-plugins",
+    highlight: "Checkout lebih tahan gangguan ongkir dan pilihan transfer lebih jelas.",
+    changes: [
+      {
+        title: "Ongkir COD tetap muncul saat estimasi kecamatan gagal",
+        description: "Bila estimasi ongkir ke kecamatan tujuan gagal, pembeli COD kini mendapat ongkir rata-rata kota yang dikonfirmasi admin, tidak lagi berhenti di pesan gagal. Pembayaran di muka tetap memakai ongkir kurir asli.",
+      },
+      {
+        title: "Rekening transfer tampil lengkap",
+        description: "Pilihan transfer bank kini menampilkan nama pemilik rekening di samping keterangan biaya. Toko dengan satu rekening atau satu bank Virtual Account menampilkannya langsung sebagai satu pilihan, tanpa harus membuka daftar terlebih dulu.",
+      },
+      {
+        title: "Form lengkap mengenali provinsi pengunjung sejak awal",
+        description: "Form lengkap kini menerima provinsi pengunjung seperti form ringkas, sehingga pilihan COD sesuai provinsi tampil tanpa jeda.",
+      },
+    ],
+  },
+  {
     version: "1.7.8",
     date: "22 Oktober 2026",
     releaseTag: "2026.10-plugins",
-    isLatest: true,
     highlight: "Pratinjau toko lewat alamat IP tidak lagi dialihkan ke domain toko.",
     changes: [
       {

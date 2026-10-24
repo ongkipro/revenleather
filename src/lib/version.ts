@@ -8,7 +8,10 @@ export type CmsVersionInfo = {
 };
 
 export const CMS_VERSION: CmsVersionInfo = {
-  version: "1.7.8",
+  version: "1.7.11",
+  // 1.7.11: Smart Placement in the template; the catalogue is read once per request; product pages make six sequential D1 reads, not nine; shipping-quote type narrowing restored.
+  // 1.7.10: setup checklist owes a courier when every courier is off; deploy preflight and fleet:status report product-owned files an install edited.
+  // 1.7.9: COD city-average fallback when the district estimate fails; manual transfer shows the holder; single bank/VA renders as one row.
   // 1.7.8: bare IP hosts (LAN or Tailscale preview) are never host-redirected, like localhost.
   // 1.7.7: optional PUBLIC_SITE_NOINDEX keeps a whole store out of search (header and robots meta).
   // 1.7.6: home h1 and the header brand title no longer end in a dangling separator when the tagline is empty.
