@@ -24,7 +24,8 @@
   and gtag (~0.35–0.55 s), which simulated Lighthouse still counts after 6 s.
   Lowering it further means deferring the Meta pixel past its 2.5 s slot, an
   ad-delivery trade-off the owner has not taken. Field data (CrUX / Search
-  Console) not checked.
+  Console) not checked. Raised upstream as a finding, not a change:
+  [adsbookcms#107](https://github.com/ongkipro/adsbookcms/issues/107).
 
 ## 2026-10-30 — Reven: every landing page back to hybrid; Gratis Grafir on the middle form (`3db2687`)
 
