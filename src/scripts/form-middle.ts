@@ -341,16 +341,6 @@ function initMiddleOrderFormInstance(
   const summaryCompareRow = formRoot?.querySelector<HTMLElement>("#summary-compare-row");
   const summaryTotal = formRoot?.querySelector("#summary-total");
   const summaryTotalNote = formRoot?.querySelector("#summary-total-note");
-  // Reven: a grafir order is transfer-only, closed by the admin on WhatsApp.
-  const grafirInputWrap = formRoot?.querySelector<HTMLElement>("[data-grafir-input-wrap]");
-  const grafirTextInput = formRoot?.querySelector<HTMLInputElement>('[data-field="grafir-text"]');
-  const summaryGrafirRow = formRoot?.querySelector<HTMLElement>("[data-summary-grafir-row]");
-  const summaryGrafirValue = formRoot?.querySelector("[data-summary-grafir-value]");
-  const isGrafirRequested = () =>
-    formRoot?.querySelector<HTMLInputElement>('input[name="grafir_choice"]:checked')
-      ?.value === "custom";
-  const getGrafirText = () =>
-    isGrafirRequested() ? String(grafirTextInput?.value || "").trim() : "";
 
   if (
     !formRoot ||
@@ -438,16 +428,6 @@ function initMiddleOrderFormInstance(
         field.setCustomValidity(
           "Maaf, alamat masih terlalu singkat. Isi jalan/dusun/desa dan patokan jika ada.",
         );
-      else field.setCustomValidity("");
-      return;
-    }
-
-    if (name === "grafir_text") {
-      if (!isGrafirRequested()) field.setCustomValidity("");
-      else if (!value)
-        field.setCustomValidity("Maaf, teks nama / inisial grafir belum diisi.");
-      else if (value.length > 24)
-        field.setCustomValidity("Maaf, teks grafir maksimal 24 karakter.");
       else field.setCustomValidity("");
       return;
     }
@@ -708,44 +688,76 @@ function initMiddleOrderFormInstance(
       });
     });
 
-  const syncGrafir = () => {
-    const wantsGrafir = isGrafirRequested();
-    const grafirText = getGrafirText();
-    if (summaryGrafirRow) summaryGrafirRow.hidden = !wantsGrafir;
-    if (summaryGrafirValue)
-      summaryGrafirValue.textContent = grafirText ? `"${grafirText}" (GRATIS)` : "GRATIS";
+  // Reven: Gratis Grafir is taken on the full form (district, shipping,
+  // transfer only). Picking it swaps this form, in place, for the inert full
+  // form GeoIpResolvedForm put beside it, carrying over what the buyer typed;
+  // "Tanpa Grafir" there swaps back to this COD form.
+  const grafirFullTemplate = formRoot
+    .closest("[data-canonical-order-form]")
+    ?.querySelector<HTMLTemplateElement>("template[data-grafir-full-form]");
+  let grafirFullRoot: HTMLElement | null = null;
+  const copyBuyerFields = (from: HTMLElement, to: HTMLElement) => {
+    for (const name of ["customer_name", "customer_phone", "address"]) {
+      const source = from.querySelector<HTMLInputElement>(`[name="${name}"]`);
+      const target = to.querySelector<HTMLInputElement>(`[name="${name}"]`);
+      if (!source || !target || target.value === source.value) continue;
+      target.value = source.value;
+      target.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+    const variant = from.querySelector<HTMLInputElement>('input[name="variant"]:checked')?.value;
+    const targetVariant = variant
+      ? to.querySelector<HTMLInputElement>(`input[name="variant"][value="${CSS.escape(variant)}"]`)
+      : null;
+    if (targetVariant && !targetVariant.checked) {
+      targetVariant.checked = true;
+      targetVariant.dispatchEvent(new Event("change", { bubbles: true }));
+    }
   };
-  if (grafirTextInput) {
-    ensureFieldFeedback(grafirTextInput);
-    grafirTextInput.addEventListener("input", () => {
-      setIdValidationMessage(grafirTextInput);
-      if (getGrafirText()) setFieldError(grafirTextInput, "");
-      syncGrafir();
-      syncSubmitState();
-    });
-    grafirTextInput.addEventListener("blur", () => {
-      if (isGrafirRequested()) validateField(grafirTextInput);
-      syncSubmitState();
-    });
-  }
-  form
-    .querySelectorAll<HTMLInputElement>('input[name="grafir_choice"]')
-    .forEach((radio) =>
-      radio.addEventListener("change", () => {
-        const wantsGrafir = isGrafirRequested();
-        if (grafirInputWrap) grafirInputWrap.hidden = !wantsGrafir;
-        if (grafirTextInput) {
-          grafirTextInput.required = wantsGrafir;
-          if (wantsGrafir) setTimeout(() => grafirTextInput.focus(), 40);
-          else {
-            grafirTextInput.setCustomValidity("");
-            setFieldError(grafirTextInput, "");
-          }
-        }
-        syncGrafir();
-        syncSubmitState();
-      }),
-    );
+  const setGrafirChoice = (root: HTMLElement, value: "none" | "custom") => {
+    const radio = root.querySelector<HTMLInputElement>(`input[name="grafir_choice"][value="${value}"]`);
+    if (!radio || radio.checked) return;
+    radio.checked = true;
+    radio.dispatchEvent(new Event("change", { bubbles: true }));
+  };
+  const showGrafirFullForm = async () => {
+    if (!grafirFullRoot) {
+      const host = grafirFullTemplate?.parentElement;
+      try {
+        if (!grafirFullTemplate || !host) throw new Error("no grafir full form");
+        const { initHybridOrderForm } = await import("./form-hybrid");
+        grafirFullTemplate.after(grafirFullTemplate.content.cloneNode(true));
+        grafirFullRoot = host.querySelector<HTMLElement>("[data-hybrid-form-root]");
+        if (!grafirFullRoot) throw new Error("no grafir full form");
+        initHybridOrderForm(host);
+      } catch {
+        // Never leave a grafir buyer on the COD form: the standalone full
+        // form takes the same order.
+        const variant = form.querySelector<HTMLInputElement>('input[name="variant"]:checked')?.value;
+        window.location.assign(
+          `/full-form?product_id=${encodeURIComponent(productSlug)}${variant ? `&variant_id=${encodeURIComponent(variant)}` : ""}`,
+        );
+        return;
+      }
+      grafirFullRoot.addEventListener("change", (event) => {
+        const target = event.target as HTMLInputElement;
+        if (!grafirFullRoot || target.name !== "grafir_choice" || target.value !== "none") return;
+        copyBuyerFields(grafirFullRoot, formRoot);
+        grafirFullRoot.hidden = true;
+        formRoot.hidden = false;
+        setGrafirChoice(formRoot, "none");
+      });
+    }
+    copyBuyerFields(formRoot, grafirFullRoot);
+    setGrafirChoice(grafirFullRoot, "custom");
+    formRoot.hidden = true;
+    grafirFullRoot.hidden = false;
+    grafirFullRoot.querySelector<HTMLInputElement>('[data-field="grafir-text"]')?.focus();
+  };
+  form.querySelectorAll<HTMLInputElement>('input[name="grafir_choice"]').forEach((radio) =>
+    radio.addEventListener("change", () => {
+      if (radio.checked && radio.value === "custom") void showGrafirFullForm();
+    }),
+  );
 
   let sessionGuardToken = createId(`tg_${productSlug}`);
   // Autofill can set a value and fire only `change`.
@@ -805,9 +817,6 @@ function initMiddleOrderFormInstance(
     }
     const price = Number(checked.dataset.price || 0);
     const label = String(checked.dataset.label || productName);
-    const grafirText = getGrafirText();
-    const paymentMethod = grafirText ? "manual_transfer" : "cod";
-    const customerNote = grafirText ? `Grafir: ${grafirText}` : "";
     const eventId = createId(`middle_${productSlug}`);
     const guardToken = sessionGuardToken;
     let order: any = null;
@@ -822,8 +831,7 @@ function initMiddleOrderFormInstance(
           customer_phone: customerPhone,
           address,
           province,
-          payment_method: paymentMethod,
-          grafir_text: grafirText,
+          payment_method: "cod",
           product_name: productName,
           quantity: 1,
           variant_unique_id: String(checked.value || ""),
@@ -926,9 +934,7 @@ function initMiddleOrderFormInstance(
       order_id: orderId,
       order_pk: orderPk,
       status_token: statusToken,
-      payment_method: paymentMethod,
-      grafir_text: grafirText,
-      customer_note: customerNote,
+      payment_method: "cod",
       lead_only: true,
       order_status: orderStatus,
       payment_status: paymentStatus,

@@ -27,9 +27,10 @@ Unlike a default install, `revenleather` has custom storefront, route, and check
      - Payment ordering: Transfer Bank / Virtual Account / QRIS first, **COD (`cod`) always at the very bottom**.
      - Single bank / VA option (`length === 1`) renders directly as a flat radio row without collapse & show accordion.
      - `GeoIpResolvedForm.astro` passes `province={resolvedProvince}` to `FormHybridContent.astro`.
-   - `src/components/storefront/forms/FormMiddleContent.astro`, `src/scripts/form-middle.ts`, `src/pages/api/submit-middle-order.ts`, `src/pages/thanks.astro`, `src/lib/thanks-whatsapp.ts`, `src/lib/middle-grafir.test.ts`:
-     - Every landing page form section is `{"mode": "hybrid"}` in D1; the middle form carries the same optional grafir selector on the 33 approved products.
-     - A middle-form grafir request is never COD: `submit-middle-order` saves it as `manual_transfer` against the active bank account with `customerNote: Grafir: <text>`; `/thanks` shows `Transfer · Total Menyusul`; `shouldAutoRedirectToWhatsapp` hands any lead-only order with an order number to WhatsApp.
+   - `src/components/storefront/forms/GeoIpResolvedForm.astro`, `src/components/storefront/forms/FormMiddleContent.astro`, `src/scripts/form-middle.ts`, `src/pages/api/submit-middle-order.ts`, `src/lib/middle-grafir.test.ts`:
+     - Every landing page form section is `{"mode": "hybrid"}` in D1. On the 33 approved grafir products the middle form (name, WhatsApp, address, COD) carries the `Tanpa Grafir` / `+ Gratis Grafir` choice only.
+     - `GeoIpResolvedForm` puts the full form beside the middle form inside `<template data-grafir-full-form>`: inert, no script or request until used. Picking `+ Gratis Grafir` swaps the middle form for it in place (`form-middle.ts` dynamic-imports `form-hybrid`), carrying name, phone, address and variant; the full form then asks for the district, quotes shipping and hides COD. `Tanpa Grafir` there swaps back.
+     - The middle form never takes a grafir order: `submit-middle-order` answers a request carrying `grafir_text` (a page cached before the change) with `AREA_REQUIRES_FULL`, which redirects to `/full-form`.
    - `public/images/reven-*.webp`, `public/images/reven-mark.svg`.
    - `src/lib/edge-cache.ts`, `src/components/storefront/tracking/GoogleAdsBase.astro`, `src/lib/reven-page-speed.test.ts` (page speed, ADR-029 §6):
      - `EDGE_CACHE_SECONDS = 600`, not upstream's 120: ad traffic spreads over ~79 landing pages times the province key. Upstream's `edge-cache.test.ts` asserts `max-age=120`; keep it at `600`.

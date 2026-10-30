@@ -2,6 +2,7 @@
 import FormHybridContent from './FormHybridContent.astro';
 import FormMiddleContent from './FormMiddleContent.astro';
 import { getRuntimeEnv } from '../../../lib/env';
+import { isApprovedGrafirSlug } from '../../../lib/approved-grafir';
 import {
   loadStoreCodDisabledProvinceCodes,
   resolveFormModeContext,
@@ -38,6 +39,10 @@ const resolvedMode =
       ? formContext.resolvedMode
       : mode;
 const resolvedProvince = province || formContext.province;
+// Reven: the middle form swaps to this full form, in place, when the buyer
+// picks Gratis Grafir (district, shipping, transfer). It is inert until then:
+// no script, no request, no field in the middle form's way.
+const grafirFullForm = resolvedMode !== 'full' && isApprovedGrafirSlug(productSlug);
 ---
 
 <div class="mx-auto w-full max-w-[480px] bg-white" data-canonical-order-form data-resolved-mode={resolvedMode}>
@@ -52,14 +57,28 @@ const resolvedProvince = province || formContext.province;
         codDisabledProvinceCodes={codDisabledProvinceCodes}
       />
     ) : (
-      <FormMiddleContent
-        productSlug={productSlug}
-        selectedVariantId={selectedVariantId}
-        province={resolvedProvince}
-        embedded={embedded}
-        bannerImage={bannerImage}
-        codDisabledProvinceCodes={codDisabledProvinceCodes}
-      />
+      <>
+        <FormMiddleContent
+          productSlug={productSlug}
+          selectedVariantId={selectedVariantId}
+          province={resolvedProvince}
+          embedded={embedded}
+          bannerImage={bannerImage}
+          codDisabledProvinceCodes={codDisabledProvinceCodes}
+        />
+        {grafirFullForm && (
+          <template data-grafir-full-form>
+            <FormHybridContent
+              productSlug={productSlug}
+              selectedVariantId={selectedVariantId}
+              province={resolvedProvince}
+              embedded={embedded}
+              bannerImage={bannerImage}
+              codDisabledProvinceCodes={codDisabledProvinceCodes}
+            />
+          </template>
+        )}
+      </>
     )
   }
 </div>

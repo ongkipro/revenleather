@@ -106,7 +106,7 @@ const supportsGrafir = isApprovedGrafirSlug(product.slug);
               <div class="form-block-head gap-1.5">
                 <h2 class="section-title">Gratis Grafir Nama / Inisial (Opsional)</h2>
                 <p class="section-lead">
-                  Abaikan jika tidak ingin grafir (COD tetap bisa). Jika memilih grafir nama, pembayaran wajib Transfer Bank (non-COD) dan dikonfirmasi admin via WhatsApp.
+                  Abaikan jika tidak ingin grafir (COD tetap bisa). Jika memilih grafir, isi kecamatan untuk ongkir dan pembayaran via Transfer Bank (non-COD).
                 </p>
               </div>
               <div class="variant-group simple-variant-group">
@@ -134,18 +134,6 @@ const supportsGrafir = isApprovedGrafirSlug(product.slug);
                     </div>
                   </div>
                 </label>
-              </div>
-              <div id={`grafir-input-wrap-${fieldUid}`} data-grafir-input-wrap class="form-field form-field-full mt-1" hidden>
-                <input
-                  id={`grafir-text-${fieldUid}`}
-                  data-field="grafir-text"
-                  name="grafir_text"
-                  maxlength="24"
-                  inputmode="text"
-                  autocomplete="off"
-                  placeholder=" "
-                />
-                <label for={`grafir-text-${fieldUid}`}>Nama / Inisial Grafir (maks. 24 karakter)</label>
               </div>
             </section>
           )
@@ -207,9 +195,6 @@ const supportsGrafir = isApprovedGrafirSlug(product.slug);
                 </span>
               </div>
             </div>
-            {supportsGrafir && (
-              <div data-summary-grafir-row class="summary-row" hidden><span>Gratis Grafir Laser</span><strong data-summary-grafir-value>GRATIS</strong></div>
-            )}
             <div class="total-box">
               <div>
                 <p>Total Pembayaran</p>
