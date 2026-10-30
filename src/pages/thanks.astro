@@ -719,7 +719,7 @@ const productCatalog = products.map((item) => ({
       document.getElementById('thanks-subtitle').textContent =
         'Order Anda sudah masuk. Customer Service akan menghubungi untuk mengonfirmasi biaya admin, ongkir, dan detail pengiriman.';
       document.getElementById('payment-title').textContent = 'Estimasi harga produk';
-      document.getElementById('payment-badge').textContent = 'COD · Total Menyusul';
+      document.getElementById('payment-badge').textContent = isCod ? 'COD · Total Menyusul' : 'Transfer · Total Menyusul';
       document.getElementById('total-label').textContent = 'Estimasi produk';
       document.getElementById('total-note').textContent = 'Belum termasuk biaya admin dan pengiriman';
       document.getElementById('status-title').textContent = 'Status pesanan';
@@ -730,11 +730,11 @@ const productCatalog = products.map((item) => ({
         'Customer Service menghubungi untuk mengonfirmasi biaya admin, ongkir, dan detail pengiriman.';
       document.getElementById('step-three-title').textContent = 'Order diproses';
       document.getElementById('step-three-copy').textContent = 'Pesanan diproses setelah detail akhir disetujui.';
-      document.getElementById('note-title').textContent = 'Catatan konfirmasi COD';
+      document.getElementById('note-title').textContent = isCod ? 'Catatan konfirmasi COD' : 'Catatan konfirmasi transfer';
       document.getElementById('note-list').innerHTML = `
         <div class="grid grid-cols-[18px_1fr] gap-2.5"><span class="mt-[11px] size-1.5 rounded-full bg-[#8a5a3b]"></span><p>Nominal saat ini hanya estimasi harga produk: <span class="font-bold text-[#1a1411]">${fmt(productTotal || productPrice || 0)}</span>.</p></div>
         <div class="grid grid-cols-[18px_1fr] gap-2.5"><span class="mt-[11px] size-1.5 rounded-full bg-[#8a5a3b]"></span><p>Biaya admin, ongkir, dan total akhir dikonfirmasi Customer Service ke WhatsApp Anda di nomor <span class="font-semibold text-[#1a1411]">${escapeHtml(phone)}</span>.</p></div>
-        <div class="grid grid-cols-[18px_1fr] gap-2.5"><span class="mt-[11px] size-1.5 rounded-full bg-[#8a5a3b]"></span><p>Pastikan nomor aktif agar pesanan COD bisa segera diproses.</p></div>`;
+        <div class="grid grid-cols-[18px_1fr] gap-2.5"><span class="mt-[11px] size-1.5 rounded-full bg-[#8a5a3b]"></span><p>${isCod ? 'Pastikan nomor aktif agar pesanan COD bisa segera diproses.' : 'Pembayaran via Transfer Bank. Rekening tujuan dan total akhir dikirim admin lewat WhatsApp; grafir dikerjakan setelah transfer diterima.'}</p></div>`;
       document.getElementById('cta-title').textContent = 'Hubungi admin';
       document.getElementById('cta-copy').textContent =
         'Jika ingin mempercepat proses, hubungi Customer Service untuk konfirmasi biaya dan pengiriman.';

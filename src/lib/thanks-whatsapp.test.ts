@@ -58,6 +58,9 @@ test("only a COD order with a usable number is handed off, and only when enabled
   // The middle form: lead-only (total waits on CS) but a real order was created.
   assert.equal(shouldAutoRedirectToWhatsapp({ enabled: true, paymentMethod: "cod", leadOnly: true, orderNumber: "INV-10001", url }), true);
   assert.equal(shouldAutoRedirectToWhatsapp({ enabled: true, paymentMethod: "cod", leadOnly: true, orderNumber: "  ", url }), false);
+  // Reven: a middle-form grafir order is a lead-only transfer closed on WhatsApp.
+  assert.equal(shouldAutoRedirectToWhatsapp({ enabled: true, paymentMethod: "manual_transfer", leadOnly: true, orderNumber: "INV-10002", url }), true);
+  assert.equal(shouldAutoRedirectToWhatsapp({ enabled: true, paymentMethod: "manual_transfer", leadOnly: false, url }), false);
   assert.equal(shouldAutoRedirectToWhatsapp({ enabled: false, paymentMethod: "cod", leadOnly: false, url }), false);
   assert.equal(shouldAutoRedirectToWhatsapp({ enabled: true, paymentMethod: "cod", leadOnly: false, url: null }), false);
 });

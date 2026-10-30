@@ -7,6 +7,8 @@
  * it carries an order number: the middle form marks every submission
  * `lead_only` (its total waits on CS) yet has created a real order since
  * 1.5.x, and that buyer is exactly the one CS must confirm on WhatsApp.
+ * Reven: a middle-form grafir order is a transfer whose total also waits on CS,
+ * so a lead-only order is handed off whatever its payment method.
  */
 
 export type ThanksWhatsappOrder = {
@@ -70,8 +72,9 @@ export function shouldAutoRedirectToWhatsapp(input: {
 }): boolean {
   return (
     input.enabled &&
-    (!input.leadOnly || Boolean(input.orderNumber?.trim())) &&
-    input.paymentMethod.trim().toLowerCase() === "cod" &&
+    (input.leadOnly
+      ? Boolean(input.orderNumber?.trim())
+      : input.paymentMethod.trim().toLowerCase() === "cod") &&
     Boolean(input.url)
   );
 }

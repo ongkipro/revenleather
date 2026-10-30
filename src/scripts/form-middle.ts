@@ -341,6 +341,16 @@ function initMiddleOrderFormInstance(
   const summaryCompareRow = formRoot?.querySelector<HTMLElement>("#summary-compare-row");
   const summaryTotal = formRoot?.querySelector("#summary-total");
   const summaryTotalNote = formRoot?.querySelector("#summary-total-note");
+  // Reven: a grafir order is transfer-only, closed by the admin on WhatsApp.
+  const grafirInputWrap = formRoot?.querySelector<HTMLElement>("[data-grafir-input-wrap]");
+  const grafirTextInput = formRoot?.querySelector<HTMLInputElement>('[data-field="grafir-text"]');
+  const summaryGrafirRow = formRoot?.querySelector<HTMLElement>("[data-summary-grafir-row]");
+  const summaryGrafirValue = formRoot?.querySelector("[data-summary-grafir-value]");
+  const isGrafirRequested = () =>
+    formRoot?.querySelector<HTMLInputElement>('input[name="grafir_choice"]:checked')
+      ?.value === "custom";
+  const getGrafirText = () =>
+    isGrafirRequested() ? String(grafirTextInput?.value || "").trim() : "";
 
   if (
     !formRoot ||
@@ -428,6 +438,16 @@ function initMiddleOrderFormInstance(
         field.setCustomValidity(
           "Maaf, alamat masih terlalu singkat. Isi jalan/dusun/desa dan patokan jika ada.",
         );
+      else field.setCustomValidity("");
+      return;
+    }
+
+    if (name === "grafir_text") {
+      if (!isGrafirRequested()) field.setCustomValidity("");
+      else if (!value)
+        field.setCustomValidity("Maaf, teks nama / inisial grafir belum diisi.");
+      else if (value.length > 24)
+        field.setCustomValidity("Maaf, teks grafir maksimal 24 karakter.");
       else field.setCustomValidity("");
       return;
     }
@@ -688,6 +708,45 @@ function initMiddleOrderFormInstance(
       });
     });
 
+  const syncGrafir = () => {
+    const wantsGrafir = isGrafirRequested();
+    const grafirText = getGrafirText();
+    if (summaryGrafirRow) summaryGrafirRow.hidden = !wantsGrafir;
+    if (summaryGrafirValue)
+      summaryGrafirValue.textContent = grafirText ? `"${grafirText}" (GRATIS)` : "GRATIS";
+  };
+  if (grafirTextInput) {
+    ensureFieldFeedback(grafirTextInput);
+    grafirTextInput.addEventListener("input", () => {
+      setIdValidationMessage(grafirTextInput);
+      if (getGrafirText()) setFieldError(grafirTextInput, "");
+      syncGrafir();
+      syncSubmitState();
+    });
+    grafirTextInput.addEventListener("blur", () => {
+      if (isGrafirRequested()) validateField(grafirTextInput);
+      syncSubmitState();
+    });
+  }
+  form
+    .querySelectorAll<HTMLInputElement>('input[name="grafir_choice"]')
+    .forEach((radio) =>
+      radio.addEventListener("change", () => {
+        const wantsGrafir = isGrafirRequested();
+        if (grafirInputWrap) grafirInputWrap.hidden = !wantsGrafir;
+        if (grafirTextInput) {
+          grafirTextInput.required = wantsGrafir;
+          if (wantsGrafir) setTimeout(() => grafirTextInput.focus(), 40);
+          else {
+            grafirTextInput.setCustomValidity("");
+            setFieldError(grafirTextInput, "");
+          }
+        }
+        syncGrafir();
+        syncSubmitState();
+      }),
+    );
+
   let sessionGuardToken = createId(`tg_${productSlug}`);
   // Autofill can set a value and fire only `change`.
   form.addEventListener("change", syncSubmitState);
@@ -746,6 +805,9 @@ function initMiddleOrderFormInstance(
     }
     const price = Number(checked.dataset.price || 0);
     const label = String(checked.dataset.label || productName);
+    const grafirText = getGrafirText();
+    const paymentMethod = grafirText ? "manual_transfer" : "cod";
+    const customerNote = grafirText ? `Grafir: ${grafirText}` : "";
     const eventId = createId(`middle_${productSlug}`);
     const guardToken = sessionGuardToken;
     let order: any = null;
@@ -760,7 +822,8 @@ function initMiddleOrderFormInstance(
           customer_phone: customerPhone,
           address,
           province,
-          payment_method: "cod",
+          payment_method: paymentMethod,
+          grafir_text: grafirText,
           product_name: productName,
           quantity: 1,
           variant_unique_id: String(checked.value || ""),
@@ -863,7 +926,9 @@ function initMiddleOrderFormInstance(
       order_id: orderId,
       order_pk: orderPk,
       status_token: statusToken,
-      payment_method: "cod",
+      payment_method: paymentMethod,
+      grafir_text: grafirText,
+      customer_note: customerNote,
       lead_only: true,
       order_status: orderStatus,
       payment_status: paymentStatus,

@@ -5,6 +5,7 @@ import { resolveFormVariant } from '../../../lib/form-config';
 import { getRuntimeEnv } from '../../../lib/env';
 import { loadStoreCodDisabledProvinceCodes } from '../../../lib/form-mode';
 import { jsonForScript } from '../../../lib/json-script';
+import { isApprovedGrafirSlug } from '../../../lib/approved-grafir';
 import Icon from '../shared/Icon.astro';
 
 interface Props {
@@ -40,6 +41,7 @@ const formId = embedded ? `${instanceId}-form` : 'middle-form';
 // Unique per render: two forms on one landing page used to share these ids, so
 // a label in the second form focused the first form's field.
 const fieldUid = crypto.randomUUID().slice(0, 8);
+const supportsGrafir = isApprovedGrafirSlug(product.slug);
 ---
 
 <RootTag class="bg-white" data-middle-form-root data-instance-id={instanceId}>
@@ -98,6 +100,57 @@ const fieldUid = crypto.randomUUID().slice(0, 8);
           </div>
         </section>
 
+        {
+          supportsGrafir && (
+            <section class="form-block" data-grafir-block>
+              <div class="form-block-head gap-1.5">
+                <h2 class="section-title">Gratis Grafir Nama / Inisial (Opsional)</h2>
+                <p class="section-lead">
+                  Abaikan jika tidak ingin grafir (COD tetap bisa). Jika memilih grafir nama, pembayaran wajib Transfer Bank (non-COD) dan dikonfirmasi admin via WhatsApp.
+                </p>
+              </div>
+              <div class="variant-group simple-variant-group">
+                <label class="variant-option simple-variant-option">
+                  <input type="radio" name="grafir_choice" value="none" checked data-grafir-choice="none" />
+                  <div class="variant-copy simple-variant-copy">
+                    <div class="variant-radio" />
+                    <div class="variant-main simple-variant-main">
+                      <div class="simple-variant-head">
+                        <p class="variant-label">Tanpa Grafir</p>
+                        <span class="text-[11px] font-medium text-[#555555]">Bisa COD</span>
+                      </div>
+                    </div>
+                  </div>
+                </label>
+                <label class="variant-option simple-variant-option">
+                  <input type="radio" name="grafir_choice" value="custom" data-grafir-choice="custom" />
+                  <div class="variant-copy simple-variant-copy">
+                    <div class="variant-radio" />
+                    <div class="variant-main simple-variant-main">
+                      <div class="simple-variant-head">
+                        <p class="variant-label">+ Gratis Grafir Nama / Inisial</p>
+                        <span class="text-[11px] font-bold text-[#1f5199]">GRATIS • Transfer</span>
+                      </div>
+                    </div>
+                  </div>
+                </label>
+              </div>
+              <div id={`grafir-input-wrap-${fieldUid}`} data-grafir-input-wrap class="form-field form-field-full mt-1" hidden>
+                <input
+                  id={`grafir-text-${fieldUid}`}
+                  data-field="grafir-text"
+                  name="grafir_text"
+                  maxlength="24"
+                  inputmode="text"
+                  autocomplete="off"
+                  placeholder=" "
+                />
+                <label for={`grafir-text-${fieldUid}`}>Nama / Inisial Grafir (maks. 24 karakter)</label>
+              </div>
+            </section>
+          )
+        }
+
         <section class="form-block">
           <div class="form-block-head gap-1.5">
             <h2 class="section-title">Data penerima</h2>
@@ -154,6 +207,9 @@ const fieldUid = crypto.randomUUID().slice(0, 8);
                 </span>
               </div>
             </div>
+            {supportsGrafir && (
+              <div data-summary-grafir-row class="summary-row" hidden><span>Gratis Grafir Laser</span><strong data-summary-grafir-value>GRATIS</strong></div>
+            )}
             <div class="total-box">
               <div>
                 <p>Total Pembayaran</p>

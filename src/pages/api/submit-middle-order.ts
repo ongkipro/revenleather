@@ -92,6 +92,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
     body.variant_id || body.variant_unique_id || "",
   ).trim();
   const quantity = Number(body.quantity || 1);
+  // Reven: a grafir request is never COD. It is saved as a manual transfer and
+  // closed by the admin on WhatsApp, like every other middle-form order.
+  const grafirText = String(body.grafir_text || "").trim();
+  const paymentMethod = grafirText ? "manual_transfer" : "cod";
   if (submitToken.length < 16 || submitToken.length > 120)
     return json(
       {
@@ -135,6 +139,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
       {
         success: false,
         error: "Varian produk harus dipilih",
+        code: "VALIDATION_ERROR",
+      },
+      422,
+    );
+  if (grafirText.length > 24)
+    return json(
+      {
+        success: false,
+        error: "Teks grafir maksimal 24 karakter",
         code: "VALIDATION_ERROR",
       },
       422,
@@ -183,6 +196,28 @@ export const POST: APIRoute = async ({ request, locals }) => {
     );
   }
 
+  const sellerBankAccount =
+    paymentMethod === "manual_transfer"
+      ? await database
+          .prepare(
+            `SELECT id FROM seller_bank_accounts
+             WHERE is_active = 1
+               AND store_id = (SELECT id FROM stores ORDER BY id LIMIT 1)
+             ORDER BY id
+             LIMIT 1`,
+          )
+          .first<{ id: number }>()
+      : null;
+  if (paymentMethod === "manual_transfer" && !sellerBankAccount)
+    return json(
+      {
+        success: false,
+        error: "Rekening transfer belum tersedia. Silakan hubungi admin.",
+        code: "VALIDATION_ERROR",
+      },
+      422,
+    );
+
   try {
     // Attribution captured at the ad landing by the middleware; kept with the
     // order so a COD sale confirmed later can be uploaded to Google Ads.
@@ -205,7 +240,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
       variantKey,
       quantity,
       shippingCost: 0,
-      paymentMethod: "cod",
+      paymentMethod,
+      ...(sellerBankAccount ? { sellerBankAccountId: sellerBankAccount.id } : {}),
+      ...(grafirText ? { customerNote: `Grafir: ${grafirText}` } : {}),
       adClickIds: storedClickIds,
       metaRequestContext,
       sourcePagePath: String(body.source_page_path || "").slice(0, 500) || undefined,
@@ -223,8 +260,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
       order_pk: order.id,
       order_number: order.orderNumber,
       status_token: order.publicStatusToken,
-      payment_method: "cod",
-      payment_status: "unpaid",
+      payment_method: paymentMethod,
+      payment_status: paymentMethod === "cod" ? "unpaid" : "pending",
       status: "pending",
       customer_name: customerName,
       customer_phone: customerPhone,
