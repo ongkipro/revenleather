@@ -41,3 +41,16 @@ test("picking grafir swaps to the full form; the middle form never sends grafir"
   assert.match(api, /if \(String\(body\.grafir_text \|\| ""\)\.trim\(\)\)\s*return json\([\s\S]*?code: "AREA_REQUIRES_FULL"/);
   assert.match(api, /paymentMethod: "cod"/);
 });
+
+test("the full form the swap lands on takes grafir and never offers COD with it", () => {
+  // An AdsBookCMS release that overwrites these files drops grafir from the
+  // full form while the middle form still swaps to it; this catches that.
+  const form = source("../components/storefront/forms/FormHybridContent.astro");
+  assert.match(form, /supportsGrafir = isApprovedGrafirSlug\(product\.slug\)/);
+  assert.match(form, /name="grafir_choice"/);
+  assert.match(form, /name="grafir_text"/);
+
+  const script = source("../scripts/form-hybrid.ts");
+  assert.match(script, /const codDisabled = isCodDisabledByProvince\(\) \|\| isGrafirRequested\(\);/);
+  assert.match(script, /const customerNote = grafirNote \? `Grafir: \$\{grafirNote\}` : "";/);
+});

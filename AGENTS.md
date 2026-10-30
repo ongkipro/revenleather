@@ -1,10 +1,29 @@
 # AGENTS.md — Working Agreement for AdsBookCMS
 
-> Verified against disk: 2026-10-13 @ `7644b63` + changelog-1.5 working tree
+> Verified against disk: 2026-10-31 @ `e04dabd` (Reven install)
 
 This file is the contract for any AI coding agent or contributor working in this repository. Read it before the first edit.
 
 **The product is AdsBookCMS (single):** a direct-response commerce CMS installed onto Cloudflare Workers, where **1 installer = 1 Worker = 1 store**. `permatamall.shop` is the reference instance, not the product name.
+
+---
+
+## 0. This repository is the Reven Leather install, not the product
+
+`revenleather` is the live install for `https://page.revenleather.com`, and it
+differs from AdsBookCMS on purpose: storefront, checkout forms (Gratis Grafir
+on the middle and full forms), page-speed settings and more.
+
+- **Never push or copy Reven changes back to `adsbookcms`.** The `product`
+  remote's push URL is `DISABLED` for that reason.
+- **Adopting a new AdsBookCMS release:** every file listed in
+  `docs/UPDATE-PATH-OWNERSHIP.md` §"Reven Leather Protected Customizations"
+  is hand-merged, never overwritten. That list is the only copy; add to it
+  whenever a Reven-only change lands.
+- The Reven tests (`src/lib/middle-grafir.test.ts`,
+  `src/lib/reven-page-speed.test.ts`, and the grafir tests beside them) fail
+  when a release silently overwrites one of these files. A failing Reven test
+  after an update means re-apply the customization, never edit the test.
 
 ---
 

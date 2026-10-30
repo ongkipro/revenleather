@@ -1,6 +1,6 @@
 # Path-ownership manifest — copy-paste install updates (`revenleather`)
 
-> Verified against disk: 2026-10-23 @ `241da00`
+> Verified against disk: 2026-10-31 @ `e04dabd` (Reven install)
 
 Authority: `DECISIONS.md` ADR-020, `PLAN.md`, `TASKS.md` A-153, `AGENTS.md` §0.
 
