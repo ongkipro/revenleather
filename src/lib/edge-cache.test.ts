@@ -90,7 +90,7 @@ test("a write is readable as a hit with the internal headers swapped for browser
   writeEdgeCache(k, new Response("<p>home</p>", { status: 200, headers: { "content-type": "text/html" } }), undefined, cache);
   await new Promise((resolve) => setTimeout(resolve, 5));
   const stored = cache.map.get(k.url)!;
-  assert.match(stored.headers.get("cache-control") ?? "", /max-age=120/);
+  assert.match(stored.headers.get("cache-control") ?? "", /max-age=600/);
   const hit = await readEdgeCache(k, cache);
   assert.equal(await hit!.text(), "<p>home</p>");
   assert.equal(hit!.headers.get("x-edge-cache"), "HIT");

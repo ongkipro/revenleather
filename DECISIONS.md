@@ -1017,7 +1017,9 @@ page is the same for every visitor.
    computed from the request, never from the cached HTML. Nothing visitor
    specific may be written into HTML that this cache can store; the Pixel
    `event_id` is made in the browser for that reason.
-6. **Freshness.** An admin edit shows within two minutes. Prices are not read
+6. **Freshness.** An admin edit shows within two minutes (Reven: ten minutes,
+   `EDGE_CACHE_SECONDS = 600` since 2026-10-30; a logged-in admin always
+   bypasses the cache). Prices are not read
    from the cache for money: checkout validates them again.
 7. **Observable:** `X-Edge-Cache: HIT` or `MISS`; absent where the cache is
    not consulted.

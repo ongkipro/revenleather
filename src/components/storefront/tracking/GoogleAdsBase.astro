@@ -113,7 +113,13 @@ const shouldRenderGoogleAds = hasValidGoogleAdsConversion(
         for (const type of ['pointerdown', 'keydown', 'touchstart', 'scroll']) {
           window.addEventListener(type, loadGtag, { once: true, passive: true });
         }
-        window.setTimeout(loadGtag, 2500);
+        // Reven: 6 s, after the Meta pixel's 2.5 s instead of alongside it. The
+        // two libraries landing together cost ~0.9 s of blocking time on a
+        // mid-range phone (Lighthouse, 2026-10-30). Meta keeps the early slot
+        // because its PageView/ViewContent feed ad delivery; for Google only
+        // remarketing `page_view` of a visitor who leaves inside 6 s without
+        // touching the page is lost. The conversion and the gclid are unaffected.
+        window.setTimeout(loadGtag, 6000);
         // A conversion must never wait on a timer. The thanks page calls this
         // before pushing, so the library is already on its way by the time the
         // event is queued.

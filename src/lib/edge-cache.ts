@@ -5,7 +5,7 @@
  * the page's D1 reads and the render: 0.5 to 2 seconds before the first byte
  * on a mobile network, the largest single cost in Lighthouse's LCP. The HTML of
  * the home page, the product list and the landing pages is the same for every
- * visitor, so one render serves the next two minutes of them.
+ * visitor, so one render serves the next ten minutes of them.
  *
  * What makes this safe is how narrow it is:
  *
@@ -37,7 +37,11 @@ import { SESSION_COOKIE_NAME } from "./auth.ts";
 import { CLICK_ID_KEYS } from "./click-ids.ts";
 import { resolveProvinceCode } from "./geo.ts";
 
-export const EDGE_CACHE_SECONDS = 120;
+// Reven: 600, not upstream's 120. Ad traffic is spread over ~79 landing pages
+// times the province key, so at 120 s most visitors were a cold render
+// (0.6-1 s to the first byte). An admin who is logged in always bypasses this
+// cache, so only public visitors see an edit up to ten minutes late.
+export const EDGE_CACHE_SECONDS = 600;
 
 /** Parameters that identify an ad click, not a different page, plus the internal province key. */
 const TRACKING_PARAMS = new Set<string>([

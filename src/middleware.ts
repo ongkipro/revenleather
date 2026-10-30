@@ -225,7 +225,7 @@ export function createMiddleware(
   }
 
   // The edge cache (ADR-029): an anonymous page another visitor rendered in
-  // the last two minutes skips the schema check, the store lookup, the page's
+  // the last ten minutes skips the schema check, the store lookup, the page's
   // D1 reads and the render. It sits after the host redirects, so an alias or
   // http host never reads an entry made for the canonical one.
   const edgeKey = edgeCacheRequest(context.request, url);
