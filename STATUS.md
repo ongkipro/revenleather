@@ -1,9 +1,39 @@
 # STATUS — AdsBookCMS (`revenleather` / `page.revenleather.com`)
 
-> Verified against disk: 2026-10-30 (1.7.13 + Reven page speed on revenleather `page.revenleather.com` @ `a85ab27`; 1.7.4 on zvarashop; 1.7.2 on beranda-tani, numaskin-adbook, taniniaga, agritani-shop, zanobyshop)
+> Verified against disk: 2026-10-30 (1.7.13 + Reven grafir full-form swap on revenleather `page.revenleather.com` @ `2eeecf0`; 1.7.4 on zvarashop; 1.7.2 on beranda-tani, numaskin-adbook, taniniaga, agritani-shop, zanobyshop)
 
 > **⚠️ AI AGENT UPDATE WARNING (`revenleather` vs `adsbookcms`):**
 > `revenleather` (`https://page.revenleather.com`) contains custom storefront, product card, footer, and checkout rules that **must never be pushed to `adsbookcms`** and **must never be overwritten when adopting a new `adsbookcms` release**. Before copying or merging any upstream `adsbookcms` update into this repository, read `AGENTS.md` §0 and `docs/UPDATE-PATH-OWNERSHIP.md` §"Reven Leather Protected Customizations", preserve all Reven Leather files/rules, keep `src/pages/testimoni.astro` deleted, and run `npm run route-map && npm test && npm run check && npm run build`.
+
+## 2026-10-31 — Reven: Gratis Grafir swaps the middle form for the full form (`2eeecf0`)
+
+- **Live:** Worker version `880df42f` deployed 2026-10-31 from `2eeecf0`.
+- **Why (D1, read-only):** 23–30 Oct, 33 of ~83 `INV-` orders were grafir
+  (~40%), all through the full form as `manual_transfer`; 28 of 33 are paid
+  (non-grafir transfer, 60 days: 7 of 13). No middle-form grafir order was
+  ever placed on the lead-only path from `3db2687`.
+- **Change:** on the 33 approved products, `+ Gratis Grafir` on the middle
+  form swaps it in place for the full form (district, shipping quote,
+  transfer only; COD hidden), carrying name, phone, address and variant;
+  `Tanpa Grafir` swaps back to the COD middle form. The full form waits in a
+  `<template>` and `form-hybrid` is dynamic-imported, so a non-grafir buyer
+  loads none of it. The lead-only transfer path is removed (`/thanks` and the
+  WhatsApp hand-off are upstream again); `submit-middle-order` answers a
+  cached page that still posts `grafir_text` with `AREA_REQUIRES_FULL`
+  (redirect to `/full-form`). Rollback: revert `2eeecf0` and deploy.
+- **Evidence:** `npm test` 883 pass / 1 skipped, `npm run check` 0 errors,
+  build ok. Local Chromium (390 and 1280 px, `/middle-form`): swap, carry-over,
+  focus on the grafir text, swap back and swap again, no errors; nothing of
+  the full form loads before the click. Live (`/produk/barry-sling-bag`, Jawa
+  Timur IP, 390 px, abandoned-lead, `meta-event`, pixel and gtag requests
+  blocked, nothing submitted): same swap, `form-hybrid` chunk loads on the
+  click, the only payment shown is `Transfer Bank MANDIRI`. Not proven live:
+  a district pick with its shipping quote (unchanged full-form code).
+- **Known:** a buyer who types a name and phone and only then picks grafir can
+  leave two abandoned leads (the two forms fingerprint differently), and
+  `InitiateCheckout` may fire from both forms. Local dev renders `/produk/*`
+  as the full form because the rewrite drops the geo headers; production does
+  not.
 
 ## 2026-10-30 — Reven: ten-minute edge cache, gtag after the Meta pixel (`a85ab27`)
 
