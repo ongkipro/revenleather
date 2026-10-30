@@ -1,9 +1,30 @@
 # STATUS — AdsBookCMS (`revenleather` / `page.revenleather.com`)
 
-> Verified against disk: 2026-10-30 (1.7.13 + Reven middle-form grafir on revenleather `page.revenleather.com` @ `3db2687`; 1.7.4 on zvarashop; 1.7.2 on beranda-tani, numaskin-adbook, taniniaga, agritani-shop, zanobyshop)
+> Verified against disk: 2026-10-30 (1.7.13 + Reven page speed on revenleather `page.revenleather.com` @ `a85ab27`; 1.7.4 on zvarashop; 1.7.2 on beranda-tani, numaskin-adbook, taniniaga, agritani-shop, zanobyshop)
 
 > **⚠️ AI AGENT UPDATE WARNING (`revenleather` vs `adsbookcms`):**
 > `revenleather` (`https://page.revenleather.com`) contains custom storefront, product card, footer, and checkout rules that **must never be pushed to `adsbookcms`** and **must never be overwritten when adopting a new `adsbookcms` release**. Before copying or merging any upstream `adsbookcms` update into this repository, read `AGENTS.md` §0 and `docs/UPDATE-PATH-OWNERSHIP.md` §"Reven Leather Protected Customizations", preserve all Reven Leather files/rules, keep `src/pages/testimoni.astro` deleted, and run `npm run route-map && npm test && npm run check && npm run build`.
+
+## 2026-10-30 — Reven: ten-minute edge cache, gtag after the Meta pixel (`a85ab27`)
+
+- **Live:** Worker version `4cc0d930` deployed 2026-10-30 from `a85ab27`.
+- **Change:** `EDGE_CACHE_SECONDS` 120 → 600 for anonymous HTML (a logged-in
+  admin still bypasses it, so only public visitors see an edit up to ten
+  minutes late); gtag's idle timer 2.5 s → 6 s so it no longer lands with the
+  Meta pixel. Conversions and the gclid are unaffected; only the remarketing
+  `page_view` of a visitor who leaves inside 6 s untouched is lost. Rollback:
+  revert `a85ab27` and deploy.
+- **Evidence:** `npm test` 882 pass / 1 skipped (install-tree image check),
+  `npm run check` 0 errors, `npm run build` ok. Live `/` answers
+  `x-edge-cache: HIT` and serves `setTimeout(loadGtag, 6000)` beside
+  `setTimeout(loadPixel, 2500)`. Lighthouse mobile (simulated, 3 runs on `/`):
+  score 71–78, LCP 2.2–3.3 s, TBT 750–1370 ms, TTFB 80 ms on a hit and
+  500–600 ms on a miss.
+- **Open:** TBT is now mostly Meta (`fbevents` + `signals/config`, ~0.4–0.6 s)
+  and gtag (~0.35–0.55 s), which simulated Lighthouse still counts after 6 s.
+  Lowering it further means deferring the Meta pixel past its 2.5 s slot, an
+  ad-delivery trade-off the owner has not taken. Field data (CrUX / Search
+  Console) not checked.
 
 ## 2026-10-30 — Reven: every landing page back to hybrid; Gratis Grafir on the middle form (`3db2687`)
 

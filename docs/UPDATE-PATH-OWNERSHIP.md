@@ -31,6 +31,9 @@ Unlike a default install, `revenleather` has custom storefront, route, and check
      - Every landing page form section is `{"mode": "hybrid"}` in D1; the middle form carries the same optional grafir selector on the 33 approved products.
      - A middle-form grafir request is never COD: `submit-middle-order` saves it as `manual_transfer` against the active bank account with `customerNote: Grafir: <text>`; `/thanks` shows `Transfer · Total Menyusul`; `shouldAutoRedirectToWhatsapp` hands any lead-only order with an order number to WhatsApp.
    - `public/images/reven-*.webp`, `public/images/reven-mark.svg`.
+   - `src/lib/edge-cache.ts`, `src/components/storefront/tracking/GoogleAdsBase.astro`, `src/lib/reven-page-speed.test.ts` (page speed, ADR-029 §6):
+     - `EDGE_CACHE_SECONDS = 600`, not upstream's 120: ad traffic spreads over ~79 landing pages times the province key. Upstream's `edge-cache.test.ts` asserts `max-age=120`; keep it at `600`.
+     - gtag's idle timer is `6000`, the Meta pixel keeps `2500`, so the two libraries never load together. `reven-page-speed.test.ts` pins both.
 
 ## Product-owned — copy on every update
 
