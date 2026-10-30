@@ -1,9 +1,32 @@
 # STATUS — AdsBookCMS (`revenleather` / `page.revenleather.com`)
 
-> Verified against disk: 2026-10-23 (1.7.8 on revenleather `page.revenleather.com` @ `241da00`; 1.7.4 on zvarashop; 1.7.2 on beranda-tani, numaskin-adbook, taniniaga, agritani-shop, zanobyshop)
+> Verified against disk: 2026-10-30 (1.7.13 + Reven middle-form grafir on revenleather `page.revenleather.com` @ `3db2687`; 1.7.4 on zvarashop; 1.7.2 on beranda-tani, numaskin-adbook, taniniaga, agritani-shop, zanobyshop)
 
 > **⚠️ AI AGENT UPDATE WARNING (`revenleather` vs `adsbookcms`):**
 > `revenleather` (`https://page.revenleather.com`) contains custom storefront, product card, footer, and checkout rules that **must never be pushed to `adsbookcms`** and **must never be overwritten when adopting a new `adsbookcms` release**. Before copying or merging any upstream `adsbookcms` update into this repository, read `AGENTS.md` §0 and `docs/UPDATE-PATH-OWNERSHIP.md` §"Reven Leather Protected Customizations", preserve all Reven Leather files/rules, keep `src/pages/testimoni.astro` deleted, and run `npm run route-map && npm test && npm run check && npm run build`.
+
+## 2026-10-30 — Reven: every landing page back to hybrid; Gratis Grafir on the middle form (`3db2687`)
+
+- **Live:** Worker version `ef92579d` deployed 2026-10-30 from `3db2687`.
+- **D1 (`revenleather-d1`):** all 79 `landing_sections` of type `form` changed
+  from `{"mode": "full"}` to `{"mode": "hybrid"}`. A province outside
+  `stores.cod_disabled_province_codes` gets the middle form, an excluded or
+  unknown province gets the full form with COD disabled. Rollback: set the
+  same rows back to `{"mode": "full"}` (all 79 were identical before).
+- **Middle-form grafir:** on the 33 approved grafir products the middle form
+  offers `Tanpa Grafir` (COD) or `+ Gratis Grafir Nama / Inisial`. A grafir
+  request is saved as `manual_transfer` against the store's active bank
+  account, the text goes to `lead_follow_up_note` (`Grafir: <text>`, address
+  stays clean for Mengantar), `/thanks` shows `Transfer · Total Menyusul`, and
+  the lead-only transfer is handed off to WhatsApp for the admin to close.
+  Purchase is sent when the admin marks the transfer received (1.7.13).
+- **Evidence:** `npm test` 881 pass, `npm run check` 0 errors; local Chromium
+  run (390 px grafir → `INV-10002` manual_transfer/pending, WA message carries
+  `Grafir: ONGKI`; 1280 px no grafir → COD/unpaid, WA hand-off). Live: from a
+  Jawa Timur IP `/produk/barry-sling-bag` and `/produk/helsinki-leather-laptop-bag`
+  render `middle` with the grafir block, `/produk/apollo-long-wallet` renders
+  `middle` without it, `/full-form?product_id=barry-sling-bag` stays `full`.
+  No production order was created for this check.
 
 ## 2026-10-24 — 1.7.13: manual transfer confirmation sends the Purchase
 

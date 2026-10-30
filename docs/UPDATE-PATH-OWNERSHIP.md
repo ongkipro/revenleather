@@ -27,6 +27,9 @@ Unlike a default install, `revenleather` has custom storefront, route, and check
      - Payment ordering: Transfer Bank / Virtual Account / QRIS first, **COD (`cod`) always at the very bottom**.
      - Single bank / VA option (`length === 1`) renders directly as a flat radio row without collapse & show accordion.
      - `GeoIpResolvedForm.astro` passes `province={resolvedProvince}` to `FormHybridContent.astro`.
+   - `src/components/storefront/forms/FormMiddleContent.astro`, `src/scripts/form-middle.ts`, `src/pages/api/submit-middle-order.ts`, `src/pages/thanks.astro`, `src/lib/thanks-whatsapp.ts`, `src/lib/middle-grafir.test.ts`:
+     - Every landing page form section is `{"mode": "hybrid"}` in D1; the middle form carries the same optional grafir selector on the 33 approved products.
+     - A middle-form grafir request is never COD: `submit-middle-order` saves it as `manual_transfer` against the active bank account with `customerNote: Grafir: <text>`; `/thanks` shows `Transfer · Total Menyusul`; `shouldAutoRedirectToWhatsapp` hands any lead-only order with an order number to WhatsApp.
    - `public/images/reven-*.webp`, `public/images/reven-mark.svg`.
 
 ## Product-owned — copy on every update
