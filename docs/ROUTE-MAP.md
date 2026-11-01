@@ -24,7 +24,7 @@ The [Modules](#modules) section is the same book read from the other side.
 | `/404` | GET | public | — | `src/pages/404.astro` | `catalog` `image-derivative` | `product_variants` `products` | `catalog.test.ts` `image-derivative.test.ts` |
 | `/llms.txt` | GET | public | — | `src/pages/llms.txt.ts` | `catalog` `llms-txt` | `product_variants` `products` | `catalog.test.ts` `llms-txt.test.ts` |
 | `/payment` | GET | public | — | `src/pages/payment.astro` | `format-idr` `payment-brand` `payment-display` | — | `format-idr.test.ts` `payment-brand.test.ts` `payment-display.test.ts` |
-| `/produk` | GET | public | — | `src/pages/produk/index.astro` | `approved-grafir` `catalog` `format-idr` | `product_variants` `products` | `catalog.test.ts` `format-idr.test.ts` |
+| `/produk` | GET | public | — | `src/pages/produk/index.astro` | `approved-grafir` `auto-load-more` `catalog` `format-idr` | `product_variants` `products` | `auto-load-more.test.ts` `catalog.test.ts` `format-idr.test.ts` |
 | `/produk/[slug]` | GET | public | — | `src/pages/produk/[slug].astro` | `catalog` `catalog-feed` `env` `form-mode` `geo` `json-ld` `landing-pages` `social-proof` | `landing_pages` `landing_sections` `orders` `product_variants` `products` `stores` | `catalog.test.ts` `catalog-feed.test.ts` `env.test.ts` `form-mode.test.ts` `geo.test.ts` `json-ld.test.ts` `landing-pages.test.ts` |
 | `/thanks` | GET | public | — | `src/pages/thanks.astro` | `catalog` `payment-brand` `payment-display` `public-store` `thanks-whatsapp` | `product_variants` `products` `stores` | `catalog.test.ts` `payment-brand.test.ts` `payment-display.test.ts` `public-store.test.ts` `thanks-whatsapp.test.ts` |
 
@@ -218,7 +218,7 @@ The [Modules](#modules) section is the same book read from the other side.
 
 ## Modules
 
-137 modules under `src/lib`; 14 without a sibling test.
+138 modules under `src/lib`; 14 without a sibling test.
 `used by` lists routes importing the module directly — a module used by nothing
 is either transitive (imported by another lib) or dead, and only reading tells which.
 
@@ -238,6 +238,7 @@ is either transitive (imported by another lib) or dead, and only reading tells w
 | `approved-grafir` | 2 | — | **none** | `/produk` `/landing-page` |
 | `auth-secret` | 1 | `install_secrets` | ✓ | `/[slug]` `/hello` `/api/install` `/api/admin/logout` |
 | `auth` | 13 | — | ✓ | `/hello` `/api/install` `/admin/dashboard` `/api/admin/access` `/api/admin/logout` `/api/admin/profile` |
+| `auto-load-more` | 2 | — | ✓ | `/produk` |
 | `autolaris-client` | 20 | — | ✓ | `/api/order-status` `/api/payment-methods` `/admin/payments` `/api/admin/settings` |
 | `autolaris-payment` | 22 | `autolaris_callbacks` `order_items` `orders` `payment_transaction_attempts` `payment_transactions` `product_variants` `products` `stores` `warehouses` | ✓ | `/api/meta-event` `/api/order-status` `/api/submit-order` `/api/v1/checkout` `/api/v1/tracking/events` `/api/admin/orders/[id]` |
 | `bundled-migrations` | 1 | — | **none** | — |

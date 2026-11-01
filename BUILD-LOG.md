@@ -8310,3 +8310,63 @@ No migration, no version bump. 1149 tests pass, `npm run check` 0/0/0.
 - Full method and the other measurements are `TRACKING_SPECS.md` §16.1b; the
   fleet state, including five installs left merged-but-unpushed by an
   interrupted rollout, is `docs/FLEET.md`.
+
+### Entry 230: lighter catalogue cards and load-more on scroll (zvara.shop Lighthouse)
+
+No migration, no version bump. 1154 tests pass, `npm run check` 0/0/0.
+
+- **Measured on zvara.shop (Lighthouse mobile, home 62):** ten 600x600 landing
+  hero images (~55 KB each) sat in 182 CSS px cards, because `cardImageSrc` only
+  knew the admin-upload `-sm` twin. 29 of its 70 products point at such static
+  files. A static file has no server fallback (a missing twin answers 404
+  through the Worker), so the swap is driven by a generated list:
+  `npm run card-images` writes `<name>-sm.webp` (480 px) and
+  `src/data/card-derivatives.ts`; `cardImageSrc` swaps only listed paths. The
+  list ships empty, so no install changes until it runs the script.
+- **Load more** already existed on the home grid and `/produk` (10 at a time,
+  a button, two separate scripts). `lib/auto-load-more.ts` now clicks that
+  button as it nears the screen, after the first scroll or touch, and
+  re-observes after each click; the button stays for keyboard and no-script
+  use. Tested with a fake observer (`auto-load-more.test.ts`).
+- Server timing was *not* the problem: see `UNIMPLEMENTED_SPECS.md` PERF-1.
+- **Correction, same day:** the first `npm run card-images` wrote the twins but
+  listed none of them (it filtered the list against a directory snapshot taken
+  before the twins existed), so `cardImageSrc` would never have swapped. Fixed to
+  judge on disk, covered end to end by `card-images-script.test.ts`, which runs the
+  script in a temp folder. Quality 74 became 66 after measuring 12 real packshots
+  (52 KB originals, 32 KB at 74, 30 KB at 66, no visible loss at card size).
+
+### Entry 231: zvara home hero re-encoded; the upload limit stays 2 MB (owner decision)
+
+- **Upload rule, decided 2026-11-01 (Paduka: "image max 2mb aja"):** unchanged.
+  The ceiling is 2 MB at every layer (`upload-r2.ts` answers 413, `ProductForm`,
+  `MAX_ENCODED_BYTES` after the browser's WebP pass), with the 1280 px edge and
+  quality 0.8 in `client-image.ts` as they were. A 1000 px / 0.72 tightening was
+  proposed and dropped; do not reopen it without new evidence. Measured for
+  context: a 480 px twin of a packshot is about 30 KB, a 1000 px product image
+  about 55 KB.
+- **zvara.shop home hero:** the upload of 2026-08-18 was 1254x1254, 132 KB,
+  stored before the edge rule. It was re-encoded to 1000 px, q70 (56 KB, banner
+  text still sharp) and stored under a **new** R2 key
+  `uploads/2026-11-01/8eef89d6-6e9c-4de0-b770-6b41ad8732e9.webp`, because
+  `/assets/*` is served `immutable` for a year and an overwritten key would never
+  reach a browser that has the old one. `storefront_content` row `home` (draft and
+  published) points at it; image bytes on the home page went 453 to 380 KB.
+  Rollback: the old object `uploads/2026-08-18/ccf44dda-90ac-486e-b088-1553d19d4a36.webp`
+  is still in R2; `UPDATE storefront_content SET draft_json = REPLACE(draft_json,
+  '<new path>', '<old path>'), published_json = REPLACE(published_json, '<new path>',
+  '<old path>') WHERE content_key = 'home'`.
+- The same upload is still a product's main image (card uses its `-sm` twin, the
+  product page the 132 KB original). Content, left alone.
+
+### Entry 232: the login timing-floor test measures medians, not one sample
+
+`admin-credentials.test.ts` "the login timing work floor is a real PBKDF2
+verification" failed once in CI on a documentation-only PR and passed on the
+re-run. It timed the digest compare once (about 0.03 ms) and demanded the
+PBKDF2 floor exceed ten times that, so one pause inside that single sample was
+enough. It now takes the median of 5 floor runs and 9 compare runs. Checked: with
+the floor replaced by the cheap compare the test still fails (3 of 3), the
+property it guards (LOGIN-13) is untouched, and over 30 000 samples under 12 busy
+loops on 8 cores a single sample crossed the limit 2 times against 0 of 3 333
+median-of-9 groups. The CI failure rate was not reproduced locally.

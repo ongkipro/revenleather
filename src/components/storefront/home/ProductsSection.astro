@@ -231,6 +231,8 @@ const categories = [...categoryMap.entries()].sort((a, b) => b[1] - a[1]);
 </section>
 
 <script>
+  import { autoLoadMore } from '../../../lib/auto-load-more';
+
   function initProductCatalog() {
     const searchInput = document.getElementById('catalog-search') as HTMLInputElement | null;
     const cards = document.querySelectorAll('.product-card') as NodeListOf<HTMLElement>;
@@ -320,6 +322,9 @@ const categories = [...categoryMap.entries()].sort((a, b) => b[1] - a[1]);
     });
 
     filterAndRender();
+    // The next ten load as the button nears the screen; the button stays as the
+    // keyboard and no-script path.
+    autoLoadMore(loadMoreBtn);
   }
 
   if (document.readyState === 'loading') {
