@@ -86,4 +86,9 @@
   /* foundation sets body colour to slate-900 for both surfaces. The storefront
      ink is #111111; admin keeps its slate. */
   --text-main: #111111;
+  /* revenleather keeps its ink action colour (ADR-019). The product default is
+     orange; the same tokens as the form root, declared here so the buttons
+     outside it (PDP sticky bar, 404) do not fall back to orange. */
+  --sf-accent: #121212;
+  --sf-accent-strong: #333333;
 }
