@@ -8269,3 +8269,44 @@ No migration. 1146 tests pass, `npm run check` 0/0/0. Released as 1.8.5
   Graph API v26.0 everywhere. skincarebpom's hourly cron, commented out since
   2026-08-22 to free a slot for zanobyshop, is registered again.
 - PRD A47 records the 1.8.3–1.8.4 dashboard requirements (REQ-274–279).
+
+### Entry 228: `PUBLIC_DEFAULT_BRAND` — the brand for a product that has none
+
+No migration, no version bump. 1148 tests pass, `npm run check` 0/0/0.
+
+- A product with no `products.brand` was reported to Google and Meta under the
+  store name (`Zvara Shop` on zvara.shop, 39 of 70 items). `PUBLIC_DEFAULT_BRAND`
+  now supplies that fallback in the Google/Meta catalog feeds and the product
+  JSON-LD, through `tenant.defaultBrand`. Empty keeps the store name, so no
+  install changes until it sets the variable. A product's own brand always wins.
+- It is a build-time `vars` entry, like the other `PUBLIC_*` values: it takes
+  effect after `npm run build`, not by redeploying an old bundle.
+
+### Entry 229: `_fbp` is minted before the deferred pixel (live CAPI audit of zvara.shop)
+
+No migration, no version bump. 1149 tests pass, `npm run check` 0/0/0.
+
+- **Measured, read-only, on zvara.shop's `capi_event_outbox` (30 days):** every
+  event is `sent` on the first attempt (0 pending, 0 failed). Purchase carries
+  phone, name, province, external_id, IP and user agent on 100% of rows, `fbp`
+  on 99% and `fbc` on 98%. But `fbp` was on only 31% of PageView and 21% of
+  ViewContent rows.
+- **Cause, reproduced in a real browser:** the pixel library is deferred to
+  2.5 s for page speed, and only it writes `_fbp`. `MetaPageViewTracker` posts
+  the server PageView/ViewContent at ~240 ms, so a first-time visitor's
+  top-of-funnel events left without it.
+- **Fix:** the `MetaPixelBase` bootstrap writes `_fbp` first, in Meta's format
+  (`fb.1.<ms>.<10 digits>`), when none exists; fbevents.js keeps an existing
+  one. Client-side, so the cached HTML is untouched. Tested at runtime in
+  `meta-pixel-ordering.test.ts`.
+- **Not a defect, recorded so it is not chased again:** city and postal code
+  are on 12 of 486 Purchase events because the short checkout form asks for a
+  province only; the payload matches the order row exactly. Email is 0% because
+  the COD form does not collect one.
+- **Verified live on zvara.shop (Worker `11b08a82`):** the first
+  `/api/meta-event` request of a fresh visitor carries `_fbp` before
+  `fbevents.js` is requested. The browser then holds two `_fbp` cookies
+  (host-only from this bootstrap, `.domain` from fbevents) with the same value.
+- Full method and the other measurements are `TRACKING_SPECS.md` §16.1b; the
+  fleet state, including five installs left merged-but-unpushed by an
+  interrupted rollout, is `docs/FLEET.md`.

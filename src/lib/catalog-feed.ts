@@ -152,6 +152,7 @@ function buildCatalogXml(
   title: string | undefined,
   description: string | undefined,
   flavor: CatalogFeedFlavor,
+  defaultBrand?: string,
 ): string {
   const origin = siteOrigin.replace(/\/$/, "");
   const siteTitle = title || "AdsBookCMS Merchant Store";
@@ -215,7 +216,7 @@ function buildCatalogXml(
       <g:price>${escapeXml(basePriceFormatted)}</g:price>${salePriceXml}
 ${flavor.categoryXml(taxonomy)}
       <g:product_type>${escapeXml(taxonomy.productType)}</g:product_type>
-      <g:brand>${escapeXml(product.brand?.trim() || siteTitle)}</g:brand>
+      <g:brand>${escapeXml(product.brand?.trim() || defaultBrand?.trim() || siteTitle)}</g:brand>
       <g:condition>new</g:condition>${flavor.identityXml(variant)}
     </item>`;
   }
@@ -270,6 +271,7 @@ export function generateGoogleCatalogXml(
   siteOrigin: string,
   title?: string,
   description?: string,
+  defaultBrand?: string,
 ): string {
   return buildCatalogXml(products, siteOrigin, title, description, {
     channelSuffix: "Google Merchant Catalog",
@@ -289,7 +291,7 @@ export function generateGoogleCatalogXml(
     // `identifier_exists: no` already does; the MPN was redundant as well as
     // contradictory, and this schema has no column for a real one.
     identityXml: () => `\n      <g:identifier_exists>no</g:identifier_exists>`,
-  });
+  }, defaultBrand);
 }
 
 export function generateMetaCatalogXml(
@@ -297,6 +299,7 @@ export function generateMetaCatalogXml(
   siteOrigin: string,
   title?: string,
   description?: string,
+  defaultBrand?: string,
 ): string {
   return buildCatalogXml(products, siteOrigin, title, description, {
     channelSuffix: "Meta Commerce Catalog",
@@ -310,5 +313,5 @@ export function generateMetaCatalogXml(
         ? `\n      <g:fb_product_category>${escapeXml(taxonomy.metaCategoryName)}</g:fb_product_category>`
         : "") + googleCategoryXml(taxonomy),
     identityXml: () => "",
-  });
+  }, defaultBrand);
 }
