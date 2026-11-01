@@ -1,6 +1,6 @@
 # AGENTS.md — Working Agreement for AdsBookCMS
 
-> Verified against disk: 2026-10-31 @ `e04dabd` (Reven install)
+> Verified against disk: 2026-11-01 @ `0f042c9` (1.8.5 release; baseline 1146)
 
 This file is the contract for any AI coding agent or contributor working in this repository. Read it before the first edit.
 
@@ -50,12 +50,14 @@ Exactly one document owns each subject. Do not restate another document's truth;
 | `OBSERVABILITY.md` | Logging, failure visibility, what to enable |
 | `INSTALLATION.md` | Standing up a new install |
 | `STATUS.md` | Current state of the running system |
+| `docs/FLEET.md` | The install fleet: which stores run AdsBookCMS, their version, repository, visibility, infrastructure and per-install merge rules |
 | `UNIMPLEMENTED_SPECS.md` | Remaining work and external blockers |
 | `PRD.md` | Product requirements |
 | `TASKS.md` | Execution log |
 | `BUILD-LOG.md` | Chronological history. Append-only |
 | `DESIGN-SYSTEM.md` | Visual contract |
 | `STOREFRONT_INTEGRATION.md` | Headless `/api/v1/*` contract |
+| `docs/OPS-API.md` | Operations `/api/ops/v1/*` contract: scopes, operations, errors. The OpenAPI document it names is generated from `src/lib/ops-openapi.ts` |
 | `MENGANTAR_INTEGRATION_SPEC.md` | Courier provider boundary |
 | `TRACKING_SPECS.md` | Ad signal contract |
 | `PRD-ADMIN-LOGIN.md` | Admin login, first-run access, session |
@@ -132,15 +134,15 @@ A React island is only partly covered. A component that throws during SSR
 answers `200` with an **empty body** — a blank white page that every static
 check calls healthy; 1.3.4 shipped a one-line island change to every install and
 left the admin order list blank for a day. `src/lib/admin-islands-render.test.ts`
-now bundles and server-renders the six admin islands that carry data
+now bundles and server-renders the seven admin islands that carry data
 (`OrdersTable`, `OrderDetail`, `PaymentReconciliationQueue`, `ProductForm`,
-`LandingPageEditor`, `RateCheckTools`); any other island, and every client-side script, is still
+`LandingPageEditor`, `RateCheckTools`, `OperationalStatus`); any other island, and every client-side script, is still
 proven only by opening the page. Put branch logic in `src/lib/` where the runner
 can reach it.
 
 On a fresh clone, run `npm run check` rather than bare `npx tsc --noEmit`. `astro check` generates `.astro/types.d.ts` first; without it `tsc` reports phantom errors such as `Property 'env' does not exist on type 'ImportMeta'`.
 
-Current verified working-tree baseline: **833 passing** (0 skipped), 0 type errors, `astro check` 0 errors / 0 warnings / 0 hints. A change that reduces this baseline is not done.
+Current verified baseline: **1146 passing** (0 skipped, 2026-11-01, `release/1.8.5`, 1.8.5), 0 type errors, `astro check` 0 errors / 0 warnings / 0 hints (568 files). A change that reduces this baseline is not done.
 
 New non-trivial logic — a branch, a parser, a money or auth path — leaves one runnable check behind. Trivial one-liners do not need a test.
 
@@ -162,7 +164,7 @@ A permitted command is not an approved one. The tooling here runs with broad per
 
 ## 6. Code discipline
 
-Smallest change that is correct. Reuse what exists before adding; the codebase already has 100 non-test lib modules and duplicating one is the most common failure mode.
+Smallest change that is correct. Reuse what exists before adding; the codebase already has 116 non-test lib modules and duplicating one is the most common failure mode.
 
 Before adding a dependency, check whether the platform already provides it. Two headless UI libraries already ship side by side (`radix-ui` and `@base-ui/react`) — do not add a third.
 

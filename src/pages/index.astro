@@ -70,7 +70,7 @@ const itemList = {
 <BaseLayout
   title={homepageTitle}
   description={Astro.locals.tenant.description}
-  image={heroSlides[0]?.image ?? Astro.locals.tenant.logo}
+  image={heroSlides[0]?.image || undefined}
   preloadImages={heroSlides[0]?.image ? toCardImage(heroSlides[0].image) : undefined}
   itemList={ready ? itemList : undefined}
 >

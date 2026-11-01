@@ -2,12 +2,16 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import LegalPage from '../components/storefront/shared/LegalPage.astro';
 import { getTenantLegalPage } from '../data/legal';
-import { getStoreSupportWhatsapp } from '../lib/public-store';
+import { getStorePublicContact } from '../lib/public-store';
 
-const supportWhatsapp = await getStoreSupportWhatsapp(Astro.locals);
-const normalizedWa = supportWhatsapp ? supportWhatsapp.replace(/^0/, '62').replace(/^\+/, '') : '628518857767';
+const contact = await getStorePublicContact(Astro.locals);
+// Reven: the store's WhatsApp, normalised to 62…, with the brand's own number as the fallback.
+const normalizedWa = contact.whatsapp ? contact.whatsapp.replace(/^\+/, '').replace(/^0/, '62') : '628518857767';
 const data = getTenantLegalPage('contact', Astro.locals.tenant.name, {
-  supportWhatsapp: supportWhatsapp ? `+${normalizedWa}` : '+628518857767',
+  supportWhatsapp: `+${normalizedWa}`,
+  supportEmail: contact.email,
+  businessAddress: contact.address,
+  siteUrl: Astro.locals.tenant.siteUrl,
 });
 ---
 

@@ -8,7 +8,7 @@ interface BreadcrumbItem {
 }
 
 interface Props {
-  badge: string;
+  badge?: string;
   title: string;
   description: string;
   breadcrumbs?: BreadcrumbItem[];
@@ -21,9 +21,11 @@ const rail = 'max-w-[480px]';
 {breadcrumbs.length > 0 && <Breadcrumb items={breadcrumbs} />}
 <section class="border-b border-[#d6cbbd] bg-[#f4eee6] px-4 py-6">
   <div class={cn('mx-auto', rail)}>
-    <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#7c6a5a]">
-      {badge}
-    </p>
+    {badge && (
+      <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#7c6a5a]">
+        {badge}
+      </p>
+    )}
     <h1 class="mt-1.5 font-serif text-[25px] font-semibold leading-[1.15] tracking-[-0.01em] text-[#1a1411]">
       {title}
     </h1>

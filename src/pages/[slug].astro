@@ -15,6 +15,7 @@ import { defaultCatalogContentId } from '../lib/catalog-feed';
 import SocialProofToast from '../components/storefront/shared/SocialProofToast.astro';
 const toCardImage = (u = '') => /^(?:https?:\/\/[^/]+)?\/assets\/uploads\//i.test(u) && !/-sm\.[a-z0-9]+$/i.test(u) ? u.replace(/(\.[a-z0-9]+)$/i, '-sm$1') : u;
 import { recentOrderCount } from '../lib/social-proof';
+import { buildProductJsonLd } from '../lib/json-ld';
 
 export const prerender = false;
 
@@ -114,32 +115,27 @@ const metaDescription = rawDesc.replace(/\s*landing\s*page\s*/gi, ' ').trim();
 const canonicalPath = page.is_product_page ? productPagePath : `/${page.slug}`;
 const canonical = `${Astro.locals.tenant.siteUrl}${canonicalPath}`;
 
-const productSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'Product',
-  name: product.productName,
-  description: metaDescription,
-  image: [new URL(product.heroImage, Astro.locals.tenant.siteUrl).toString()],
-  sku: product.productId,
-  category: product.category,
-  brand: {
-    '@type': 'Brand',
-    name: Astro.locals.tenant.name,
-  },
-  offers: product.variants.map((variant) => ({
-    '@type': 'Offer',
+// Same builder as the product page (lib/json-ld.ts), so both describe the
+// product identically — including its own brand, not the store's name.
+const productSchema = buildProductJsonLd({
+  siteUrl: Astro.locals.tenant.siteUrl,
+  organization: { name: Astro.locals.tenant.name },
+  product: {
+    name: product.productName,
+    description: product.description || metaDescription,
+    image: product.heroImage,
     url: canonical,
-    priceCurrency: 'IDR',
-    price: String(variant.price),
-    availability: 'https://schema.org/InStock',
-    itemCondition: 'https://schema.org/NewCondition',
-    name: variant.label,
-    seller: {
-      '@type': 'Organization',
-      name: Astro.locals.tenant.name,
-    },
-  })),
-};
+    sku: product.productId,
+    category: product.category,
+    ...(product.brand ? { brand: product.brand } : {}),
+    offers: product.variants.map((variant) => ({
+      price: variant.price,
+      availability: 'InStock',
+      name: variant.label,
+      ...(variant.sku ? { sku: variant.sku } : {}),
+    })),
+  },
+});
 const productSchemaJson = JSON.stringify(productSchema).replace(/</g, '\\u003c');
 const INLINE_CORMORANT_FONT_CSS = `<style>@font-face{font-family:'Cormorant Garamond';font-style:italic;font-weight:600;font-display:swap;src:url(https://fonts.gstatic.com/s/cormorantgaramond/v21/co3smX5slCNuHLi8bLeY9MK7whWMhyjYrGFEsdtdc62E6zd5LDf-iNM8A_ipUA.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:600;font-display:swap;src:url(https://fonts.gstatic.com/s/cormorantgaramond/v21/co3umX5slCNuHLi8bLeY9MK7whWMhyjypVO7abI26QOD_iE9KnTOitk7Ifo.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}</style>`;
 ---

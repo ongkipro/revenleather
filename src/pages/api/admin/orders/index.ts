@@ -1,8 +1,12 @@
 import type { APIRoute } from 'astro';
 import { jsonError, jsonOk } from '../../../../lib/api.ts';
-import { parseCrmTemplates } from '../../../../lib/crm-template.ts';
+import { CRM_BANK_ACCOUNTS_SQL, CRM_STORE_SQL, crmStoreContext, formatBankAccount } from '../../../../lib/crm-template.ts';
+import { buyerLinkOrigin, buyerOrderLinks } from '../../../../lib/payment-switch.ts';
 import { getRuntimeEnv } from '../../../../lib/env.ts';
+import { shippingStatusLabel } from '../../../../lib/shipping-status.ts';
+import { readOrderFollowUpsFor, type OrderFollowUp } from '../../../../lib/order-follow-up.ts';
 import { dispatchOrderToMengantar } from '../../../../lib/mengantar-dispatch.ts';
+import { parseMengantarPickupChoice } from '../../../../lib/mengantar-order.ts';
 import {
   runMengantarOrderQueue,
   summarizeMengantarDispatchResults,
@@ -16,11 +20,13 @@ import {
 } from '../../../../lib/order-lifecycle.ts';
 import type { AdminShippingStatus } from '../../../../lib/order-lifecycle.ts';
 import { isRecentReceiverRefusal, scheduleReceiverPerformanceRefresh } from '../../../../lib/rts-scoring.ts';
+import { AWAITING_PAYMENT_SQL, LIST_SHIPPING_STATUS_SQL, orderListFilter } from '../../../../lib/order-list-filter.ts';
 import {
-  ADMIN_CUSTOM_DATE_FILTER,
-  isAdminDateFilter,
-  parseAdminDateSelection,
-} from '../../../../lib/admin-date-filter.ts';
+  sourceFacetStatement,
+  sourceFilterOptions,
+  sourceLabelsFromRows,
+  sourceLabelsStatement,
+} from '../../../../lib/source-slug.ts';
 
 /** The order lines the CRM templates list (`{{rincian_pesanan}}`). */
 function parseItemsJson(raw: string | null) {
@@ -43,8 +49,6 @@ function parseItemsJson(raw: string | null) {
 export const prerender = false;
 
 const BULK_SHIPPING_STATUSES = ADMIN_SHIPPING_STATUSES;
-const SHIPPING_STATUSES = ['all', ...BULK_SHIPPING_STATUSES] as const;
-const PAYMENT_STATUSES = ['all', 'unpaid', 'paid', 'settled', 'success', 'failed', 'refunded', 'expired'] as const;
 
 type OrderRow = {
   id: number;
@@ -71,7 +75,8 @@ type OrderRow = {
   seller_bank_name: string | null;
   seller_account_holder: string | null;
   seller_account_number: string | null;
-  epayment_link: string | null;
+  public_status_token: string | null;
+  stock_restored_at: string | null;
   destination_area_id: string | null;
   provider_order_id: string | null;
   provider_dispatch_error: string | null;
@@ -82,6 +87,8 @@ type OrderRow = {
   receiver_refused_at: string | null;
   ad_click_ids: string | null;
   customer_note: string | null;
+  source_page_path: string | null;
+  source_slug: string | null;
   created_at: string;
 };
 
@@ -102,6 +109,8 @@ type OrderMutation = {
   orderIds?: Array<number | string>;
   order_ids?: string[];
   status?: string;
+  /** `dispatch-orders`: drop-off or a scheduled pickup for the batch (PRD A46). */
+  pickup?: unknown;
 };
 
 export type BulkStatusUpdate = {
@@ -142,82 +151,34 @@ export function parseBulkStatusUpdate(body: unknown): BulkStatusUpdate {
 }
 
 
-export const GET: APIRoute = async ({ url, locals }) => {
+/**
+ * Set by `/admin/orders` when it server-renders the first rows through this
+ * route: the island's own fetch follows within a second, and scoring the same
+ * unscored orders twice is a second provider call each. Forging it only
+ * skips one refresh.
+ */
+export const ORDER_LIST_PREFETCH_HEADER = 'X-Order-List-Prefetch';
+
+export const GET: APIRoute = async ({ url, locals, request }) => {
   const database = getRuntimeEnv(locals)?.OMS_DB;
   if (!database || typeof database !== 'object') {
     return jsonError('Database order belum tersedia.', 503);
   }
 
-  const search = String(url.searchParams.get('search') || '').trim().slice(0, 120);
-  const shippingStatus = String(url.searchParams.get('shipping_status') || 'all').trim().toLowerCase();
-  const paymentStatus = String(url.searchParams.get('payment_status') || 'all').trim().toLowerCase();
-  const dateFilter = String(url.searchParams.get('date_filter') || 'all').trim().toLowerCase();
-  const sourceFilter = String(url.searchParams.get('source') || 'all').trim().toLowerCase();
   const page = Math.max(Number.parseInt(url.searchParams.get('page') || '1', 10) || 1, 1);
   const limit = Math.min(Math.max(Number.parseInt(url.searchParams.get('limit') || '25', 10) || 25, 1), 100);
-  if (!SHIPPING_STATUSES.includes(shippingStatus as (typeof SHIPPING_STATUSES)[number])) {
-    return jsonError('Filter status pengiriman tidak valid.', 400);
+  const filter = orderListFilter(url.searchParams);
+  if (!filter.ok) {
+    return jsonError(filter.error, filter.status, filter.code ? { code: filter.code } : undefined);
   }
-  if (!PAYMENT_STATUSES.includes(paymentStatus as (typeof PAYMENT_STATUSES)[number])) {
-    return jsonError('Filter status pembayaran tidak valid.', 400);
-  }
-  if (dateFilter !== ADMIN_CUSTOM_DATE_FILTER && !isAdminDateFilter(dateFilter)) {
-    return jsonError('Filter periode order tidak valid.', 400);
-  }
+  const { parts: whereParts, params } = filter;
 
   try {
-    let whereClause = '';
-    const whereParts: string[] = ["shipping_status <> 'abandoned'"];
-    const params: unknown[] = [];
-
-    if (search) {
-      const term = `%${search}%`;
-      whereParts.push('(customer_name LIKE ? OR customer_phone LIKE ? OR order_number LIKE ? OR cnote_no LIKE ?)');
-      params.push(term, term, term, term);
-    }
-
-    // Recorded separately: the summary reads every filter, but the status
-    // chips must not filter by the status they let you pick, or selecting one
-    // would zero the others and break the control.
-    // The two indices differ: one search term pushes four params for a single
-    // clause, so the clause position is not the param position.
-    const shippingStatusIndex = shippingStatus !== 'all' ? whereParts.length : -1;
-    const statusParamIndex = shippingStatus !== 'all' ? params.length : -1;
-    if (shippingStatus !== 'all') {
-      whereParts.push('shipping_status = ?');
-      params.push(shippingStatus);
-    }
-    if (paymentStatus !== 'all') {
-      whereParts.push('payment_status = ?');
-      params.push(paymentStatus);
-    }
-    if (dateFilter !== 'all') {
-      // Refuses an unresolvable period rather than answering for a different
-      // one — passing the raw string straight in used to make anything
-      // unrecognised, `custom` included, silently become the 7-day default.
-      const { resolution } = parseAdminDateSelection(url.searchParams);
-      if (!resolution.ok) {
-        return jsonError(resolution.reason, 422, { code: 'DATE_RANGE_INVALID' });
-      }
-      whereParts.push("date(created_at, '+7 hours') BETWEEN ? AND ?");
-      params.push(resolution.start, resolution.end);
-    }
-    if (sourceFilter === 'meta') {
-      whereParts.push("(ad_click_ids LIKE '%fbclid%' OR ad_click_ids LIKE '%_fbc%' OR ad_click_ids LIKE '%meta%' OR ad_click_ids LIKE '%facebook%' OR ad_click_ids LIKE '%instagram%')");
-    } else if (sourceFilter === 'google') {
-      whereParts.push("(ad_click_ids LIKE '%gclid%' OR ad_click_ids LIKE '%gbraid%' OR ad_click_ids LIKE '%wbraid%' OR ad_click_ids LIKE '%google%')");
-    } else if (sourceFilter === 'organic') {
-      // `%ttclid%` stays excluded even though TikTok is no longer a filterable
-      // source (removed below): an order captured one before that removal has
-      // a real ad click id on it, and must not read as organic just because
-      // its own category went away.
-      whereParts.push("(ad_click_ids IS NULL OR ad_click_ids = '' OR ad_click_ids = '{}' OR (ad_click_ids NOT LIKE '%fbclid%' AND ad_click_ids NOT LIKE '%gclid%' AND ad_click_ids NOT LIKE '%ttclid%' AND ad_click_ids NOT LIKE '%gbraid%' AND ad_click_ids NOT LIKE '%wbraid%'))");
-    }
-
-    whereClause = ` WHERE ${whereParts.join(' AND ')}`;
-    // Same filters minus the status predicate, for the chips.
-    const chipParts = whereParts.filter((_, index) => index !== shippingStatusIndex);
-    const chipParams = params.filter((_, index) => index !== statusParamIndex);
+    const whereClause = ` WHERE ${whereParts.join(' AND ')}`;
+    // Same filters minus the status predicate, for the chips: selecting one
+    // must not zero the others.
+    const chipParts = whereParts.filter((_, index) => index !== filter.statusPart);
+    const chipParams = params.filter((_, index) => index !== filter.statusParam);
     const chipWhereClause = ` WHERE ${chipParts.join(' AND ')}`;
     const offset = (page - 1) * limit;
     const db = database as D1Database;
@@ -267,7 +228,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
           shipping_cost,
           payment_method,
           payment_status,
-          shipping_status,
+          ${LIST_SHIPPING_STATUS_SQL} AS shipping_status,
           courier_code,
           cnote_no,
           (
@@ -278,13 +239,8 @@ export const GET: APIRoute = async ({ url, locals }) => {
           seller_bank_name,
           seller_account_holder,
           seller_account_number,
-          (
-            SELECT provider_payment_url
-            FROM payment_transactions
-            WHERE payment_transactions.order_id = orders.id
-            ORDER BY payment_transactions.id DESC
-            LIMIT 1
-          ) AS epayment_link,
+          public_status_token,
+          stock_restored_at,
           (
             SELECT CASE
               WHEN pt.status = 'pending' AND pt.expires_at IS NOT NULL AND pt.expires_at <= strftime('%Y-%m-%dT%H:%M:%fZ', 'now') THEN 'expired'
@@ -309,13 +265,16 @@ export const GET: APIRoute = async ({ url, locals }) => {
             THEN json_extract(receiver_performance_json, '$.at') END AS receiver_refused_at,
           ad_click_ids,
           lead_follow_up_note AS customer_note,
+          source_page_path,
+          source_slug,
           created_at
         FROM orders
         ${whereClause}
         ORDER BY id DESC
         LIMIT ? OFFSET ?
       `).bind(...params, limit, offset);
-    const [countResult, rowResult, summaryResult, crmResult, statusCountResult] = await db.batch([
+    const withSourceOptions = url.searchParams.get('source_options') === '1';
+    const [countResult, rowResult, summaryResult, crmResult, bankResult, statusCountResult, labelResult, facetResult] = await db.batch([
       countStmt,
       ordersStmt,
       // Scoped to the active filters. These cards used to answer for the whole
@@ -325,25 +284,40 @@ export const GET: APIRoute = async ({ url, locals }) => {
       db.prepare(`
         SELECT
           COUNT(*) AS total_orders,
-          SUM(CASE WHEN payment_status = 'unpaid' THEN 1 ELSE 0 END) AS unpaid_count,
+          SUM(CASE WHEN ${AWAITING_PAYMENT_SQL} THEN 1 ELSE 0 END) AS unpaid_count,
           SUM(CASE WHEN UPPER(COALESCE(rts_risk_label, '')) LIKE '%HIGH%' THEN 1 ELSE 0 END) AS high_risk_count,
           COALESCE(SUM(total_amount), 0) AS total_value
         FROM orders${whereClause}
       `).bind(...params),
-      db.prepare("SELECT crm_templates FROM stores ORDER BY id LIMIT 1"),
+      db.prepare(CRM_STORE_SQL),
+      db.prepare(CRM_BANK_ACCOUNTS_SQL),
       db.prepare(`
-        SELECT shipping_status, COUNT(*) AS count
+        SELECT ${LIST_SHIPPING_STATUS_SQL} AS shipping_status, COUNT(*) AS count
         FROM orders${chipWhereClause}
-        GROUP BY shipping_status
+        GROUP BY 1
       `).bind(...chipParams),
+      // Names for the source chip, bounded by the catalogue.
+      sourceLabelsStatement(db),
+      // The source filter's menu, asked for once per list load.
+      withSourceOptions
+        ? sourceFacetStatement(db, 'orders')
+        : db.prepare('SELECT NULL AS slug, 0 AS count WHERE 0'),
     ]);
+    const facets = (facetResult?.results ?? []) as Array<{ slug: string; count: number }>;
+    const sourceLabels = sourceLabelsFromRows(
+      [
+        ...((rowResult.results ?? []) as OrderRow[]).map((row) => row.source_slug),
+        ...facets.map((row) => row.slug),
+      ],
+      (labelResult?.results ?? []) as Parameters<typeof sourceLabelsFromRows>[1],
+    );
 
     const totalItems = Number((countResult.results?.[0] as { total_items?: number | string } | undefined)?.total_items ?? 0);
     const totalPages = totalItems > 0 ? Math.ceil(totalItems / limit) : 0;
     const summary = (summaryResult.results?.[0] ?? {}) as Partial<OrderSummaryRow>;
-    const crmTemplates = parseCrmTemplates(
-      (crmResult.results?.[0] as { crm_templates?: string | null } | undefined)
-        ?.crm_templates ?? null,
+    const crm = crmStoreContext(
+      crmResult.results?.[0] as Parameters<typeof crmStoreContext>[0],
+      (bankResult.results ?? []) as Parameters<typeof crmStoreContext>[1],
     );
     const statusCounts = Object.fromEntries(
       ((statusCountResult.results ?? []) as OrderStatusCountRow[]).map((row) => [
@@ -356,14 +330,24 @@ export const GET: APIRoute = async ({ url, locals }) => {
     ).trim();
 
     const rows = (rowResult.results ?? []) as OrderRow[];
-    for (const row of rows.slice(0, 10)) {
+    const prefetch = request?.headers.get(ORDER_LIST_PREFETCH_HEADER) === '1';
+    for (const row of prefetch ? [] : rows.slice(0, 10)) {
       if (row.receiver_risk_label === null && row.customer_phone && !isRecentReceiverRefusal(row.receiver_refused_at)) {
         scheduleReceiverPerformanceRefresh(db, row.order_number, row.customer_phone, locals);
       }
     }
 
+    // The chips' state for the whole page in one read (REQ-249). A failed
+    // read leaves it out, and each panel then reads its own order.
+    let followUps: Map<number, OrderFollowUp[]> | null = null;
+    try {
+      followUps = await readOrderFollowUpsFor(db, rows.map((row) => Number(row.id)));
+    } catch (error) {
+      console.error('admin-orders-follow-up-read-failed', error instanceof Error ? error.name : 'unknown');
+    }
+
     return jsonOk({
-      data: ((rowResult.results ?? []) as OrderRow[]).map((row) => {
+      data: rows.map((row) => {
         const dispatch = getMengantarDispatchEligibility({
           paymentMethod: row.payment_method,
           paymentStatus: row.payment_status,
@@ -397,10 +381,11 @@ export const GET: APIRoute = async ({ url, locals }) => {
           courier_code: row.courier_code,
           cnote_no: row.cnote_no,
           seller_name: row.seller_name,
-          seller_bank_name: row.seller_bank_name,
-          seller_account_holder: row.seller_account_holder,
-          seller_account_number: row.seller_account_number,
-          epayment_link: row.epayment_link,
+          // The account this order was told to pay, else the store's active ones.
+          bank_accounts:
+            formatBankAccount(row.seller_bank_name, row.seller_account_number, row.seller_account_holder) ||
+            crm.bank_accounts,
+          ...buyerOrderLinks(buyerLinkOrigin(locals.tenant?.siteUrl, url.origin), row),
           dispatch_eligible: dispatch.eligible,
           dispatch_reason: dispatch.reason,
           provider_dispatch_error: row.provider_dispatch_error,
@@ -408,10 +393,15 @@ export const GET: APIRoute = async ({ url, locals }) => {
           receiver_risk_label: row.receiver_risk_label,
           ad_click_ids: row.ad_click_ids,
           customer_note: row.customer_note || null,
+          source_page_path: row.source_page_path,
+          source_slug: row.source_slug,
+          source_label: row.source_slug ? sourceLabels.get(row.source_slug)?.label ?? row.source_slug : null,
           created_at: row.created_at,
+          follow_ups: followUps ? followUps.get(Number(row.id)) ?? [] : null,
         };
       }),
-      crm_templates: crmTemplates,
+      ...(withSourceOptions ? { source_options: sourceFilterOptions(facets, sourceLabels) } : {}),
+      crm_templates: crm.templates,
       pagination: {
         page,
         limit,
@@ -474,7 +464,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         update.status,
       );
       return jsonOk({
-        message: `${updatedCount} order berhasil diubah ke status ${update.status}.`,
+        message: `${updatedCount} order berhasil diubah ke ${shippingStatusLabel(update.status)}.`,
         data: {
           updated_count: updatedCount,
           order_ids: update.orderIds.map(String),
@@ -499,11 +489,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
   if (orderIds.length === 0 || orderIds.length > 50) {
     return jsonError('Pilih 1 sampai 50 order untuk dikirim ke Mengantar.', 400);
   }
+  const pickupChoice = parseMengantarPickupChoice(body.pickup);
+  if (!pickupChoice.ok) return jsonError(pickupChoice.reason, 400);
 
   const db = database as D1Database;
+  // One slot per pickup address for the whole batch (PRD A46).
+  const pickup = { choice: pickupChoice.choice, timeIds: new Map<string, string>() };
   const results = await runMengantarOrderQueue(
     orderIds,
-    (orderId) => dispatchOrderToMengantar(db, locals, orderId),
+    (orderId) => dispatchOrderToMengantar(db, locals, orderId, pickup),
   );
   const dispatchSummary = summarizeMengantarDispatchResults(results);
   return jsonOk({

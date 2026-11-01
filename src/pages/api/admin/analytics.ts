@@ -1,6 +1,8 @@
 import type { APIRoute } from 'astro';
 import { jsonError, jsonOk } from '../../../lib/api.ts';
 import { getRuntimeEnv } from '../../../lib/env.ts';
+import { LEAD_ROW, ORDER_ROW, RELEASED_ORDER } from '../../../lib/order-metrics.ts';
+import { compareCutoff, compareRange, defaultCompareMode, isCompareMode } from '../../../lib/dashboard-compare.ts';
 
 export const prerender = false;
 
@@ -18,6 +20,8 @@ type AnalyticsRow = {
   virtual_account_orders: number | string | null;
   qris_orders: number | string | null;
   unknown_payment_orders: number | string | null;
+  handed_over_orders: number | string | null;
+  cod_revenue: number | string | null;
 };
 
 type TrendRow = {
@@ -69,7 +73,7 @@ export const GET: APIRoute = async ({ locals, url }) => {
       ? 'hour'
       : 'day';
 
-  const conditions = ["shipping_status <> 'abandoned'"];
+  const conditions = [ORDER_ROW];
   const params: string[] = [];
 
   if (startParam && endParam) {
@@ -77,16 +81,12 @@ export const GET: APIRoute = async ({ locals, url }) => {
     params.push(startParam, endParam);
   }
   const dateFilter = `WHERE ${conditions.join(' AND ')}`;
-  // An order that no longer represents money in play. Matches the releasing
-  // sets in order-lifecycle.ts: a cancelled or returned shipment gives its
-  // stock back and its COD money never arrives; a cancelled, refunded or
-  // failed payment is not coming. One expression, used by the summary AND
-  // the trends query, so a card and the chart beneath it cannot drift apart.
-  const RELEASED_ORDER =
-    "shipping_status IN ('cancelled', 'returned') OR payment_status IN ('cancelled', 'refunded', 'failed')";
+  // RELEASED_ORDER (src/lib/order-metrics.ts) is used by the summary AND the
+  // trends query, and by the Analitik menu, so a card, the chart beneath it
+  // and a ranking cannot drift apart.
 
   try {
-    const row = await (database as D1Database).prepare(`
+    const summarySql = `
       SELECT
         COUNT(*) AS total_orders,
         -- Order value of orders still in play. A cancelled order, a returned
@@ -117,10 +117,16 @@ export const GET: APIRoute = async ({ locals, url }) => {
         COALESCE(SUM(CASE WHEN payment_method = 'manual_transfer' THEN 1 ELSE 0 END), 0) AS manual_transfer_orders,
         COALESCE(SUM(CASE WHEN payment_method = 'bank_transfer' THEN 1 ELSE 0 END), 0) AS virtual_account_orders,
         COALESCE(SUM(CASE WHEN payment_method = 'qris' THEN 1 ELSE 0 END), 0) AS qris_orders,
-        COALESCE(SUM(CASE WHEN payment_method NOT IN ('cod', 'manual_transfer', 'bank_transfer', 'qris') THEN 1 ELSE 0 END), 0) AS unknown_payment_orders
+        COALESCE(SUM(CASE WHEN payment_method NOT IN ('cod', 'manual_transfer', 'bank_transfer', 'qris') THEN 1 ELSE 0 END), 0) AS unknown_payment_orders,
+        -- Handed to Mengantar: the shipment exists there (provider order id),
+        -- whatever happened to it since. The funnel's middle step.
+        COALESCE(SUM(CASE WHEN provider_order_id IS NOT NULL THEN 1 ELSE 0 END), 0) AS handed_over_orders,
+        -- Live revenue that is COD: its money arrives only when the parcel does.
+        COALESCE(SUM(CASE WHEN payment_method = 'cod' AND NOT (${RELEASED_ORDER}) THEN total_amount ELSE 0 END), 0) AS cod_revenue
       FROM orders
       ${dateFilter}
-    `).bind(...params).first() as AnalyticsRow | null;
+    `;
+    const row = await (database as D1Database).prepare(summarySql).bind(...params).first() as AnalyticsRow | null;
 
     const totalOrders = Number(row?.total_orders ?? 0);
     const totalRevenue = Number(row?.total_revenue ?? 0);
@@ -142,9 +148,67 @@ export const GET: APIRoute = async ({ locals, url }) => {
     // reported 0% RTS on any store that had not shipped yet.
     const rtsBase = deliveredOrders + returnedOrders;
 
+    // The funnel's first step: leads still unconverted, created in the period.
+    // A lead that checked out became an order and is counted there instead.
+    const leadConditions = [LEAD_ROW, ...conditions.slice(1)];
+    const leadRow = await (database as D1Database)
+      .prepare(`SELECT COUNT(*) AS leads FROM orders WHERE ${leadConditions.join(' AND ')}`)
+      .bind(...params)
+      .first<{ leads: number | string | null }>();
+    const leads = Number(leadRow?.leads ?? 0);
+
+    // The comparison period (`dashboard-compare.ts`): last week's same
+    // weekday for a day, last month's same dates for a month, else the equal
+    // period just before. A period running to today is compared only up to
+    // the same moment of its own day. Only for a dated request.
+    const requestedCompare = url.searchParams.get('compare');
+    const compareMode = isCompareMode(requestedCompare)
+      ? requestedCompare
+      : defaultCompareMode(url.searchParams.get('preset') || '');
+    let previous: Record<string, unknown> | null = null;
+    let previousRange: { start: string; end: string; cutoff: string | null } | null = null;
+    if (startParam && endParam) {
+      const range = compareRange(startParam, endParam, compareMode);
+      const cutoff = compareCutoff(startParam, endParam, range.start, range.end);
+      previousRange = { ...range, cutoff };
+      const previousSql = cutoff
+        ? summarySql.replace(dateFilter, `${dateFilter} AND created_at < ?`)
+        : summarySql;
+      const before = await (database as D1Database)
+        .prepare(previousSql)
+        .bind(...(cutoff ? [range.start, range.end, cutoff] : [range.start, range.end]))
+        .first() as AnalyticsRow | null;
+      const beforeLeads = await (database as D1Database)
+        .prepare(`SELECT COUNT(*) AS leads FROM orders WHERE ${leadConditions.join(' AND ')}${cutoff ? ' AND created_at < ?' : ''}`)
+        .bind(...(cutoff ? [range.start, range.end, cutoff] : [range.start, range.end]))
+        .first<{ leads: number | string | null }>();
+      const beforeOnline = Number(before?.online_orders ?? 0);
+      const beforeDelivered = Number(before?.delivered_orders ?? 0);
+      const beforeReturned = Number(before?.returned_orders ?? 0);
+      const beforeLive = Number(before?.live_orders ?? 0);
+      const beforeRevenue = Number(before?.total_revenue ?? 0);
+      const beforeOrders = Number(before?.total_orders ?? 0);
+      const beforeLeadCount = Number(beforeLeads?.leads ?? 0);
+      previous = {
+        mode: compareMode,
+        start_date: range.start,
+        end_date: range.end,
+        partial: Boolean(cutoff),
+        total_revenue: beforeRevenue,
+        live_orders: beforeLive,
+        average_order_value: beforeLive > 0 ? Math.round(beforeRevenue / beforeLive) : 0,
+        lead_conversion_rate: pct(beforeOrders, beforeOrders + beforeLeadCount),
+        lead_base: beforeOrders + beforeLeadCount,
+        conversion_rate: pct(Number(before?.paid_orders ?? 0), beforeOnline),
+        online_orders: beforeOnline,
+        rts_rate: pct(beforeReturned, beforeDelivered + beforeReturned),
+        rts_base: beforeDelivered + beforeReturned,
+      };
+    }
+
     const groupBy = interval === 'hour' ? "STRFTIME('%Y-%m-%d %H:00:00', created_at, '+7 hours')" : "DATE(created_at, '+7 hours')";
-    const trendsResult = await (database as D1Database).prepare(`
-      SELECT 
+    const trendSql = `
+      SELECT
         ${groupBy} as date,
         COALESCE(SUM(CASE WHEN ${RELEASED_ORDER} THEN 0 ELSE total_amount END), 0) as revenue,
         COUNT(*) as orders
@@ -152,75 +216,22 @@ export const GET: APIRoute = async ({ locals, url }) => {
       ${dateFilter}
       GROUP BY ${groupBy}
       ORDER BY date ASC
-    `).bind(...params).all<TrendRow>();
+    `;
+    const trendsResult = await (database as D1Database).prepare(trendSql).bind(...params).all<TrendRow>();
+    const trends = buildTrends(trendsResult.results ?? [], startParam, endParam, interval);
 
-    const trends = [];
-    if (startParam && endParam) {
-      if (interval === 'hour') {
-        // Generate 24 hours for the start date
-        const baseDate = startParam; // YYYY-MM-DD
-        for (let i = 0; i < 24; i++) {
-          const hourStr = String(i).padStart(2, '0');
-          const dateStr = `${baseDate} ${hourStr}:00:00`;
-          const match = trendsResult.results?.find(r => r.date === dateStr);
-          trends.push({
-            date: dateStr,
-            revenue: Number(match?.revenue ?? 0),
-            orders: Number(match?.orders ?? 0)
-          });
-        }
-      } else {
-        // Generate complete date sequence for the range to avoid gaps
-        const start = new Date(startParam);
-        const end = new Date(endParam);
-        
-        const diffTime = end.getTime() - start.getTime();
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
-        for (let i = diffDays; i >= 0; i--) {
-          const d = new Date(end);
-          d.setDate(d.getDate() - i);
-          const dateStr = d.toISOString().split('T')[0];
-          const match = trendsResult.results?.find(r => r.date === dateStr);
-          trends.push({
-            date: dateStr,
-            revenue: Number(match?.revenue ?? 0),
-            orders: Number(match?.orders ?? 0)
-          });
-        }
-      }
-    } else {
-      // All time. The grouped results only contain days that have orders, so
-      // pushing them as-is drew a bar chart that silently skipped every empty
-      // day between them — two bars for a fortnight. Fill the span between
-      // the first and last order with zeros so the axis is continuous.
-      const rows = trendsResult.results ?? [];
-      const first = rows[0]?.date;
-      const last = rows[rows.length - 1]?.date;
-      if (first && last) {
-        const byDate = new Map(rows.map((r) => [r.date, r]));
-        const cursor = new Date(`${first}T00:00:00.000Z`);
-        const stop = new Date(`${last}T00:00:00.000Z`);
-        while (cursor.getTime() <= stop.getTime()) {
-          const key = cursor.toISOString().slice(0, 10);
-          const match = byDate.get(key);
-          trends.push({
-            date: key,
-            revenue: Number(match?.revenue ?? 0),
-            orders: Number(match?.orders ?? 0),
-          });
-          cursor.setUTCDate(cursor.getUTCDate() + 1);
-        }
-      }
-      // Keep the original branch as a no-op guard for rows outside the span.
-      ([] as typeof rows).forEach(r => {
-        trends.push({
-          date: r.date,
-          revenue: Number(r.revenue ?? 0),
-          orders: Number(r.orders ?? 0)
-        });
-      });
+    // The comparison's own buckets, whole (not cut at the moment), lined up
+    // with the current ones by position: hour h against hour h, day i
+    // against day i. The chart draws it as a dashed overlay.
+    let previousTrends: Array<{ date: string; revenue: number; orders: number }> = [];
+    if (previousRange) {
+      const rows = await (database as D1Database)
+        .prepare(trendSql)
+        .bind(previousRange.start, previousRange.end)
+        .all<TrendRow>();
+      previousTrends = buildTrends(rows.results ?? [], previousRange.start, previousRange.end, interval);
     }
+    if (previous) previous.trends = previousTrends;
 
     return jsonOk({
       data: {
@@ -232,6 +243,19 @@ export const GET: APIRoute = async ({ locals, url }) => {
         conversion_rate: pct(paidOrders, onlineOrders),
         rts_rate: pct(returnedOrders, rtsBase),
         rts_base: rtsBase,
+        average_order_value: liveOrders > 0 ? Math.round(totalRevenue / liveOrders) : 0,
+        lead_conversion_rate: pct(totalOrders, totalOrders + leads),
+        lead_base: totalOrders + leads,
+        cod_revenue: Number(row?.cod_revenue ?? 0),
+        prepaid_revenue: totalRevenue - Number(row?.cod_revenue ?? 0),
+        funnel: {
+          leads,
+          orders: totalOrders,
+          handed_over: Number(row?.handed_over_orders ?? 0),
+          delivered: deliveredOrders,
+          returned: returnedOrders,
+        },
+        previous,
         cod_percentage: ratio(codOrders),
         transfer_percentage: ratio(virtualAccountOrders),
         qris_percentage: ratio(qrisOrders),
@@ -265,3 +289,36 @@ export const GET: APIRoute = async ({ locals, url }) => {
     return jsonError('Gagal mengambil data analytics.', 500);
   }
 };
+
+/**
+ * Every bucket of the period, zero where nothing sold: 24 hours for a single
+ * day, every day otherwise, or for "all time" the span between the first and
+ * last order. An axis that skipped empty days drew two bars for a fortnight.
+ */
+function buildTrends(
+  rows: TrendRow[],
+  start: string | null,
+  end: string | null,
+  interval: 'hour' | 'day',
+) {
+  const byDate = new Map(rows.map((row) => [row.date, row]));
+  const bucket = (date: string) => {
+    const match = byDate.get(date);
+    return { date, revenue: Number(match?.revenue ?? 0), orders: Number(match?.orders ?? 0) };
+  };
+  const out: Array<{ date: string; revenue: number; orders: number }> = [];
+  if (start && end && interval === 'hour') {
+    for (let hour = 0; hour < 24; hour += 1) out.push(bucket(`${start} ${String(hour).padStart(2, '0')}:00:00`));
+    return out;
+  }
+  const first = start ?? rows[0]?.date;
+  const last = end ?? rows[rows.length - 1]?.date;
+  if (!first || !last) return out;
+  const cursor = new Date(`${first}T00:00:00.000Z`);
+  const stop = new Date(`${last}T00:00:00.000Z`);
+  while (cursor.getTime() <= stop.getTime()) {
+    out.push(bucket(cursor.toISOString().slice(0, 10)));
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+  return out;
+}

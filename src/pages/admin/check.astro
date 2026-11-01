@@ -10,7 +10,7 @@ const database = getRuntimeEnv(Astro.locals)?.OMS_DB as D1Database | undefined;
 let warehouse: { name: string | null; origin_area_id: string | null; origin_label: string | null } | null = null;
 try {
   warehouse = (await database
-    ?.prepare('SELECT name, origin_area_id, origin_label FROM warehouses ORDER BY id ASC LIMIT 1')
+    ?.prepare('SELECT name, origin_area_id, origin_label FROM warehouses ORDER BY is_primary DESC, id LIMIT 1')
     .first()) ?? null;
 } catch (error) {
   // The checker still works without a default origin; say so in the log.
@@ -27,6 +27,8 @@ const defaultOrigin = warehouse?.origin_area_id
     }
   : null;
 const initialPhone = Astro.url.searchParams.get('search')?.trim() || '';
+// A `?search=` phone always opens the WA check, whatever `tab` says.
+const initialTab = !initialPhone && Astro.url.searchParams.get('tab') === 'ongkir' ? 'ongkir' : 'wa';
 ---
 <AdminLayout title="Cek WA & Ongkir" activeMenu="scoring">
   <div class="space-y-6">
@@ -39,6 +41,7 @@ const initialPhone = Astro.url.searchParams.get('search')?.trim() || '';
       defaultOrigin={defaultOrigin}
       warehouseName={warehouse?.name || ''}
       initialPhone={initialPhone}
+      initialTab={initialTab}
     />
   </div>
 </AdminLayout>

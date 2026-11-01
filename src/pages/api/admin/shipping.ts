@@ -1,12 +1,13 @@
 import type { APIRoute } from "astro";
 import { jsonError, jsonOk } from "../../../lib/api";
 import { getRuntimeEnv } from "../../../lib/env";
+import { matchesShippingQueue } from "../../../lib/shipping-queue";
 import {
   mapMengantarStatusEvidence,
   MengantarClient,
   selectProviderShippingAdvance,
 } from "../../../lib/mengantar-client";
-import { resolveMengantarPickupSlot } from "../../../lib/mengantar-order";
+import { pickMengantarTimeId, resolveMengantarPickupSlot } from "../../../lib/mengantar-order";
 import { getMengantarDispatchEligibility } from "../../../lib/payment-dispatch-policy";
 import { getProviderConfig } from "../../../lib/provider-config";
 import {
@@ -15,11 +16,7 @@ import {
   OrderLifecycleError,
 } from "../../../lib/order-lifecycle";
 import type { AdminShippingStatus } from "../../../lib/order-lifecycle";
-import {
-  ADMIN_CUSTOM_DATE_FILTER,
-  isAdminDateFilter,
-  parseAdminDateSelection,
-} from "../../../lib/admin-date-filter";
+import { shippingListFilter } from "../../../lib/order-list-filter.ts";
 
 export const prerender = false;
 
@@ -60,6 +57,7 @@ type ShippingOrderRow = {
   receiverDeliveryRate: number | null;
   receiverRiskLabel: string | null;
   pickupScheduleId: number | null;
+  handover: string | null;
   createdAt: string;
   warehouseName: string;
   pickupScheduledAt: string | null;
@@ -90,15 +88,13 @@ type ProviderSyncResult = {
 };
 
 export const GET: APIRoute = async ({ locals, url }) => {
-  const dateFilter = String(url.searchParams.get("date_filter") || "all")
-    .trim()
-    .toLowerCase();
   const database = getRuntimeEnv(locals)?.OMS_DB;
   if (!database || typeof database !== "object") {
     return jsonError("Database pengiriman belum tersedia.", 503);
   }
-  if (dateFilter !== ADMIN_CUSTOM_DATE_FILTER && !isAdminDateFilter(dateFilter)) {
-    return jsonError("Filter periode order tidak valid.", 400);
+  const filter = shippingListFilter(url.searchParams);
+  if (!filter.ok) {
+    return jsonError(filter.error, filter.status, filter.code ? { code: filter.code } : undefined);
   }
 
   const shipmentLimit = Math.min(
@@ -111,23 +107,14 @@ export const GET: APIRoute = async ({ locals, url }) => {
 
   try {
     const db = database as D1Database;
-    let dateClause = " WHERE o.shipping_status IN ('processing', 'shipped', 'delivered', 'returned') AND o.provider_order_id IS NOT NULL ";
-    const dateParams: string[] = [];
-    if (dateFilter !== "all") {
-      // Refuses an unresolvable period instead of answering for a different
-      // one; see the same note in the order list route.
-      const { resolution } = parseAdminDateSelection(url.searchParams);
-      if (!resolution.ok) {
-        return jsonError(resolution.reason, 422, { code: "DATE_RANGE_INVALID" });
-      }
-      dateClause += " AND date(o.created_at, '+7 hours') BETWEEN ? AND ? ";
-      dateParams.push(resolution.start, resolution.end);
-    }
+    const dateClause = ` WHERE ${filter.conditions.join(" AND ")} `;
+    const dateParams = filter.params;
 
     const [shipmentResult, pickupResult, warehouseResult] = await db.batch([
       db
         .prepare(
           `
+        SELECT * FROM (
         SELECT
           o.id,
           o.order_number AS orderNumber,
@@ -152,6 +139,7 @@ export const GET: APIRoute = async ({ locals, url }) => {
           o.receiver_rts_score AS receiverDeliveryRate,
           o.rts_risk_label AS receiverRiskLabel,
           o.pickup_schedule_id AS pickupScheduleId,
+          o.mengantar_handover AS handover,
           o.created_at AS createdAt,
           w.name AS warehouseName,
           ps.scheduled_at AS pickupScheduledAt,
@@ -161,8 +149,13 @@ export const GET: APIRoute = async ({ locals, url }) => {
         LEFT JOIN pickup_schedules ps ON o.pickup_schedule_id = ps.id
         LEFT JOIN warehouses w ON o.warehouse_id = w.id
         ${dateClause}
-        ORDER BY o.id DESC
+        -- Open work first when the window is full: a parcel still waiting on a
+        -- waybill, pickup or drop-off must be listed however many newer ones
+        -- have shipped, or its queue tab reads 0 while the dashboard counts it
+        -- (review 2026-11-01). The page still shows newest first.
+        ORDER BY (o.shipping_status = 'processing') DESC, o.id DESC
         LIMIT ?
+        ) ORDER BY id DESC
       `,
         )
         .bind(...dateParams, shipmentLimit),
@@ -206,12 +199,7 @@ export const GET: APIRoute = async ({ locals, url }) => {
     const warehouses = warehouseResult.results ?? [];
 
     const readyPickupIds = shipments
-      .filter(
-        (shipment) =>
-          shipment.shippingStatus === "processing" &&
-          shipment.cnoteNo &&
-          !shipment.pickupScheduleId,
-      )
+      .filter((shipment) => matchesShippingQueue(shipment, "needs_pickup"))
       .map((shipment) => shipment.id);
     const dispatchableIds = shipments
       .filter((shipment) => shipment.dispatchEligible)
@@ -556,7 +544,7 @@ export const POST: APIRoute = async ({ locals, request }) => {
     new Date(pickupSlot.scheduledAt).getTime() < minimumPickupTime
   ) {
     return jsonError(
-      "Slot pickup 09.00–18.00 WIB harus dimulai minimal 90 menit dari sekarang.",
+      "Jam pickup 09.00–18.00 WIB, minimal 90 menit dari sekarang.",
       400,
     );
   }
@@ -592,6 +580,7 @@ export const POST: APIRoute = async ({ locals, request }) => {
         AND shipping_status = 'processing'
         AND cnote_no IS NOT NULL
         AND pickup_schedule_id IS NULL
+        AND mengantar_handover IS NOT 'drop_off'
     `,
       )
       .bind(warehouseId, ...orderIds)
@@ -601,7 +590,7 @@ export const POST: APIRoute = async ({ locals, request }) => {
     );
     if (eligibleIds.length !== orderIds.length) {
       return jsonError(
-        "Sebagian order bukan milik gudang terpilih, sudah dijadwalkan, atau belum memiliki resi.",
+        "Sebagian order bukan milik gudang terpilih, sudah dijadwalkan, dikirim lewat drop-off, atau belum memiliki resi.",
         409,
       );
     }
@@ -623,10 +612,7 @@ export const POST: APIRoute = async ({ locals, request }) => {
         date: pickupSlot.date,
         time: pickupSlot.time,
       });
-      const first = Array.isArray(providerSchedule.data)
-        ? providerSchedule.data[0]
-        : undefined;
-      providerReference = String(first?._id || "").trim();
+      providerReference = pickMengantarTimeId(providerSchedule.data, pickupSlot);
       if (!providerReference) {
         return jsonError(
           "Mengantar tidak mengembalikan referensi jadwal; D1 tidak diubah.",

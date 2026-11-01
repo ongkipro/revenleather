@@ -1,4 +1,5 @@
 ---
+import { legalSegments } from '../../../lib/legal-links';
 import PageIntro from './PageIntro.astro';
 
 interface LegalSection {
@@ -36,7 +37,21 @@ const { badge, title, description, sections, breadcrumbs = [] } = Astro.props;
             </h2>
             <div class="mt-2.5 space-y-3 text-[13px] leading-[1.7] text-[#574c43]">
               {section.paragraphs.map((paragraph) => (
-                <p>{paragraph}</p>
+                <p>
+                  {legalSegments(paragraph).map((segment) =>
+                    segment.href ? (
+                      <a
+                        href={segment.href}
+                        class="font-semibold text-[#1a1411] underline decoration-[#c9bcab] underline-offset-4 hover:decoration-[#1a1411] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1a1411]"
+                        {...(segment.href.startsWith('https://') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                      >
+                        {segment.text}
+                      </a>
+                    ) : (
+                      segment.text
+                    ),
+                  )}
+                </p>
               ))}
             </div>
           </article>

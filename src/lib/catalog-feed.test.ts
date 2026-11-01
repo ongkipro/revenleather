@@ -103,7 +103,7 @@ test("a feed omits the ad category it cannot determine", () => {
       slug: "barang-baru",
       productName: "Barang Baru",
       category: "Kategori Sendiri",
-      heroImage: "/images/adsbook-mark.webp",
+      heroImage: "/images/produk-contoh.webp",
       variants: [{ id: 9, label: "Standar", price: 50000 }],
     },
   ];
@@ -202,7 +202,7 @@ test("feeds link the JPEG sibling of an uploaded WebP, since Meta takes JPEG or 
   assert.equal(feedImagePath(upload), upload.replace(/\.webp$/, ".jpg"));
   assert.equal(feedImagePath(fullUrlUpload), fullUrlUpload.replace(/\.webp$/, ".jpg"));
   // Anything that is not an asset-route upload is left as the merchant set it.
-  for (const other of ["/images/adsbook-mark.webp", "https://r2.example.com/pompa.webp", "/assets/uploads/2026-10-08/x.png"]) {
+  for (const other of ["/images/produk-contoh.webp", "https://r2.example.com/pompa.webp", "/assets/uploads/2026-10-08/x.png"]) {
     assert.equal(feedImagePath(other), other);
   }
   const product: CatalogProduct = {

@@ -7,6 +7,7 @@ import {
   evaluateOperationalAlerts,
 } from "./lib/operational-alerts.ts";
 import { collectOperationalHealth, recordSchedulerRun } from "./lib/operational-health.ts";
+import { readSetupRequiredLeft, writeHealthSnapshot } from "./lib/health-snapshot.ts";
 import { backfillReceiverScores } from "./lib/rts-scoring.ts";
 import { ensureSchemaUpgraded } from "./lib/schema-version.ts";
 import { purgeExpiredRateLimits } from "./lib/rate-limit.ts";
@@ -19,7 +20,7 @@ import {
 } from "./lib/autolaris-payment.ts";
 import { enqueuePurchaseForPaidOrder } from "./lib/paid-order-purchase.ts";
 import { envTenantConfig } from "./lib/tenant.ts";
-import { drainCapiOutbox, purgeExpiredCapiOutboxEvents } from "./lib/capi-outbox.ts";
+import { drainCapiOutboxBacklog, purgeExpiredCapiOutboxEvents } from "./lib/capi-outbox.ts";
 import { getStoreAdsConfig } from "./lib/store-ads.ts";
 import { runPluginCron } from "./plugins/registry.ts";
 import {
@@ -36,8 +37,6 @@ async function runScheduledMaintenance(
   context: ExecutionContext,
 ) {
   await ensureSchemaUpgraded(env.OMS_DB);
-  // The panel's "Tugas terjadwal" signal: proof this clock still runs at all.
-  await recordSchedulerRun(env.SESSION, new Date(scheduledTime));
   // No step takes the ones after it down: payment reconciliation, both outbox
   // drains and the health evaluation each run even when an earlier step hit a
   // transient D1 or provider error. The failure is logged and reads as -1.
@@ -49,6 +48,13 @@ async function runScheduledMaintenance(
       return -1;
     }
   };
+  // The panel's "Tugas terjadwal" signal: proof this clock still runs at all.
+  // A D1 column on the status row, not KV (A-379), stamped before any later
+  // step can fail.
+  await housekeeping("scheduled-heartbeat-failed", async () => {
+    await recordSchedulerRun(env.OMS_DB, new Date(scheduledTime));
+    return 0;
+  });
   const purgedAbandonedOrders = await housekeeping(
     "scheduled-abandoned-order-purge-failed",
     () => purgeExpiredAbandonedOrders(env.OMS_DB, new Date(scheduledTime)),
@@ -131,7 +137,7 @@ async function runScheduledMaintenance(
   const drainedCapiEvents = await housekeeping("scheduled-capi-drain-failed", async () => {
     const ads = await getStoreAdsConfig({ runtimeEnv: env } as unknown as App.Locals);
     return ads.metaPixelId && ads.metaCapiToken
-      ? drainCapiOutbox(env.OMS_DB, ads.metaPixelId, ads.metaCapiToken)
+      ? drainCapiOutboxBacklog(env.OMS_DB, ads.metaPixelId, ads.metaCapiToken, new Date(scheduledTime))
       : 0;
   });
   const googleAdsOffline = readGoogleAdsOfflineConfig(env);
@@ -203,6 +209,19 @@ async function runScheduledMaintenance(
       transition,
       notification,
     })),
+  });
+
+  // The admin status icon reads this one row instead of collecting health on
+  // every page (A39). Last, and isolated: its failure is logged and nothing
+  // else, and a run that failed to collect never reaches it, so the previous
+  // snapshot stays rather than a blank one.
+  await housekeeping("scheduled-health-snapshot-failed", async () => {
+    await writeHealthSnapshot(
+      env.OMS_DB,
+      health,
+      await readSetupRequiredLeft(env.OMS_DB, scheduledLocals),
+    );
+    return 0;
   });
 }
 
