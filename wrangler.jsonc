@@ -131,11 +131,6 @@
     // Header mark beside the store name (AdsBookCMS 1.7.5+).
     "PUBLIC_SITE_BRAND_MARK": "/images/reven-mark.svg",
 
-    // Ads/COD funnel only: revenleather.com and revenleather.id (Shopify) own
-    // search for the same catalog, so this subdomain stays out of the index
-    // (AdsBookCMS 1.7.7+). Paid ads are unaffected.
-    "PUBLIC_SITE_NOINDEX": "true",
-
     // Must match #rrggbb or the code falls back to its own default.
     "PUBLIC_SITE_THEME_COLOR": "#111111",
 
