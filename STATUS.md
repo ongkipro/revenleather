@@ -1,105 +1,60 @@
-# STATUS — AdsBookCMS (`revenleather` / `page.revenleather.com`)
+# STATUS — AdsBookCMS
 
-> Verified against disk: 2026-11-01 (1.8.5 on revenleather `page.revenleather.com`, merged from product `7a207a0`; product fleet entries below retain their dated evidence)
+> Verified against disk: 2026-11-02 @ `43c6cb3` (1.9.2 on eleven of the twelve installs; fleet registry in `docs/FLEET.md`; the sections below retain their dated evidence)
 
-> **⚠️ AI AGENT UPDATE WARNING (`revenleather` vs `adsbookcms`):**
-> `revenleather` (`https://page.revenleather.com`) contains custom storefront, product card, footer, and checkout rules that **must never be pushed to `adsbookcms`** and **must never be overwritten when adopting a new `adsbookcms` release**. Before copying or merging any upstream `adsbookcms` update into this repository, read `AGENTS.md` §0 and `docs/UPDATE-PATH-OWNERSHIP.md` §"Reven Leather Protected Customizations", preserve all Reven Leather files/rules, keep `src/pages/testimoni.astro` deleted, and run `npm run route-map && npm test && npm run check && npm run build`.
+## 2026-11-02 — 1.9.2: the default CTA is orange, form states corrected
 
-## 2026-11-01 — Reven: adopted AdsBookCMS 1.8.5 (merge of product `7a207a0`)
+`main` carries 1.9.1: `--sf-accent` is `#c2410c` and the buttons that were hard-coded
+ink read the token with an orange fallback (ADR-019 amendment). 1.9.0 had made it blue;
+Paduka asked for orange or red the same day and it never reached a store. Orange won:
+red is the checkout error colour, and brighter oranges fail AA under white text. A store
+that never overrode the tokens turns orange on its next merge; numaskin, beranda-tani
+and revenleather keep their own colour. 1.9.2 keeps filled fields grey and the typing frame ink so orange never reads as the red error. Rolled out to eleven of the twelve installs the same day with the live colours measured per store (`docs/FLEET.md`, "Rollout of 1.9.0-1.9.2"): orange on the six default-theme stores, navy on numaskin, leather brown on revenleather, green on beranda-tani.
 
-- **Live version:** 1.8.5, deployed by hand with `npm run deploy` from the merge
-  commit. 13 migrations (`0067`-`0079`) apply themselves on the first database
-  request; live schema was 67 applied before this deploy.
-- **Kept as Reven's own** (every file in `docs/UPDATE-PATH-OWNERSHIP.md`
-  "Protected Customizations"): grafir middle/full form swap, `approved-grafir`,
-  `customer_note` flow, `EDGE_CACHE_SECONDS = 600`, dark header/footer, sharp
-  product card, `/testimoni` removed, `wrangler.jsonc` untouched.
-- **Ported from core:** the "Mulai" label on product cards when variant prices
-  differ (the PDP already had it).
-- **Deliberately not ported:** the uploaded-logo support in `SiteBrand` (the
-  store's `PUBLIC_SITE_LOGO` is a dark-on-light webp that is unreadable on the
-  dark header, so turning it on would regress the look), the core watermark
-  footer with the ongki.pro credit, and the 'Halaman' footer link.
-- **Not verified:** `SELECT COUNT(*) FROM warehouses` on the live D1 before
-  migration `0072` (RELEASE.md asks for it; remote reads need approval). One row
-  is unchanged; more than one row would start serving buyers from their own
-  province.
+## 2026-11-02 — 1.8.9: payment page follows the store accent
 
-## 2026-10-31 — Reven: Gratis Grafir swaps the middle form for the full form (`2eeecf0`)
+Rolled out to eleven of the twelve installs the same day (`docs/FLEET.md`, "Rollout of 1.8.9").
 
-- **Live:** Worker version `880df42f` deployed 2026-10-31 from `2eeecf0`.
-- **Why (D1, read-only):** 23–30 Oct, 33 of ~83 `INV-` orders were grafir
-  (~40%), all through the full form as `manual_transfer`; 28 of 33 are paid
-  (non-grafir transfer, 60 days: 7 of 13). No middle-form grafir order was
-  ever placed on the lead-only path from `3db2687`.
-- **Change:** on the 33 approved products, `+ Gratis Grafir` on the middle
-  form swaps it in place for the full form (district, shipping quote,
-  transfer only; COD hidden), carrying name, phone, address and variant;
-  `Tanpa Grafir` swaps back to the COD middle form. The full form waits in a
-  `<template>` and `form-hybrid` is dynamic-imported, so a non-grafir buyer
-  loads none of it. The lead-only transfer path is removed (`/thanks` and the
-  WhatsApp hand-off are upstream again); `submit-middle-order` answers a
-  cached page that still posts `grafir_text` with `AREA_REQUIRES_FULL`
-  (redirect to `/full-form`). Rollback: revert `2eeecf0` and deploy.
-- **Evidence:** `npm test` 883 pass / 1 skipped, `npm run check` 0 errors,
-  build ok. Local Chromium (390 and 1280 px, `/middle-form`): swap, carry-over,
-  focus on the grafir text, swap back and swap again, no errors; nothing of
-  the full form loads before the click. Live (`/produk/barry-sling-bag`, Jawa
-  Timur IP, 390 px, abandoned-lead, `meta-event`, pixel and gtag requests
-  blocked, nothing submitted): same swap, `form-hybrid` chunk loads on the
-  click, the only payment shown is `Transfer Bank MANDIRI`. Not proven live:
-  a district pick with its shipping quote (unchanged full-form code).
-- **Known:** a buyer who types a name and phone and only then picks grafir can
-  leave two abandoned leads (the two forms fingerprint differently), and
-  `InitiateCheckout` may fire from both forms. Local dev renders `/produk/*`
-  as the full form because the rewrite drops the geo headers; production does
-  not.
+The payment page now loads the `form-hybrid.css` token layer and uses `--sf-accent`
+and `--sf-accent-strong` for its buttons and markers (ADR-019), so numaskin (navy) and
+beranda-tani (green) show their own accent where the buyer pays; the other stores,
+whose tokens are the neutral defaults, look as before. revenleather keeps its own
+leather-themed page. TRK-1 is closed on the nine-install measurement
+(`TRACKING_SPECS.md` 16.1c); Event Match Quality waits for account access (EMQ-1).
 
-## 2026-10-30 — Reven: ten-minute edge cache, gtag after the Meta pixel (`a85ab27`)
+## 2026-11-02 — 1.8.8: SEO pass and fleet rollout
 
-- **Live:** Worker version `4cc0d930` deployed 2026-10-30 from `a85ab27`.
-- **Change:** `EDGE_CACHE_SECONDS` 120 → 600 for anonymous HTML (a logged-in
-  admin still bypasses it, so only public visitors see an edit up to ten
-  minutes late); gtag's idle timer 2.5 s → 6 s so it no longer lands with the
-  Meta pixel. Conversions and the gclid are unaffected; only the remarketing
-  `page_view` of a visitor who leaves inside 6 s untouched is lost. Rollback:
-  revert `a85ab27` and deploy.
-- **Evidence:** `npm test` 882 pass / 1 skipped (install-tree image check),
-  `npm run check` 0 errors, `npm run build` ok. Live `/` answers
-  `x-edge-cache: HIT` and serves `setTimeout(loadGtag, 6000)` beside
-  `setTimeout(loadPixel, 2500)`. Lighthouse mobile (simulated, 3 runs on `/`):
-  score 71–78, LCP 2.2–3.3 s, TBT 750–1370 ms, TTFB 80 ms on a hit and
-  500–600 ms on a miss.
-- **Open:** TBT is now mostly Meta (`fbevents` + `signals/config`, ~0.4–0.6 s)
-  and gtag (~0.35–0.55 s), which simulated Lighthouse still counts after 6 s.
-  Lowering it further means deferring the Meta pixel past its 2.5 s slot, an
-  ad-delivery trade-off the owner has not taken. Field data (CrUX / Search
-  Console) not checked. Raised upstream as a finding, not a change:
-  [adsbookcms#107](https://github.com/ongkipro/adsbookcms/issues/107).
+`main` is `17ac629`, version 1.8.8, schema 80, no migration. Eleven of the twelve installs run it (`docs/FLEET.md`, "Rollout of 1.8.7 and 1.8.8").
 
-## 2026-10-30 — Reven: every landing page back to hybrid; Gratis Grafir on the middle form (`3db2687`)
+Lighthouse mobile over every live store (local run; PageSpeed's API quota was
+spent): performance 98 without a pixel (cekat, klikinaja) and 67-90 with Meta
+Pixel and gtag, whose 270 KB and 170 KB account for the 300-1 270 ms of
+blocking time (PERF-1 stands: loading them on interaction costs ad signal);
+accessibility 100 everywhere; CLS 0. SEO 92 on four stores is Cloudflare's
+managed `Content-Signal` line in `robots.txt`, which Lighthouse does not know
+yet; it is a zone setting, not product code. Done: every store is indexable,
+the home title no longer repeats the store name, short meta descriptions gain
+the store's categories, native landing pages carry `Product` JSON-LD.
 
-- **Live:** Worker version `ef92579d` deployed 2026-10-30 from `3db2687`.
-- **D1 (`revenleather-d1`):** all 79 `landing_sections` of type `form` changed
-  from `{"mode": "full"}` to `{"mode": "hybrid"}`. A province outside
-  `stores.cod_disabled_province_codes` gets the middle form, an excluded or
-  unknown province gets the full form with COD disabled. Rollback: set the
-  same rows back to `{"mode": "full"}` (all 79 were identical before).
-- **Middle-form grafir:** on the 33 approved grafir products the middle form
-  offers `Tanpa Grafir` (COD) or `+ Gratis Grafir Nama / Inisial`. A grafir
-  request is saved as `manual_transfer` against the store's active bank
-  account, the text goes to `lead_follow_up_note` (`Grafir: <text>`, address
-  stays clean for Mengantar), `/thanks` shows `Transfer · Total Menyusul`, and
-  the lead-only transfer is handed off to WhatsApp for the admin to close.
-  Purchase is sent when the admin marks the transfer received (1.7.13).
-- **Evidence:** `npm test` 881 pass, `npm run check` 0 errors; local Chromium
-  run (390 px grafir → `INV-10002` manual_transfer/pending, WA message carries
-  `Grafir: ONGKI`; 1280 px no grafir → COD/unpaid, WA hand-off). Live: from a
-  Jawa Timur IP `/produk/barry-sling-bag` and `/produk/helsinki-leather-laptop-bag`
-  render `middle` with the grafir block, `/produk/apollo-long-wallet` renders
-  `middle` without it, `/full-form?product_id=barry-sling-bag` stays `full`.
-  No production order was created for this check.
+Open: Purchase on a fresh order and Event Match Quality; a visual pass over
+the pages shipped today; the `fbp` re-measure on about 2026-11-11 (TRK-1);
+page.revenleather.com and revenleather.com now index the same catalogue, so
+watch Search Console for cannibalisation before touching canonicals.
 
+## 2026-11-02 — 1.8.6 rolled out to the fleet
+
+`main` is `eb0ced6` (PR #143), version 1.8.6, schema 80. Eleven of the twelve installs are on 1.8.6 (see `docs/FLEET.md`); skincarebpom was left out by instruction
+(1.8.5 in its clone, 371 uncommitted files, last deployed 2026-10-18). Live check on each domain: `/hello` shows v1.8.6; the new
+rollouts also passed `/` and `/produk`. Gates in each install: check 0/0/0,
+tests 1157–1170 pass with 1 skipped, build.
+
+Tracking: the early `_fbp` fix measured on the server leg. On zvara.shop and
+page.revenleather.com `fbp` on PageView/ViewContent went from 20–50% to 100%
+from the first hour after deploy (`TRACKING_SPECS.md` §16.1c). The browser leg
+was re-run on all eleven installs with every beacon aborted: Pixel and CAPI
+carry the same `eid` for PageView and ViewContent, `_fbp`, `_fbc` and
+`adsbook_click_ids` are set. Not covered: Purchase on a fresh order, Event
+Match Quality in Events Manager.
 
 ## 2026-11-01 — 1.8.4 released and deployed
 
@@ -302,123 +257,85 @@ written, enforced since 2026-09-01 (PRD A40 E1).
   manual transfer; the PATCH that marks it paid enqueues the server CAPI
   Purchase (TRACKING_SPECS §13). COD stays on `/thanks` by the owner's choice.
 
-## 2026-10-23 — Reven Leather (`page.revenleather.com`): 79-LP Grafir/Non-Grafir rollout, dynamic compare-price tiers, full-form checkout, Gratis Grafir COD-disable mechanism, classic sharp UI & Ads tracking
+## 2026-10-24 — 1.7.12: sitemap and titles; 1.7.11 live on revenleather and beranda-tani
 
-- **Google & Meta Catalog XML (`/feed/google-catalog.xml`, `/feed/meta-catalog.xml`) & Full-Form Advanced Matching Hardening:**
-  - `feedImagePath()` in `src/lib/catalog-feed.ts` now rewrites same-origin absolute `/assets/uploads/...webp` URLs as well as relative paths to `.jpg` (`79/79` items in both feeds now emit `.jpg` `g:image_link`s), selects the lowest-priced variant (`variants.reduce`) so `<g:price>` / `<g:sale_price>` match `[slug].astro`'s displayed price, and strips HTML/newlines from `<g:description>`.
-  - `getAdTaxonomy()` in `src/lib/ad-taxonomy.ts` breaks ties between category and product title using title keyword hits (`Reven Helsinki Leather Laptop Bag` resolves to `Tas & Dompet > Tas Laptop` + `travel & luggage > briefcases & laptop bags` instead of `Umum > Sling Bag`).
-  - `src/scripts/form-hybrid.ts` & `src/scripts/form-middle.ts`: `AddToCart` and `InitiateCheckout` now send full `city` (`ct`), `province` (`st`), `district`, `postal_code` (`zp`), `country` (`id`), `customer_name` (`fn`/`ln`), `customer_phone` (`ph`), and `external_id` to both CAPI (`/api/meta-event`) and browser Pixel (`fbq.instance.pixelsByID[pixelId].userData`), fire `InitiateCheckout` once both customer identity and shipping district/postal code resolve, include `contents` on Pixel funnel events, and push Google Ads Enhanced Conversions `gtag('set', 'user_data', ...)` with SHA-256 E.164 phone, first/last name, `city`, `region`, `postal_code`, and `country: 'ID'`.
-  - `src/lib/order-status.ts` & `MetaThanksTracker.astro`: `/api/order-status` returns `city`, `province`, and `postal_code` so `/thanks` backfills full Advanced Matching & Enhanced Conversion address signals even when opened via fragment locator (`#o=...&t=...`) without `sessionStorage`, and falls back `transaction_id` to `finalEventId` (`order_number`).
+- 1.7.11 deployed: revenleather `49445725`, beranda-tani (petanisejahtera.com)
+  `fe3f3f50`, both with `placement: smart`. The order path was walked to the
+  submit button on both (hybrid form on Reven, middle form on Petani). No
+  order was placed.
+- **1.7.12** `canonicalSlug` on a native landing register entry keeps a second
+  ad slug out of the sitemap: petanisejahtera.com listed
+  `/aussie-formulabaru-evrpro`, whose canonical is `/aussie-formulabaru`.
+  `withStoreName` stops legal page titles reading "… Petani Sejahtera - Petani
+  Sejahtera".
+- Lab caveat: local Lighthouse TBT is unreliable while other work loads the
+  machine (load 13 measured); TTFB is network-bound and stays comparable. The
+  keyless PageSpeed API quota is shared and was exhausted on both days.
 
-- **79 Landing Pages Segmented (33 Approved Grafir vs 46 Non-Grafir).** All 79
-  published landing pages in `revenleather-d1` (`landing_pages` + `landing_sections`)
-  are synchronized:
-  - **33 Approved Grafir LPs** (mapped from the 28 validated Google Drive
-    `letak grafir tas` references in `src/lib/approved-grafir.ts`, supporting both
-    `reven-*` LP slugs and `products.slug`) carry the Hero `GRATIS GRAFIR NAMA / BRAND`
-    pill, full-width `.grafir-spot` (`GRATIS GRAFIR LASER`,
-    `PREMIUM GRAFIR LASER`, `<s>Rp37.000</s> GRATIS HARI INI`, full-bleed
-    `/images/reven-grafir-sample.webp`, and 3-column strip:
-    `Nama Pribadi` | `Inisial Monogram` | `Brand / Komunitas`), full-width
-    `.offer-card` with `Premium Grafir Laser (<s>Rp37.000</s> GRATIS)`, 5-item
-    `.box` grid, and 2-level `.rv-sticky` (`[HEMAT {{discount_percent}}] • Gratis Grafir`).
-  - **46 Non-Grafir LPs** strip all grafir claims across Hero, `.rv-feat`,
-    `.offer-card` (3 validated inclusions: `100% Kulit Sapi Asli Bersertifikat`,
-    `Box Kemasan Eksklusif Reven Leather`, `Garansi Resmi 1 Tahun & Bisa COD`),
-    `.box` (`2×2` standard grid), and `.rv-sticky` (`[HEMAT {{discount_percent}}] • Bisa COD`).
-  - **Shared UI across all 79 LPs:** Hero `.deal-meta` displays simplified
-    `4.9 • 1.5rb+ terjual` (without `/5`), customer reviews render the inline
-    `#1d9bf0` Verified SVG badge after the buyer name, and all AI-slop phrases
-    are cleaned from both `landing_pages.meta_description` and `landing_sections.content_html`.
-- **Dynamic Compare-Price (`compare_price`) Calibration (`30%`–`55%`).** All 208
-  rows in `product_variants` keep their selling `price` (`harga non-coret`)
-  untouched while `compare_price` (`harga coret`) is calibrated to clean IDR
-  multiples (`Rp5.000` / `Rp1.000`) so `{{discount_percent}}` distributes across
-  6 exact tiers: **`30%` (14 products / 34 variants)**, **`35%` (13 / 41)**,
-  **`40%` (13 / 33)**, **`45%` (13 / 26)**, **`49%` (13 / 38)**, and **`55%`
-  (13 / 36)**.
-- **Full-Form Checkout (`{"mode": "full"}`), Optional Gratis Grafir COD-Disable
-  Mechanism & Shipping/Payment Hardening (`241da00`).**
-  - Every form section in `landing_sections` is set to `{"mode": "full"}` while
-    preserving `stores.cod_disabled_province_codes`
-    (`PA,PB,PD,PT,PE,PS,MA,MU,NT,KU,SR,GO,KR,AC,BE`).
-  - **Optional Gratis Grafir Selector (`FormHybridContent.astro` + `src/scripts/form-hybrid.ts`):**
-    On the 33 products where `isApprovedGrafirSlug(product.slug)` is true, the
-    checkout form renders a `Gratis Grafir Nama / Inisial (Opsional)` block right
-    under `Pilih Varian`:
-    1. **`Tanpa Grafir` (Default):** Buyer ignores/skips engraving — **COD remains
-       fully allowed** (alongside Transfer Bank).
-    2. **`+ Gratis Grafir Nama / Inisial (GRATIS • Non-COD)`:** Reveals the
-       required `#grafir-input-wrap` input (`grafir_text`, max 24 chars),
-       **automatically disables COD (`cod`)** in `syncVisiblePaymentOptions()`,
-       switches to Transfer Bank (`manual_transfer`), displays
-       `Gratis Grafir Laser: "<Teks>" (GRATIS)` in `Ringkasan Pemesanan`, and
-       stores `customer_note` (`Grafir: <Teks>`) in the order note column
-       (`orders.lead_follow_up_note`) while keeping `address` 100% clean so the
-       grafir note is **never pushed to Mengantar**. Switching back to
-       `Tanpa Grafir` immediately restores COD availability.
-    3. **`/thanks`, `/payment`, WhatsApp Confirmation & Admin Orders Output:**
-       - `/thanks` (`src/pages/thanks.astro`) renders `#grafir-badge`
-         (`✦ Gratis Grafir: <Teks>`) under the product card,
-         `#thanks-grafir-row` (`Gratis Grafir Laser | Rp37.000 GRATIS`) in the
-         payment summary, and `#customer-note-row` (`Catatan | Grafir: <Teks>`)
-         in the shipping details (recovered from both `sessionStorage` and
-         `/api/order-status`).
-       - `buildThanksWhatsappMessage()` (`src/lib/thanks-whatsapp.ts`) appends
-         `Catatan: Grafir: <Teks>` right under `Produk: ...` in the WhatsApp
-         message sent to admin.
-       - `/payment` (`src/pages/payment.astro`) displays `Catatan Pesanan` in the
-         payment breakdown and links directly to `/thanks#o=...&t=...` for
-         confirmation.
-       - Admin Orders (`OrdersTable.tsx` & `OrderDetail.tsx`) surface
-         `customer_note` (`Catatan Pesanan / Grafir`) with a 1-tap copy button
-         and an explicit workshop-only label confirming it is not sent to
-         Mengantar.
-  - `GeoIpResolvedForm.astro` passes `province={resolvedProvince}` to
-    `FormHybridContent.astro`; `src/scripts/form-hybrid.ts` keeps
-    `#payment-method-block` hidden until a shipping district (`locationId`) is
-    selected, orders Transfer Bank / Virtual Account / online options first and
-    places `COD (Bayar di Tempat)` at the very bottom (final option), renders a
-    single Transfer/VA option (`length === 1`) directly as a flat radio row
-    without collapse & show while using a collapsible group when more than one
-    option is active (`Transfer Bank MANDIRI` `1330035981794` a.n.
-    `PT East Retail Network`, `seller_bank_account_id = 5`), defaults
-    COD-eligible provinces to `cod` unless the buyer manually chose another
-    method or selected Gratis Grafir, orders the full street address
-    (`#shipping-address-line`, regular weight) above the bold resolved Kecamatan
-    (`#district-picked-subtitle`, `Kecamatan, Kota, Provinsi Kodepos`) inside
-    `Kirim ke`, and clears `#district-help` once the shipping quote succeeds.
-- **XML Catalog Feeds & Ads Signal Contract (`page.revenleather.com`).**
-  - `/feed/meta-catalog.xml` and `/feed/google-catalog.xml` serve all **79
-    products** (`200 OK`), emitting immutable 5-digit `products.id` as `<g:id>`
-    (matching Meta Pixel `1568437321304661` and CAPI `content_ids` 1:1),
-    `<g:price>` (`compare_price IDR`), `<g:sale_price>` (`price IDR`), and
-    `.jpg` image links for Meta Commerce compatibility.
-- **Classic Sharp Storefront, Minimalist Footer & Clean Copy (`page.revenleather.com`).**
-  - Unified the storefront homepage (`/`), header (`SiteHeader.astro`,
-    `SiteBrand.astro` with white `brightness-0 invert` logo on `#1a1411` dark
-    backgrounds), footer (`SiteFooter.astro`), product cards
-    (`ProductListItem.astro`), and inner pages (`/produk`, `/tentang`,
-    `/kontak`, `/pengiriman`) onto classic sharp (`rounded-none`) geometry with
-    zero AI-slop copy.
-  - Removed the redundant `<LandingPagesSection />` from the homepage (since
-    every `/produk/<slug>` page is already the promo/landing page) and deleted
-    `/testimoni` (`src/pages/testimoni.astro`).
-  - `SiteFooter.astro` uses a centered minimalist layout with 4 core links
-    (`Katalog`, `Pengiriman`, `Tentang`, `Kontak`) and places
-    `Kebijakan Privasi · Syarat & Ketentuan · Sitemap` directly in the bottom
-    copyright row for Meta & Google Ads compliance.
-  - `ProductListItem.astro` renders compact dynamic spacing in the order:
-    **Category → 1-line truncated Title (`truncate`) → `★★★★★ 4.9 (xx+ terjual)`
-    → Price & Compare Price**, using the 480×480 `-sm.webp` R2 derivative via
-    `cardImageSrc()` (`src/lib/image-derivative.ts`) and WCAG AA-compliant
-    strikethrough contrast (`#685b4f`).
-  - **PageSpeed & Web Vitals Hardening:** `HeroSection.astro`, `src/pages/index.astro`,
-    and `src/pages/[slug].astro` preload and serve `-sm.webp` derivatives for
-    LCP hero images, inline `@font-face` (`font-display: swap`) for Cormorant
-    Garamond to eliminate render-blocking Google Fonts CSS chains, compress
-    `/images/reven-grafir-sample.webp` (`147 KB` → `24 KB`), and apply
-    `content-visibility: auto` on below-the-fold `.product-card` grids.
+## 2026-10-23 — 1.7.11: product pages and far colos (ADR-030)
+
+- A PageSpeed pass over page.revenleather.com (Lighthouse mobile, every
+  template) put product pages at 3.7-6 s to the first byte while the rest sat
+  near 0.5 s. Cause, measured: Cloudflare served part of the Indonesian traffic
+  (and all of PageSpeed) from SEA/SJC; `wrangler tail` showed 80-220 ms CPU in
+  a 3.7-6 s wall, and a product page made nine sequential D1 reads to the APAC
+  primary, the catalogue twice.
+- **1.7.11** the catalogue is read once per request with its two queries in
+  parallel, and the product page reads its landing claim beside the order
+  count: nine sequential round trips become six (counted on `dev:local`). The
+  template sets `"placement": { "mode": "smart" }`; the deploy preflight warns
+  an install whose `wrangler.jsonc` has none. Also restores the type narrowing
+  1.7.9 lost in `shipping-quote.ts`: `npm run check` had been red since 1.7.9
+  while `npm test` stayed green, so both gates must run, never one.
+- Not taken: delaying the Google and Meta tags (most of the 450-860 ms TBT on
+  every page), because the ad signal is the product. SEO 69 on the revenleather
+  run is its own `PUBLIC_SITE_NOINDEX`, by design.
+
+## 2026-10-22/23 — 1.7.5–1.7.9: store mark and noindex opt-ins, IP preview, checkout resilience; revenleather drift
+
+- **1.7.5** `PUBLIC_SITE_BRAND_MARK` shows a store's own mark beside the
+  wordmark (root-relative or `https:` only; inverted on the light tone, sized
+  by attribute because `h-7` resolves through an undefined `--spacing` in
+  inlined CSS). **1.7.6** the home h1 and brand title read
+  `tenant.defaultTitle`, so an empty tagline no longer leaves "Store — ".
+  **1.7.7** `PUBLIC_SITE_NOINDEX=true` sends `X-Robots-Tag: noindex, nofollow`
+  on every response (edge-cache hits and pages outside BaseLayout too) and
+  BaseLayout's robots meta agrees. **1.7.8** bare IPv4/IPv6 hosts are never
+  host-redirected, so a LAN or Tailscale preview opens.
+- **1.7.9** A failed exact-district estimate no longer ends a COD checkout: it
+  falls through to the existing city-average `ICO` fallback (prepaid still
+  fails, it has no fallback); one test covers both. Manual transfer options
+  carry fee text and the holder (`a.n. …`), and a single bank or VA renders as
+  its own row instead of a one-item accordion. `GeoIpResolvedForm` passes the
+  visitor province to the full form as it already did to the middle form.
+  Rendered on `npm run dev:local` at 390 and 1440 px with no console errors; a
+  checkout through the single bank row stored `manual_transfer` with that
+  account.
+- **1.7.10 — gates learned from revenleather.** `npm run deploy` now warns
+  (does not refuse) with the product-owned files an install has edited since
+  its last product merge, and `fleet:status` gains an `edits` column from the
+  same `findProductOwnedEdits`. Install-owned paths and native landing pages
+  (registered route files, their styles, the register and generated
+  route-map/safelist) are not counted. First reading, 2026-10-23: revenleather
+  49, zvarashop 27 (12 of them its own catalogue migrations `0067`-`0078`,
+  which will collide by number with the product's next migration), taniniaga
+  4 (research notes under `docs/spec`). The setup checklist owes "Aktifkan
+  minimal satu kurir" when no courier rule is enabled: with every courier off
+  the buyer saw only "Ongkir belum berhasil dihitung", which is what led a
+  revenleather session (on a local D1 without courier rules) to make the quote
+  allow every courier instead. Rendered on `dev:local` at 390 and 1440 px.
+- **revenleather (`page.revenleather.com`) on 1.7.8, noindexed** because the
+  brand's Shopify shop owns search for the same catalog. Its own commits on
+  2026-10-23 edit 27 product-owned files under `src/` (checkout, header, footer,
+  inner pages, thanks page) and this file's fleet header. Three of those
+  ideas are in 1.7.9. Not taken, on purpose: allowing every courier when
+  `courier_rules` is empty (the server accepts orders through the same rule
+  check, and deny-by-default is the product contract), a store's bank account
+  hardcoded as a client fallback, and slug lists or palettes compiled into
+  shared components. The palette edits are the recurring gap (zanobyshop's
+  `apply-store-palette.py` is the same need): installs fork components because
+  the product has no per-store colour tokens. Its next product merge will
+  conflict wherever both sides moved.
 
 ## 2026-10-21 — 1.7.3–1.7.4: uploads and province-scoped product pages cached at the edge; zvarashop back on the product line
 

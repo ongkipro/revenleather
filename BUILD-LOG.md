@@ -1,120 +1,8 @@
 # BUILD LOG: AdsBookCMS
 
-> Verified against disk: 2026-11-01 (Entry 228, Reven 1.8.5 merge of product `7a207a0`; earlier entries retain their historical evidence)
+> Verified against disk: 2026-11-02 @ `43c6cb3` (Entry 244; earlier entries retain their historical evidence)
 
 Author & Curator: **[ongki.pro](https://ongki.pro)**
-
----
-
-### Entry 228: Reven adopts AdsBookCMS 1.8.5
-
-Merge of product `7a207a0` into `revenleather`. Tests 1154 (1153 pass, 1
-skipped), `npm run check` 0/0/0, build and `wrangler deploy --dry-run` clean.
-Rendered check on a local store (home with hero dots, PDP of an approved grafir
-slug with the middle-to-full form swap and back, a COD order through `/thanks`,
-`/payment`, `/kontak`, legal pages, `/testimoni` 404) at 390 and 1280 px with no
-console errors. Product-card "Mulai" label ported; uploaded-logo support and the
-core watermark footer left out on purpose (see STATUS.md).
-
-## 2026-10-23 — Reven Leather (`page.revenleather.com`): 79-LP Grafir/Non-Grafir segmentation, dynamic compare-price calibration, Full-Form checkout hardening, Gratis Grafir COD-disable mechanism, and classic sharp storefront UI
-
-- **Google & Meta Catalog XML (`/feed/google-catalog.xml`, `/feed/meta-catalog.xml`) and Full-Form Tracking / Advanced Matching Hardening.**
-  - Updated `feedImagePath()` in `src/lib/catalog-feed.ts` (`+ src/lib/catalog-feed.test.ts`) so same-origin absolute `/assets/uploads/...webp` URLs are rewritten to `.jpg` alongside relative paths (`79/79` items in Google and Meta catalog feeds now emit `.jpg` `<g:image_link>`), selected the lowest-priced variant (`variants.reduce`) for `<g:price>` / `<g:sale_price>` parity with `[slug].astro`, and stripped stray HTML/newlines from `<g:description>`.
-  - Updated `getAdTaxonomy()` in `src/lib/ad-taxonomy.ts` (`+ src/lib/ad-taxonomy.test.ts`) to break ties between category and product title using title keyword hits so `Reven Helsinki Leather Laptop Bag` (`14229`) maps to `Tas & Dompet > Tas Laptop` (`travel & luggage > briefcases & laptop bags`) instead of falling back to `Umum > Sling Bag`.
-  - Hardened `src/scripts/form-hybrid.ts` and `src/scripts/form-middle.ts`: `AddToCart` and `InitiateCheckout` now forward all available `city` (`ct`), `province` (`st`), `district`, `postal_code` (`zp`), `country: "id"`, `customer_name` (`fn`/`ln`), `customer_phone` (`ph`), and `external_id` to both `/api/meta-event` (CAPI) and browser Pixel (`fbq.instance.pixelsByID[pixelId].userData`), trigger `InitiateCheckout` once both qualified identity and shipping district/postal code resolve, include `contents: [{ id, quantity: 1, item_price }]`, and set Google Ads Enhanced Conversions `gtag('set', 'user_data', ...)` with SHA-256 `+62...` phone, first/last name, `city`, `region`, `postal_code`, and `country: 'ID'`.
-  - Updated `src/lib/order-status.ts` and `src/components/storefront/tracking/MetaThanksTracker.astro` (`+ src/lib/meta-purchase-dedup.test.ts`) so `/api/order-status` returns `city`, `province`, and `postal_code`, allowing `/thanks` to backfill `ct`/`st`/`zp` and Google `city`/`region`/`postal_code` when `sessionStorage` is partial or empty, while falling back `transaction_id` to `finalEventId` (`order_number`).
-
-- **Gratis Grafir Order Note (`customer_note` → `orders.lead_follow_up_note`), `/thanks` & WhatsApp Output, and PageSpeed Hardening.**
-  - Moved Gratis Grafir text out of `orders.address` into the dedicated order note column (`orders.lead_follow_up_note` via `customer_note` in `src/lib/order-schema.ts`, `src/pages/api/submit-order.ts`, `src/lib/order-persistence.ts`, and `src/lib/order-status.ts`) so `address` stays pure and Grafir notes are never pushed to Mengantar (`src/lib/mengantar-dispatch.ts`).
-  - Updated `src/pages/thanks.astro`, `src/pages/payment.astro`, and `src/lib/thanks-whatsapp.ts` (`+ src/lib/thanks-whatsapp.test.ts`) to display the Gratis Grafir badge (`✦ Gratis Grafir: <Teks>`), `Gratis Grafir Laser (Rp37.000 GRATIS)` summary line, `Catatan` shipping row, and `Catatan: Grafir: <Teks>` WhatsApp confirmation line.
-  - Surfaced `customer_note` across `/admin/orders` (`src/pages/api/admin/orders/index.ts`, `src/pages/admin/orders/index.astro`, `src/components/admin/OrdersTable.tsx`) and `/admin/orders/[id]` (`src/pages/api/admin/orders/[id].ts`, `src/components/admin/OrderDetail.tsx`) with a 1-tap copy button and internal workshop label.
-  - Optimized Lighthouse Performance & Accessibility (100/100) across `/` and `/produk/<slug>`: `cardImageSrc()` in `src/lib/image-derivative.ts` rewrites `page.revenleather.com/assets/uploads/...` product cards & hero images to `-sm.webp` (~14–21 KB 480×480 R2 derivatives), compressed `/images/reven-grafir-sample.webp` from 147 KB to 24 KB, replaced render-blocking Google Fonts stylesheet links on `[slug].astro` and `thanks.astro` with inline `@font-face` (`font-display: swap`), wrapped `[slug].astro` in `<main id="konten-utama">`, added `role="tab"` to `tablist` filter buttons, and darkened strikethrough compare-price text to `#685b4f` for WCAG AA contrast.
-- **Grafir vs Non-Grafir segmentation across 79 landing pages.** Audited the 28
-  reference images in Google Drive `letak grafir tas` against the 79 active
-  products in `revenleather-d1`. The 33 approved grafir landing pages render the
-  full-bleed `/images/reven-grafir-sample.webp` (`86f3a07`, cropped edge-to-edge
-  on the leather surface so it is never mistaken for a separate hang tag),
-  `<s>Rp37.000</s> GRATIS HARI INI` in `.grafir-spot` and `.offer-card`, and
-  `Gratis Grafir` in `.rv-sticky`. The remaining 46 non-grafir landing pages
-  strip every grafir badge, spotlight, bento tile, and box card while keeping the
-  shared 2-level sticky bar and inline Verified SVG review badge.
-- **Dynamic `compare_price` across 6 discount tiers (`30%`, `35%`, `40%`, `45%`,
-  `49%`, `55%`).** Previously 65 of 79 products sat at `30%` and 13 at `29%`.
-  Updated `product_variants.compare_price` across all 208 variants (leaving
-  `product_variants.price` untouched) to clean IDR multiples (`Rp5.000` on 206
-  variants, `Rp1.000` on 2 variants) so `parseShortcodes` in
-  `src/lib/landing-pages.ts` and the XML feeds (`/feed/meta-catalog.xml`,
-  `/feed/google-catalog.xml`) emit exact dynamic discounts across all 6 tiers.
-- **Full-Form checkout (`{"mode": "full"}`) & shipping/payment bug fixes (`029b725`).**
-  Switched all 79 `landing_sections` form blocks to `{"mode": "full"}` while
-  keeping `stores.cod_disabled_province_codes`
-  (`PA,PB,PD,PT,PE,PS,MA,MU,NT,KU,SR,GO,KR,AC,BE`) intact. Diagnosed and fixed
-  five checkout & shipping bugs across `src/scripts/form-hybrid.ts`,
-  `src/components/storefront/forms/FormHybridContent.astro`,
-  `src/components/storefront/forms/GeoIpResolvedForm.astro`,
-  `src/styles/form-hybrid.css`, and `src/lib/shipping-quote.ts`:
-  1. **Bug — Shipping quote error (`"Ongkir belum berhasil dihitung..."`) on subdistrict/courier edge cases:**
-     - *Root cause:* `buildShippingQuotes` in `src/lib/shipping-quote.ts` used
-       `Promise.all` across candidate subdistrict IDs (so a single subdistrict
-       failure aborted the entire quote even when sibling subdistricts or the
-       city fallback succeeded) and returned `[]` when `courier_rules` was empty
-       in local D1.
-     - *Fix:* Switched subdistrict fan-out to `Promise.allSettled`, added a
-       default-enabled courier fallback when `courier_rules` has no rows,
-       widened the client shipping fetch timeout from `6000ms` to `10000ms` with
-       automatic retry, and synced `warehouses` (`Malang Gudang Utama`
-       `68bd3b8c9d03e38246bc0476`) + `courier_rules` (`iDexpress`, `JNE`,
-       `SiCepat`, `SAP`) into local D1.
-  2. **Bug — `GeoIpResolvedForm.astro` dropped `resolvedProvince` when rendering `FormHybridContent.astro`:**
-     - *Root cause:* `GeoIpResolvedForm.astro` resolved the visitor's province
-       from Cloudflare headers to choose `middle` vs `full` mode, but did not
-       pass `province={resolvedProvince}` to `<FormHybridContent />`. Combined
-       with `isCodDisabledByProvince()` returning `true` when `provinceCode` was
-       empty, initial load stripped `COD` from `visiblePaymentOptions` and
-       locked `state.paymentMethod` to `manual_transfer` even after selecting a
-       COD-eligible district.
-     - *Fix:* Passed `province={resolvedProvince}` into `FormHybridContent.astro`,
-       changed `isCodDisabledByProvince()` to return `false` when `provinceCode`
-       is still unknown, and tracked `userPickedPaymentMethod` so COD-eligible
-       provinces default to `cod` unless the buyer explicitly chooses Transfer.
-  3. **Bug — `#payment-method-block` visibility, ordering, and single-bank collapse UX:**
-     - *Root cause:* When a store had only 1 manual bank account (`Transfer Bank MANDIRI`
-       `1330035981794` a.n. `PT East Retail Network`, `seller_bank_account_id = 5`),
-       wrapping it inside a collapsed `Transfer Bank (1 rekening tersedia)`
-       accordion hid the bank option behind an extra click and omitted the
-       account holder name.
-     - *Fix:* Kept `#payment-method-block` hidden (`!state.locationId`) until a
-       district is selected, ordered `Transfer Bank` / `Virtual Account` **above**
-       `COD (Bayar di Tempat)`, rendered a single bank/VA option (`length === 1`)
-       directly as a flat radio row (with `Tanpa biaya admin · a.n. PT East Retail Network`)
-       while using the collapsible accordion when `length > 1`, and added
-       `MANUAL_5` to `FALLBACK_PAYMENT_OPTIONS`.
-  4. **Bug — `Kirim ke` summary card showed `"Alamat lengkap belum diisi."`, inverted line order, and duplicated shipping cost hint:**
-     - *Root cause:* Selecting a district before typing the street address
-       rendered the placeholder `"Alamat lengkap belum diisi."`, placed the
-       district above the street address, and repeated the shipping cost below
-       the card.
-     - *Fix:* Hid `#shipping-address-line` (`hidden = !addr`) whenever the street
-       address textarea is blank, ordered `#shipping-address-line` (regular
-       weight `#555555`) **above** the bold `#district-picked-subtitle`
-       (`Kecamatan, Kota, Provinsi Kodepos`, `font-weight: 700; color: #111111`),
-       and cleared `#district-help` once the shipping quote succeeds so shipping
-       cost appears only once in `Ringkasan Pemesanan`.
-  5. **Bug — Unvalidated `"Bonus Gift Kulit Sapi Asli"` claim & hang-tag visual on grafir sample:**
-     - *Fix:* Removed `"Bonus Gift Kulit Sapi Asli"` from all 79 `.offer-card`
-       sections, replaced it with validated inclusions, and cropped
-       `/images/reven-grafir-sample.webp` (`86f3a07`) edge-to-edge on the leather
-       surface so it never reads as a separate hang tag.
-  6. **Feature — Optional Gratis Grafir Selector with Automatic COD Disable (`FormHybridContent.astro` + `src/scripts/form-hybrid.ts`):**
-     - On the 33 approved Gratis Grafir products (`isApprovedGrafirSlug(product.slug)`), added an optional `Gratis Grafir Nama / Inisial (Opsional)` selector directly below `Pilih Varian`:
-       - `Tanpa Grafir` (default): buyer ignores engraving and **COD remains allowed** alongside Transfer Bank.
-       - `+ Gratis Grafir Nama / Inisial (GRATIS • Non-COD)`: reveals the required `grafir_text` field (max 24 chars), **automatically disables `cod`** in `syncVisiblePaymentOptions()`, switches to Transfer Bank, displays `Gratis Grafir Laser: "<Teks>" (GRATIS)` in `Ringkasan Pemesanan`, and appends `[GRAFIR: <Teks>]` to `address` on submit.
-- **Classic Sharp Storefront (`rounded-none`), Minimalist Footer & AI-Slop Removal.**
-  - Cleaned all AI-slop phrases from `landing_pages.meta_description` and `landing_sections.content_html` across all 79 products in local and remote D1, and simplified `.deal-meta` rating display from `4.9 /5 • 1.5rb+ terjual` to `4.9 • 1.5rb+ terjual` (as well as `src/pages/produk/[slug].astro`).
-  - Updated `SiteBrand.astro` with `brightness-0 invert` when `tone === 'light'` so the single-color `reven-mark.svg` renders crisp white on dark `#1a1411` backgrounds.
-  - Updated `ProductListItem.astro` to classic sharp (`rounded-none`) geometry with dynamic compact spacing: **Category → 1-line truncated Title (`truncate`) → `★★★★★ 4.9 (xx+ terjual)` → Price & Compare Price**, plus `Gratis Grafir` badge across all 33 approved products (`isApprovedGrafirSlug` supporting both `reven-*` LP slugs and `products.slug`).
-  - Upgraded the Gratis Grafir spotlight in `ProductsSection.astro` to a full-width `16:9` `/images/reven-grafir-sample.webp` visual, removed the redundant `<LandingPagesSection />` from `CompactMarketHome.astro`, deleted `src/pages/testimoni.astro` (`/testimoni`), and simplified `SiteFooter.astro` to a minimalist centered layout with `Kebijakan Privasi · Syarat & Ketentuan` placed in the copyright bar for Ads compliance.
-  - Recorded explicit AI agent update guardrails in `AGENTS.md` §0, `docs/UPDATE-PATH-OWNERSHIP.md`, `STATUS.md`, and `RELEASE.md` so future `adsbookcms` updates never overwrite Reven Leather's custom storefront or checkout rules.
 
 ---
 
@@ -8505,3 +8393,59 @@ confirmation and status markers take `var(--sf-accent)` / `--sf-accent-strong` i
 tokens, so the rest look unchanged. `payment-accent.test.ts` guards it at source. TRK-1 is
 closed on the nine-install `fbp` measurement; EMQ-1 records the Events Manager read Paduka
 deferred.
+
+### Entry 240: 1.8.9 rolled out to the fleet
+
+Eleven of twelve installs (skincarebpom excluded by instruction) run 1.8.9; `fleet:status`
+clean, synced, 0 behind. Per-install Worker ids and the conflict notes are in the agents'
+reports, summarised in `docs/FLEET.md` ("Rollout of 1.8.9"). Evidence for the visible
+change: with a VA state placed in `sessionStorage`, "Salin Nomor VA" computes
+`rgb(0,43,73)` on numaskin, `rgb(27,94,32)` on beranda-tani and `rgb(18,18,18)` on
+zvara, and the three renders were opened and compared. revenleather keeps its own
+themed page, so two of the product's payment-accent tests are skipped there. Not verified:
+a payment with a real provider payload.
+
+### Entry 241: released as 1.9.0, CTA blue by default
+
+No migration, 1167 tests, check 0/0/0. `form-hybrid.css` token defaults: accent `#2563eb`,
+strong `#1d4ed8`, soft `#eff6ff`, ring `rgba(37,99,235,.28)`. Seven hard-coded ink buttons
+(sticky "Pesan sekarang" in `produk/[slug].astro`, three in `thanks.astro`, `404`,
+`testimoni`, `landing-page/index`) now use `var(--sf-accent, #2563EB)`/`--sf-accent-strong`
+with a blue fallback because those pages sit outside the form root that defines the tokens.
+Proof: the local build rendered through Playwright (390 px) shows the buttons, the selected
+variant card, the order summary and the payment CTA in `rgb(37,99,235)`, no page error.
+Admin screens and install-owned native landing pages are untouched. Decision and rejected
+alternatives: ADR-019 amendment 2026-11-02. Not rolled out: Paduka decides when.
+
+### Entry 242: 1.9.1, the default CTA is orange, not blue
+
+Entry 241's blue (1.9.0) was replaced before any store received it: Paduka asked for orange
+or red. Measured against white text: `#c2410c` 5.18:1 (chosen, hover `#9a3412` 7.31:1),
+`#dc2626` 4.83:1 but the checkout error colour is `#d92d20`, `#f97316` 2.8:1 and `#ea580c`
+3.6:1 (below AA). Same tokens and the same seven call-site fallbacks as 1.9.0, new values;
+ADR-019's amendment rewritten to the final choice, with the rejected options. The discount
+pill stays `#334FB4`. 1167 tests, check 0/0/0.
+
+### Entry 243: 1.9.2, form states under the orange accent
+
+Found on the live zvara canary (1.9.1): with the filled-field tint following `--sf-accent-soft`
+the name and phone fields turned peach beside their green tick, and the focused field's orange
+frame looked like the red error frame. `form-hybrid.css`: filled and valid fields take
+`--sf-surface-alt` (neutral), and a new `--sf-focus-frame: #1a1a1a` is the frame while typing,
+with `--sf-accent-ring` kept as the ring. The selected variant card, bullets, summary tint and
+the buttons keep the accent. 1167 tests. The zvara native landing page's own hero button
+(`bg-stone-950`, amber text) is that page's design and stays.
+
+### Entry 244: 1.9.2 rolled out to the fleet
+
+Eleven of twelve installs (skincarebpom excluded by instruction) run 1.9.2, canary zvara
+first. Live submit colours measured after the rollout are in `docs/FLEET.md`. What the
+rollout found: (1) revenleather's accent override sat inside the product's `form-hybrid.css`
+and was silently overwritten by the merge; restored in the install. (2) numaskin and
+beranda-tani scoped their accent to the form root, so standalone buttons would have gone
+orange; each gained a `:root` token block in its own stylesheet. (3) The first 1.9.1 canary
+showed peach filled fields and an orange focus frame that read like the red error frame;
+fixed as 1.9.2. UNIMPLEMENTED_SPECS REV-1 records the cleanup that stops the product file
+being edited per install. Process note: `pkill -f` and `pgrep -f` with a pattern matching the
+shell's own command line killed the calling shell twice (once in this session, once in an
+agent); stop servers by PID.

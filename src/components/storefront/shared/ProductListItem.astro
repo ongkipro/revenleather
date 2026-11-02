@@ -35,6 +35,7 @@ const discountPercentage = hasDiscount
 // "Mulai" only when the variants really differ in price (core 1.8.x).
 const hasRange = new Set(product.variants.map((variant) => variant.price).filter((price) => typeof price === 'number')).size > 1;
 const hasGrafir = isApprovedGrafirSlug(product.slug);
+// The discount pill sits in the price row, never over the photo (core 1.9.2).
 
 let slugSum = 0;
 for (let i = 0; i < product.slug.length; i++) {
@@ -68,11 +69,6 @@ const soldLabel = product.soldCount && product.soldCount > 0
         fetchpriority={eager ? 'high' : undefined}
         decoding="async"
       />
-      {discountPercentage > 0 && (
-        <span class="absolute left-0 top-0 bg-[#9e2a2b] px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.06em] text-white">
-          -{discountPercentage}%
-        </span>
-      )}
       {hasGrafir && (
         <span class="absolute bottom-0 left-0 bg-[#1a1411]/90 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-[#e5a970]">
           Gratis Grafir
@@ -104,6 +100,11 @@ const soldLabel = product.soldCount && product.soldCount > 0
           <p class="text-[10.5px] leading-none text-[#685b4f] line-through">
             {formatPrice(comparePrice)}
           </p>
+        )}
+        {discountPercentage > 0 && (
+          <span class="bg-[#9e2a2b] px-1.5 py-0.5 text-[9.5px] font-bold uppercase leading-none tracking-[0.06em] text-white">
+            -{discountPercentage}%
+          </span>
         )}
       </div>
     </div>
