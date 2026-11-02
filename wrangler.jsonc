@@ -34,11 +34,13 @@
     "nodejs_compat"
   ],
 
-  // Run beside D1 (ADR-030): Cloudflare serves part of Reven's Indonesian
-  // traffic and all of PageSpeed from SEA/SJC, where each D1 read crossed the
-  // Pacific (product pages 3.7-6 s to first byte vs 0.5 s from SIN).
+  // Run beside D1, pinned to Singapore (ADR-030, amended 2026-11-02): Smart
+  // Placement declined requests entering at LAX ("cf-placement: local-LAX",
+  // 2.0-2.9 s to first byte against 0.3 s from SIN), so every D1 read crossed
+  // the Pacific. An explicit region runs the fetch handler beside the APAC D1
+  // from any colo; static assets still serve from the nearest one.
   "placement": {
-    "mode": "smart"
+    "region": "aws:ap-southeast-1"
   },
 
   // The one secret a store cannot run without, and the only one the Deploy
