@@ -1,6 +1,6 @@
 # BUILD LOG: AdsBookCMS
 
-> Verified against disk: 2026-11-02 @ `cf4ce18` (Entry 246; earlier entries retain their historical evidence)
+> Verified against disk: 2026-11-02 @ `040459c` (Entry 253; earlier entries retain their historical evidence)
 
 Author & Curator: **[ongki.pro](https://ongki.pro)**
 
@@ -8527,3 +8527,127 @@ provider did not add (total equals amount) as the seller's, whatever the store s
 INV-10357 stays `pending`, its QR expires on its own; cancel it in the admin
 (UNIMPLEMENTED_SPECS OPS-1). No version bump, no changelog.
 
+
+### Entry 247: admin Docs book for the API and the CLI
+
+Requested by Paduka: one place inside AdsBookCMS that explains the CLI and the API, text
+only (a screenshot goes stale with the first UI change). `/admin/docs/<chapter>` (owner and
+admin, `ADMIN_PAGE_ROUTES`) is a six-chapter book: start here, API key and scope, Headless
+API, Operations API, `adsbook` CLI, errors and limits. A sticky contents column from 1280 px,
+a fold below it; previous/next under each chapter; a copy button on every code block; on a
+phone each table row reads as a stacked card. The endpoint, scope, limit and CLI tables are
+rendered from `HEADLESS_OPERATIONS`, `OPS_OPERATIONS`, the scope lists, the key limits and
+`ADSBOOK_CLI_USAGE` (now exported), and each operation and scope needs a sentence in a
+`Record` keyed by it, so a new operation without one fails `npm run check`.
+
+Checking the prose against the code corrected two things the earlier text had wrong: an
+API-key 429 carries `X-RateLimit-Reset` (ISO time), not `Retry-After`; and an ops order's
+fields are `number`, `status.shipping`, `amounts.total`. The hand-written endpoint cards on
+`/admin/settings/developer`, which missed `orders/status` and `tracking/events`, became a
+link to the book. The AdsBookCMS card under the sidebar now holds two actions, Docs and
+What's new (two icons on the collapsed rail); Docs is also in the account menu and the
+mobile menu. One item added to the 1.9.2 What's new entry at Paduka's request; no version
+bump. Rendered at 360, 390, 768, 1024, 1280 and 1920 px: no horizontal overflow, the
+previous/next links clear the mobile bottom bar, the copy button writes the clipboard.
+
+### Entry 248: every store bills QRIS/VA fees to the seller, and so does a new one (PAY-2)
+
+TASKS A-447 and A-448. A new install was written `payment_fee_bearer = 'buyer'`, the
+column default from `0020`, so its checkout would add an admin fee this AutoLaris account
+never bills (Entry 246). `runInstall` now writes `'seller'` in the store insert; no
+migration, since a SQLite column default needs a table rebuild and the wizard is the only
+writer of a new store row. `normalizePaymentFeeBearer` stays as it was: it also reads the
+COD bearer, which is the buyer's on purpose. `install.test.ts` runs the wizard on SQLite and
+reads `seller`/`buyer` back; it fails with the fix removed. On a fresh `dev:local --reset`
+plus `dev:seed`, every QRIS/VA channel reports `fee_bearer: "seller"` and the checkout reads
+"QRIS Tanpa biaya admin".
+
+With Paduka's go-ahead, one D1 row each on klikinaja, cekat and skincarebpom (the last one
+outside the update rollout, found `buyer` by the same read): `payment_fee_bearer` from
+`buyer` to `seller`, guarded on the old value, `changes = 1`, `cod_fee_bearer` untouched.
+`/api/payment-methods` on all twelve stores now reports `seller` for QRIS and VA. PAY-2
+stays open for A-449 (AutoLaris's answer on billing the fee to the buyer) and A-450 (one
+test order comparing the four totals). No version bump, no changelog.
+
+### Entry 249: the buyer pays the QRIS/VA fee only when the store asks AutoLaris for it (PAY-2 closed)
+
+TASKS A-449 and A-450. Reading the code behind Entry 246: `/api/h2h/submit` always sent
+`grand_total` = the order total, and the live account bills exactly `grand_total` and deducts
+its fee from it (zvara, every QRIS and VA row since October: amount = total, admin 0.7% /
+Rp3.000). `buyer` therefore never reached the provider; checkout added the fee on its own.
+Paduka's rule: seller, the fee comes out of the store's revenue; buyer, the bill is the order
+total plus the fee (QRIS 0.7% rounded up, which matches the provider's rounding — 229.430 gave
+1.607 — VA BCA Rp6.500, other VA Rp3.000; BCA not yet seen in a live transaction).
+
+`autoLarisGrandTotal()` now decides what is asked for (order total, plus the fee on `buyer`);
+`recordedAutoLarisBill()` records amount = order value, admin = the fee, total = the bill,
+so `/payment` keeps telling the two apart; `calculateAutoLarisRequestAmount()`, which assumed
+the provider adds the fee, is gone. The order detail shows the QRIS/VA fee with "Diterima toko"
+(total minus fee) or "Ditagih ke pembeli". The dev AutoLaris stand-in bills `grand_total` like
+the live account (it used to add the fee, which is how the local checks missed this).
+`lazy:` on `buyer` QRIS the provider's 0.7% is taken from the grossed-up total, so the store
+nets about 0.005% less than the order total (Rp41 on Rp858.600).
+
+Test orders on a local AdsBookCMS at Paduka's instruction, through the checkout form,
+Rp63.000 each: INV-10013 QRIS seller 63.000 everywhere, store receives 62.559; INV-10014 QRIS
+buyer 63.441 on checkout, /payment, the recorded total and QR tag 54; INV-10015 VA BCA buyer
+69.500 on all three. `npm test` 1176, `npm run check` 0 errors; order detail opened at 390 and
+1280 px. Every live store is `seller`, so live behaviour is unchanged until an install takes
+this release and a store chooses `buyer`. No version bump, no changelog.
+
+### Entry 250: Paduka's fee rules — the buyer pays so the store keeps the whole order, the seller's fee stays out of sight
+
+Refines Entry 249 at Paduka's instruction. Buyer-borne: the store receives the whole order
+total, so QRIS grosses up — `buyerPaymentAdminFee()` returns the smallest bill X with
+X − ceil(0.7% of X) ≥ the order total (Rp63.000 → Rp63.445, AutoLaris keeps 445), and VA adds
+its fixed fee. Checkout (`form-hybrid.ts`) and `/submit` use the same function, so the QR asks
+what checkout showed. Seller-borne: the fee is not shown to the buyer on `/payment`; the order
+detail shows only "Diterima toko" (total minus fee), and for a buyer-borne fee it shows the fee,
+what the buyer is billed and "Diterima toko" = the order total. A new install is `buyer` again:
+the wizard stops writing `seller` (A-447 reversed), `install.test.ts` asserts `buyer`. The 1.9.2
+What's new items follow. Local orders through the checkout form: INV-10019 QRIS buyer 63.445 on
+checkout, /payment, record and QR tag 54, store 63.000; INV-10016 VA BRI buyer 66.000, store
+63.000; INV-10018 QRIS seller 63.000, no fee line, store 62.559. Order detail at 390 px.
+
+### Entry 251: the thanks page hides a seller-borne fee; the headless contract names what the buyer pays
+
+Paduka's rule from Entry 250 (a seller-borne QRIS/VA fee is not shown to the buyer) held on
+`/payment` but not on `/thanks`, whose payment details always listed "Biaya admin". It now
+hides that row when the store's bearer is `seller`, or when the bill did not grow (the same
+rule as `/payment` and `paymentFeeIsSellers()`); `payment-fee-display.test.ts` checks every
+place that fills the fee also hides it. Local orders through the checkout form, then `/thanks`:
+seller QRIS shows Rp63.000 with no fee row; buyer QRIS shows Rp63.000, Biaya admin Rp445,
+Total tagihan Rp63.445. STOREFRONT_INTEGRATION.md: a 429 carries `X-RateLimit-Reset`, never
+`Retry-After` (the Docs book already said so), and `payment.total_amount` is what a headless
+storefront shows the buyer under either bearer; the Docs Headless chapter says the same.
+`npm test` 1178.
+
+### Entry 252: the Docs book gains the operator guide
+
+At Paduka's go-ahead on the proposed outline, `/admin/docs` becomes a 13-chapter book in two
+parts. "Panduan admin" (new, `DocsAdminChapter.astro`): Mulai di sini (roles, dashboard,
+an order's path), Pesanan, Pengiriman & ekspedisi, Pembayaran (methods, the fee bearer rules
+of Entries 249-251, reconciliation), Katalog & landing page, Iklan & analitik, Pengaturan.
+"Integrasi API & CLI": the six chapters of Entry 247, the first renamed `integrasi`. The table
+of contents groups the two parts; `/admin/docs` opens the operator guide. Facts were gathered
+from the code by three read-only searches and every label is quoted as the screen writes it;
+the date-filter labels are read from `admin-date-filter.ts`. Inconsistencies the searches
+found in the product are listed for follow-up, not written into the guide as fact (the Meta
+token help text says "encrypted KV" while the code stores it in D1; no UI calls the CAPI
+requeue action that the health text points to; Analitik still offers a TikTok channel; the
+login page shows a donation QRIS that PRD-ADMIN-LOGIN LOGIN-18 forbids; the profile page
+shows integration keys to admins while only the owner may save them). All 13 chapters open
+200 with no console error; no horizontal overflow at 360-1920 px. `npm test` 1178.
+
+### Entry 253: forms open on the cheapest variant; a helper for what a page may state about couriers and payments
+
+From the revenleather screening (2026-11-02). `/produk/nayaka-pouch` opened its form on Brown
+Rp510.100 while its cards, Product JSON-LD and both feeds said Rp500.100 (Tan): a form with no
+variant chosen took `variants[0]`, the first entered. `cheapestVariant()` (form-config.ts, the
+first among equals) is now that default and the one rule the catalogue's "from" price and the
+feed already used, each of which had its own copy. A chosen variant still wins; an unknown one
+is still refused. Second, hand-written storefront copy named seven couriers and one bank while
+the checkout offered five and six: `getStorePublicFacts()` (public-store.ts) returns the
+enabled couriers, the payment methods `/api/payment-methods` offers (summarised by
+`summarizePaymentMethods`) and the store's non-COD provinces, for an install's own pages to
+print instead of a list that goes stale. Nothing in it varies per visitor. `npm test` 1180.
