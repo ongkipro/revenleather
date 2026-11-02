@@ -141,6 +141,14 @@
     // an unknown value takes the home page to its unavailable state (503).
     "PUBLIC_STOREFRONT_TEMPLATE": "compact-market",
 
+    // AutoLaris Create Order (/submit) runs as the QRIS/VA payment rail under the
+    // account's `courir_id: 1` profile, which takes a fixed origin/destination
+    // area pair. Same AutoLaris account as zvara and baven (confirmed by Paduka
+    // 2026-11-02); without the pair every QRIS/VA channel stayed off, so Gratis
+    // Grafir and the COD-excluded provinces could only pay by manual transfer.
+    "AUTOLARIS_ORDER_ORIGIN_ID": "3517100",
+    "AUTOLARIS_ORDER_DESTINATION_ID": "3518010",
+
     // Provinces excluded from cash on delivery, comma separated, lowercase.
     // This is the shipped Indonesian default; adjust per store.
     "PUBLIC_COD_DISABLED_PROVINCES": "papua,papua barat,papua barat daya,papua tengah,papua pegunungan,papua selatan,maluku,maluku utara,nusa tenggara timur,kalimantan utara,sulawesi barat,gorontalo,kepulauan riau,aceh,bengkulu"
