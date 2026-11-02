@@ -1,6 +1,6 @@
 # BUILD LOG: AdsBookCMS
 
-> Verified against disk: 2026-11-02 @ `040459c` (Entry 253; earlier entries retain their historical evidence)
+> Verified against disk: 2026-11-02 @ `8566bf6` (Entry 256; earlier entries retain their historical evidence)
 
 Author & Curator: **[ongki.pro](https://ongki.pro)**
 
@@ -8651,3 +8651,52 @@ the checkout offered five and six: `getStorePublicFacts()` (public-store.ts) ret
 enabled couriers, the payment methods `/api/payment-methods` offers (summarised by
 `summarizePaymentMethods`) and the store's non-COD provinces, for an install's own pages to
 print instead of a list that goes stale. Nothing in it varies per visitor. `npm test` 1180.
+
+### Entry 254: revenleather screened and corrected
+
+A read-only screening of page.revenleather.com (pixel and order calls blocked, no form
+submitted): 86 sitemap URLs 200, no broken link or image in 892 checked, and the price of all
+79 products agrees across cards, product pages, Product JSON-LD and both feeds. Paduka chose
+to leave the page content's random flash-sale timer, stock and sold counts as they are.
+Corrected: the 79 product-page heroes held a tagline as their only H1; the product name sat
+in a `p.eyebrow` above it. The two tags swapped roles in D1 (`h1.eyebrow`, `p.rv-tagline`,
+the two hero CSS selectors renamed, one rule keeping the eyebrow's line height), first on one
+page, then the other 78, each UPDATE guarded on the old content's length. Tested on the live
+DOM before writing and re-shot after: 0 differing pixels at 390 and 1280 px once fonts are
+loaded; all 79 pages now answer one H1 naming the product. In the install repository
+(`f12522f`, not deployed): product #167-#175 merged with the grafir files kept, `/kontak`,
+`/pengiriman` and `/tentang` print `getStorePublicFacts()` instead of hand-written couriers,
+banks and "COD ke seluruh Indonesia", grafir copy names QRIS/VA/transfer, the `/kontak` title
+no longer doubles the store name, and the header nav (`justify-center-safe`, tighter gap) fits
+390 px. Latency: D1 is APAC; Smart Placement runs the Worker in Singapore and pulled a request
+that entered at HKG to SIN (`remote-SIN`), so an explicit `placement.region` would add nothing.
+
+### Entry 255: revenleather deployed with product 1.9.2 + #167-#175
+
+At Paduka's go-ahead, `npm run deploy` from the install (`f12522f`, Worker version `c8639527`,
+no migration in the range). Checked live after the deploy, cache bypassed: `/pengiriman` lists
+JNE, SiCepat, J&T Express, Anteraja and SPX Express, COD plus QRIS, five VAs and Mandiri
+transfer, and the 15 non-COD provinces; `/kontak` says COD "Tersedia, kecuali 15 provinsi" and
+its title names the store once; the home strip reads "QRIS · VA · Transfer"; the header nav
+fits 390 px (scrolls from its first item at 360 px); `nayaka-pouch` opens on Tan Rp500.100,
+the feed's sale price; its H1 is the product name; no page error. `/admin/docs` asks for a
+login. The fleet's other installs do not carry #167-#175 yet.
+
+### Entry 256: the Worker pinned to Singapore; the dashboard paints without Recharts and asks for its data at once
+
+PageSpeed Insights' API now answers keyless requests with quota 0, so the same engine ran
+locally (Lighthouse 12.6.0, mobile preset, pixel beacon and CAPI blocked) on revenleather:
+home 72, `/produk` 82, product page 67, home desktop 99; Accessibility and SEO 97-100. Two
+causes. Third-party tags (Meta ~790 ms, Google ~400 ms of blocking time) stay by ADR-030's
+decision. The product page's document took 3.38 s: requests entering at LAX were not moved by
+Smart Placement (`local-LAX`, 2.0-2.9 s; SIN 0.3 s). ADR-034 pins the Worker with
+`placement.region: "aws:ap-southeast-1"`; revenleather deployed it (Worker `e5ac2f20`): every
+request now runs in SIN, LAX-entry product pages at a median 1.1 s. The template follows.
+
+Admin dashboard: Recharts (330 KB, 97 KB gzipped) loaded before any card could paint, the
+rankings were requested only after the cards' data arrived, and `/api/admin/analytics` made six
+independent D1 reads one after another. The chart is now its own lazy module
+(`DashboardRevenueChart`), the rankings go out beside the cards, and the six reads run in one
+`Promise.all` (a test holds them all in flight). Locally under Slow 4G and 4x CPU, three runs
+each: cards at 1.51/1.59/1.95 s before, 1.35/1.38/1.48 s after; the live gain grows with each
+D1 round trip saved. `npm test` 1181.

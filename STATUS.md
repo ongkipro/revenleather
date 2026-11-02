@@ -2,6 +2,21 @@
 
 > Verified against disk: 2026-11-02 @ `f333530` (product `main` has PRs #167-#171 not yet on any install; installs run 1.9.2 plus PRs #157-#164 on eleven of the twelve; fleet registry in `docs/FLEET.md`; the sections below retain their dated evidence)
 
+## 2026-11-02 — Singapore placement and a lighter dashboard
+
+revenleather's Worker is pinned to Singapore (ADR-034, Worker `e5ac2f20`): requests entering at
+LAX no longer run there (2-3 s to first byte; now a median 1.1 s). The other installs still use
+Smart Placement until each takes the change. On product `main` (not on any install yet): the
+dashboard loads its chart lazily, requests its rankings beside its cards, and its analytics API
+makes its six D1 reads at once. BUILD-LOG entry 256.
+
+## 2026-11-02 — revenleather screened and corrected
+
+Live now: the 79 product pages carry the product name as their H1 (D1 content, pixel-identical).
+Deployed the same day (Worker `c8639527`): product PRs #167-#175, store-read courier/payment/COD
+copy on /kontak, /pengiriman and /tentang, the header nav at 390 px, forms opening on the
+cheapest variant. The Worker already runs in Singapore (Smart Placement). BUILD-LOG entry 254.
+
 ## 2026-11-02 — Docs book and QRIS/VA fee rules (product only, not deployed)
 
 On product `main`, no install has them yet, no version bump (What's new 1.9.2 lists them):
