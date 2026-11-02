@@ -2,9 +2,18 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import LegalPage from '../components/storefront/shared/LegalPage.astro';
 import { getTenantLegalPage } from '../data/legal';
-import { getStorePublicContact } from '../lib/public-store';
+import { withStoreName } from '../lib/tenant';
+import { getStorePublicContact, getStorePublicFacts } from '../lib/public-store';
 
 const contact = await getStorePublicContact(Astro.locals);
+// Reven: COD coverage is read from the store's own settings, not written by hand.
+const facts = await getStorePublicFacts(Astro.locals);
+const codOffered = facts.payments.some((method) => method.startsWith('COD'));
+const codCoverage = !codOffered
+  ? 'Sedang tidak tersedia'
+  : facts.codExcludedProvinces.length
+    ? `Tersedia, kecuali ${facts.codExcludedProvinces.length} provinsi`
+    : 'Tersedia ke seluruh Indonesia';
 // Reven: the store's WhatsApp, normalised to 62…, with the brand's own number as the fallback.
 const normalizedWa = contact.whatsapp ? contact.whatsapp.replace(/^\+/, '').replace(/^0/, '62') : '628518857767';
 const data = getTenantLegalPage('contact', Astro.locals.tenant.name, {
@@ -15,7 +24,7 @@ const data = getTenantLegalPage('contact', Astro.locals.tenant.name, {
 });
 ---
 
-<BaseLayout title={`${data.title} - ${Astro.locals.tenant.name}`} description={data.description}>
+<BaseLayout title={withStoreName(data.title, Astro.locals.tenant.name)} description={data.description}>
   <LegalPage
     badge={data.badge}
     title={data.title}
@@ -67,7 +76,7 @@ const data = getTenantLegalPage('contact', Astro.locals.tenant.name, {
         </div>
         <div class="flex justify-between gap-4 py-2.5">
           <dt class="text-[#574c43]">Layanan COD</dt>
-          <dd class="text-right font-semibold text-[#1a1411]">Tersedia ke Seluruh Wilayah Indonesia</dd>
+          <dd class="text-right font-semibold text-[#1a1411]">{codCoverage}{codOffered && facts.codExcludedProvinces.length > 0 && <a href="/pengiriman#cod" class="ml-1 font-normal text-[#8a5a3b] underline underline-offset-2">lihat daftar</a>}</dd>
         </div>
       </dl>
     </div>

@@ -35,11 +35,11 @@ The [Modules](#modules) section is the same book read from the other side.
 | `/disclaimer` | GET | public | — | `src/pages/disclaimer.astro` | — | — | — |
 | `/kebijakan-cookie` | GET | public | — | `src/pages/kebijakan-cookie.astro` | — | — | — |
 | `/kebijakan-privasi` | GET | public | — | `src/pages/kebijakan-privasi.astro` | `public-store` `tenant` | `courier_rules` `stores` | `public-store.test.ts` `tenant.test.ts` |
-| `/kontak` | GET | public | — | `src/pages/kontak.astro` | `public-store` | `courier_rules` `stores` | `public-store.test.ts` |
+| `/kontak` | GET | public | — | `src/pages/kontak.astro` | `public-store` `tenant` | `courier_rules` `stores` | `public-store.test.ts` `tenant.test.ts` |
 | `/pengiriman` | GET | public | — | `src/pages/pengiriman.astro` | `public-store` `tenant` | `courier_rules` `stores` | `public-store.test.ts` `tenant.test.ts` |
 | `/sitemap` | GET | public | — | `src/pages/sitemap.astro` | `catalog` `landing-pages` | `landing_pages` `landing_sections` `product_variants` `products` | `catalog.test.ts` `landing-pages.test.ts` |
 | `/syarat-ketentuan` | GET | public | — | `src/pages/syarat-ketentuan.astro` | `public-store` `tenant` | `courier_rules` `stores` | `public-store.test.ts` `tenant.test.ts` |
-| `/tentang` | GET | public | — | `src/pages/tentang.astro` | — | — | — |
+| `/tentang` | GET | public | — | `src/pages/tentang.astro` | `public-store` | `courier_rules` `stores` | `public-store.test.ts` |
 
 ## Landing page (4)
 
@@ -331,7 +331,7 @@ is either transitive (imported by another lib) or dead, and only reading tells w
 | `product-mutation` | 10 | `order_items` `product_variants` `products` `storefront_content` | ✓ | `/api/admin/products` |
 | `provider-config` | 6 | `stores` | ✓ | `/api/locations` `/api/payment-methods` `/api/submit-order` `/api/v1/checkout` `/api/admin/ongkir` `/api/admin/settings` `/api/admin/shipping` `/api/admin/warehouses` |
 | `province` | 13 | — | ✓ | `/api/submit-middle-order` `/api/v1/checkout` `/api/admin/expeditions` |
-| `public-store` | 6 | `courier_rules` `stores` | ✓ | `/thanks` `/kebijakan-privasi` `/kontak` `/pengiriman` `/syarat-ketentuan` `/[slug]` |
+| `public-store` | 6 | `courier_rules` `stores` | ✓ | `/thanks` `/kebijakan-privasi` `/kontak` `/pengiriman` `/syarat-ketentuan` `/tentang` `/[slug]` |
 | `rate-check` | 10 | — | ✓ | — |
 | `rate-limit` | 12 | `rate_limits` | ✓ | `/hello` `/api/install` `/api/locations` `/api/meta-event` `/api/order-status` `/api/record-abandoned-order` `/api/shipping-rates` `/api/submit-middle-order` `/api/submit-order` `/api/v1/checkout` `/api/v1/tracking/events` `/api/webhooks/autolaris` `/api/admin/upload-r2` |
 | `receiver-performance` | 5 | — | ✓ | `/api/admin/orders/[id]` |
@@ -355,7 +355,7 @@ is either transitive (imported by another lib) or dead, and only reading tells w
 | `storefront-template` | 9 | `storefront_templates` `stores` | ✓ | `/` `/api/admin/settings` |
 | `tenant-content` | 3 | — | ✓ | `/` `/api/v1/storefront` |
 | `tenant-contract` | 3 | — | ✓ | — |
-| `tenant` | 15 | `stores` | ✓ | `/kebijakan-privasi` `/pengiriman` `/syarat-ketentuan` `/install` `/api/install` `/api/admin/settings` |
+| `tenant` | 15 | `stores` | ✓ | `/kebijakan-privasi` `/kontak` `/pengiriman` `/syarat-ketentuan` `/install` `/api/install` `/api/admin/settings` |
 | `thanks-whatsapp` | 6 | — | ✓ | `/thanks` |
 | `traffic-source` | 3 | — | ✓ | — |
 | `ui-variants` | 4 | — | ✓ | — |

@@ -3,9 +3,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import LegalPage from '../components/storefront/shared/LegalPage.astro';
 import { getTenantLegalPage } from '../data/legal';
 import { withStoreName } from '../lib/tenant';
-import { getStorePublicContact } from '../lib/public-store';
+import { getStorePublicContact, getStorePublicFacts, joinIndonesian } from '../lib/public-store';
 
 const contact = await getStorePublicContact(Astro.locals);
+// Reven: couriers, payment methods and COD coverage come from the same settings
+// the checkout reads, so this summary cannot drift from what a buyer is offered.
+const facts = await getStorePublicFacts(Astro.locals);
+const nonCodPayments = facts.payments.filter((method) => !method.startsWith('COD'));
+const codOffered = nonCodPayments.length < facts.payments.length;
 const data = getTenantLegalPage('shipping', Astro.locals.tenant.name, {
   supportWhatsapp: contact.whatsapp,
   supportEmail: contact.email,
@@ -39,16 +44,22 @@ const data = getTenantLegalPage('shipping', Astro.locals.tenant.name, {
         </div>
         <div class="flex justify-between gap-4 py-2">
           <dt class="text-[#574c43]">Mitra Ekspedisi</dt>
-          <dd class="text-right font-semibold text-[#1a1411]">JNE, J&T, SiCepat, SAP, ID Express, Lion, POS</dd>
+          <dd class="text-right font-semibold text-[#1a1411]">{joinIndonesian(facts.couriers) || 'Dipilih otomatis di formulir pemesanan'}</dd>
         </div>
         <div class="flex justify-between gap-4 py-2">
           <dt class="text-[#574c43]">Metode Pembayaran</dt>
-          <dd class="text-right font-semibold text-[#1a1411]">Transfer Bank Mandiri & COD (Bayar di Tempat)</dd>
+          <dd class="text-right font-semibold text-[#1a1411]">{joinIndonesian(facts.payments) || 'Ditampilkan di formulir pemesanan'}</dd>
         </div>
         <div class="flex justify-between gap-4 py-2">
           <dt class="text-[#574c43]">Pesanan Gratis Grafir</dt>
-          <dd class="text-right font-semibold text-[#8a5a3b]">Khusus Pembayaran Non-COD (Transfer Bank)</dd>
+          <dd class="text-right font-semibold text-[#8a5a3b]">{nonCodPayments.length ? `Khusus ${joinIndonesian(nonCodPayments)}` : 'Khusus pembayaran non-COD'}</dd>
         </div>
+        {codOffered && facts.codExcludedProvinces.length > 0 && (
+          <div id="cod" class="flex justify-between gap-4 py-2">
+            <dt class="shrink-0 text-[#574c43]">COD tidak tersedia ke</dt>
+            <dd class="text-right font-semibold text-[#1a1411]">{joinIndonesian(facts.codExcludedProvinces)}</dd>
+          </div>
+        )}
       </dl>
     </div>
   </LegalPage>
