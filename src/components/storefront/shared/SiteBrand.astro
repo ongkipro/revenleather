@@ -36,6 +36,7 @@ const brandMark = Astro.locals.tenant.brandMark;
           'shrink-0 object-contain',
           isLight && 'brightness-0 invert',
         ]}
+        loading="eager"
         decoding="async"
       />
     ) : (

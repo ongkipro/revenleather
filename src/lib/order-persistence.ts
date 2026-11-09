@@ -197,7 +197,13 @@ function completedNumberFromAbandoned(orderNumber: string): string {
   return `INV-${orderNumber.slice(4)}`;
 }
 
-export const ABANDONED_RETENTION_DAYS = 7;
+/**
+ * A lead is kept 14 days from capture, then deleted with its items and payment
+ * rows (owner 2026-11-10, ADR-035; was 7). The hourly cron and
+ * `POST /api/admin/orders/retention` are the only paths that delete a lead:
+ * the order delete route refuses one, so a lead is never removed early by hand.
+ */
+export const ABANDONED_RETENTION_DAYS = 14;
 
 export async function purgeExpiredAbandonedOrders(
   database: D1Database,
@@ -244,6 +250,13 @@ export type RecordAbandonedOrderInput = {
   variantId?: number;
   /** The page the lead was captured on (PRD A36), already clipped. */
   sourcePagePath?: string | null;
+  /**
+   * The buyer's Meta identity and ad click ids at capture (audit F-5). A lead
+   * CS later converts becomes a Purchase sent from an admin request, which
+   * carries the operator's browser, not the buyer's.
+   */
+  metaRequestContext?: string;
+  adClickIds?: string;
 };
 
 export type RecordedAbandonedOrder = {
@@ -307,7 +320,9 @@ export async function recordAbandonedOrder(
              payment_status = 'unpaid',
              shipping_status = 'abandoned',
              created_at = ?,
-             source_page_path = COALESCE(source_page_path, ?)
+             source_page_path = COALESCE(source_page_path, ?),
+             meta_request_context = COALESCE(?, meta_request_context),
+             ad_click_ids = COALESCE(?, ad_click_ids)
          WHERE id = ? AND shipping_status = 'abandoned'`,
       )
       .bind(
@@ -317,6 +332,8 @@ export async function recordAbandonedOrder(
         totalAmount,
         createdAt,
         input.sourcePagePath || null,
+        input.metaRequestContext || null,
+        input.adClickIds || null,
         existing.id,
       )
     ];
@@ -356,14 +373,16 @@ export async function recordAbandonedOrder(
           address, province, city, district,
           payment_method, payment_status, shipping_status,
           total_amount, shipping_cost, discount_amount, cod_service_fee,
-          cod_service_fee_vat, cod_fee_bearer, created_at, source_page_path
+          cod_service_fee_vat, cod_fee_bearer, created_at, source_page_path,
+          meta_request_context, ad_click_ids
         )
         SELECT
           ?, ?, ?, ?,
           ?, ?, '', '',
           'cod', 'unpaid', 'abandoned',
           ?, 0, 0, 0,
-          0, 'buyer', ?, ?
+          0, 'buyer', ?, ?,
+          ?, ?
         WHERE NOT EXISTS (
           SELECT 1
           FROM orders
@@ -382,6 +401,8 @@ export async function recordAbandonedOrder(
         totalAmount,
         createdAt,
         input.sourcePagePath || null,
+        input.metaRequestContext || null,
+        input.adClickIds || null,
         customerPhone,
       ),
   ];
