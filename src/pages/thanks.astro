@@ -121,7 +121,7 @@ const productCatalog = products.map((item) => ({
              product name, so the page the customer trusts most was branded by
              whatever they happened to buy rather than by the shop. -->
         <a href="/" class="rv-thanks-brand-link" aria-label={Astro.locals.tenant.name}>
-          <img src="/images/reven-mark.svg" alt="" width="22" height="24" />
+          <img src="/images/reven-mark.svg" alt="" width="22" height="24" loading="eager" decoding="async" />
           <span id="brand-logo">{Astro.locals.tenant.name}</span>
         </a>
       </header>

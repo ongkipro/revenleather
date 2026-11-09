@@ -102,12 +102,8 @@ const EXCEPTIONS: { file: string; contains: string; skip: Skip[]; why: string; t
     skip: ["loading"],
     why: "1x1 pixel inside <noscript>; no layout, and a lazy beacon might never fire",
   },
-  {
-    file: "src/components/storefront/shared/SiteBrand.astro",
-    contains: "src={uploadedLogo}",
-    skip: ["dimensions"],
-    why: "uploaded logo of unknown aspect: height-bound inline, width auto, max 168px",
-  },
+  // Reven: no SiteBrand `src={uploadedLogo}` exception. Reven's SiteBrand.astro
+  // (install-owned) has no uploaded-logo branch, so the product's entry would excuse nothing.
   {
     file: "src/components/storefront/forms/FormHybridContent.astro",
     contains: "src={bannerImage}",
