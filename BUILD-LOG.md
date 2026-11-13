@@ -8858,4 +8858,12 @@ this repository; installs pick it up with their next product merge.
   image URL is no longer re-judged on save), which this install had not merged. None of these files is on the
   protected list; the product versions were applied unchanged.
 - 1210 passing, 3 skipped (the inherited `payment-accent.test.ts` skips). Browser evidence is the product's (same
-  code); not re-rendered on this install. Not deployed: the live D1 gets `0080` on the first request after a deploy.
+  code); not re-rendered on this install.
+- Committed `1fdefe2`, pushed, `npm run deploy` (preflight passed) → Worker `a1f0e9fb-b94c-48b5-b5d3-ccf4c753cf05`.
+  Live D1: `0080` applied, 208/208 variants shown. Public pages 200, feed 200 (79 items), form-config lists variants.
+- The owner still saw the bank account on `/kontak` after the deploy: the edge cache (ADR-029, 600 s) was serving the
+  pre-deploy render (`x-edge-cache: HIT`, age 234 s). My first check used `?cb=<random>`, which has its own cache key
+  and so proved nothing about the plain URL. After expiry `/kontak` answered `MISS` without the account; `/tentang`
+  clean too. Check public HTML after a deploy on the plain URL and read `x-edge-cache`.
+- Product side: AdsBookCMS PR #199 merged (`c923b83`); this install already carries its code.
+- Not verified: the admin product form on this install (needs the store's admin login); no order observed after deploy.
