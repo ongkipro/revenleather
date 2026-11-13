@@ -8867,3 +8867,11 @@ this repository; installs pick it up with their next product merge.
   clean too. Check public HTML after a deploy on the plain URL and read `x-edge-cache`.
 - Product side: AdsBookCMS PR #199 merged (`c923b83`); this install already carries its code.
 - Not verified: the admin product form on this install (needs the store's admin login); no order observed after deploy.
+- Review on live D1 (same day): `0080` applied; 208 variants, 206 shown, 2 hidden by the owner (91 Lisbon Dark Tan,
+  102 Ironhide Brown, both on orders); every active product keeps a shown variant; no orphan order line; 4 orders after
+  the deploy, none on a hidden variant. The hidden colours were still drawn by the hand-written colour swatch section of
+  each landing page (`landing_sections` 783a3bae… and 8f4a2ad5…, HTML, not read from variants). Both rows edited on the
+  owner's instruction with a compare-and-set UPDATE (2 changes): Dark Tan removed, heading "Empat pilihan warna";
+  Brown removed, Black full width, heading "Warna Black". Pre-edit rows: `/data/backups/revenleather/landing_section_*.pre-swatch-20261113T1456*.json`.
+  Live `/produk/lisbon-handbag` and `/produk/ironhide-pouch` render only shown colours; 390 px, no overflow. Left as is:
+  Ironhide reviews ("Varian: Brown") and the image alt, which describe real past orders and a real photo.
