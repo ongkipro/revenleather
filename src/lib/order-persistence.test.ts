@@ -426,11 +426,15 @@ test("an identical checkout inside the window reuses the order instead of creati
 });
 
 /** The variant lookup runs real SQL: the defect was in the WHERE clause itself. */
-function variantDatabase(rows: Array<[id: number, productId: number, sku: string, price: number]>, inactive: number[] = []) {
+function variantDatabase(
+  rows: Array<[id: number, productId: number, sku: string, price: number]>,
+  inactive: number[] = [],
+  hiddenVariants: number[] = [],
+) {
   const sqlite = new DatabaseSync(":memory:");
   sqlite.exec(`
     CREATE TABLE products (id INTEGER PRIMARY KEY, is_active INTEGER NOT NULL DEFAULT 1);
-    CREATE TABLE product_variants (id INTEGER PRIMARY KEY, product_id INTEGER NOT NULL, sku TEXT, price INTEGER NOT NULL);
+    CREATE TABLE product_variants (id INTEGER PRIMARY KEY, product_id INTEGER NOT NULL, sku TEXT, price INTEGER NOT NULL, is_active INTEGER NOT NULL DEFAULT 1);
     CREATE INDEX idx_variants_sku ON product_variants (sku);
   `);
   for (const productId of new Set(rows.map((row) => row[1]))) {
@@ -438,6 +442,9 @@ function variantDatabase(rows: Array<[id: number, productId: number, sku: string
   }
   for (const row of rows) {
     sqlite.prepare("INSERT INTO product_variants (id, product_id, sku, price) VALUES (?, ?, ?, ?)").run(...row);
+  }
+  for (const id of hiddenVariants) {
+    sqlite.prepare("UPDATE product_variants SET is_active = 0 WHERE id = ?").run(id);
   }
   return {
     prepare(sql: string) {
@@ -478,4 +485,13 @@ test("a SKU still resolves when no variant has it as an id", async () => {
 test("an inactive product's variant id never falls through to another product's SKU", async () => {
   const database = variantDatabase(SARATOGA_AND_KOJIEN, [50510]);
   assert.equal(await findOrderVariant(database, "1"), null);
+});
+
+test("a variant the merchant hid cannot be ordered, by id or by SKU", async () => {
+  // The storefront stops listing it, but an old link, a cached page or a
+  // Headless client can still post its id; checkout is the boundary.
+  const database = variantDatabase(SARATOGA_AND_KOJIEN, [], [2]);
+  assert.equal(await findOrderVariant(database, "2"), null);
+  assert.equal(await findOrderVariant(database, "SARATOGA-1L"), null);
+  assert.deepEqual(await findOrderVariant(database, "1"), { id: 1, price: 135000 });
 });

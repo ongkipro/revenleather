@@ -178,6 +178,9 @@ export async function resolveEligibleShippingRates(
   let weightKg = (input.fallbackWeightKg || 1) * quantity;
   let quotedVariant: QuotedVariant | undefined;
   if (input.variantKey) {
+    // A hidden variant (pv.is_active = 0) still quotes: the admin order page
+    // re-quotes an existing order by its variant. Checkout refuses it in
+    // findOrderVariant, so a quote alone sells nothing.
     const variant = await database
       .prepare(
         `

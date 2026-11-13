@@ -33,6 +33,8 @@ type Variant = {
   title: string;
   price: number;
   compare_price?: number | null;
+  /** False: hidden from the storefront, so a form cannot preselect it. */
+  is_active?: boolean;
 };
 
 type Product = {
@@ -558,7 +560,7 @@ export default function LandingPageEditor({ landingPageId }: Props) {
                   {/* Five rows, then scroll: the catalogue can hold hundreds. */}
                   <SelectContent alignItemWithTrigger={false} className="max-h-[17.5rem] w-(--anchor-width) min-w-80">
                     {products.map((p) => {
-                      const prices = p.variants?.map((v) => v.price) || [];
+                      const prices = p.variants?.filter((v) => v.is_active !== false).map((v) => v.price) || [];
                       const minPrice = prices.length ? Math.min(...prices) : 0;
                       const maxPrice = prices.length ? Math.max(...prices) : 0;
                       const priceLabel =
@@ -624,7 +626,7 @@ export default function LandingPageEditor({ landingPageId }: Props) {
                         {selectedProduct.title}
                       </div>
                       <div className="truncate text-slate-500">
-                        <span className="font-mono">/{selectedProduct.slug}</span> · {selectedProduct.variants?.length || 0} varian aktif
+                        <span className="font-mono">/{selectedProduct.slug}</span> · {selectedProduct.variants?.filter((v) => v.is_active !== false).length || 0} varian aktif
                       </div>
                     </div>
                   </div>
@@ -963,7 +965,7 @@ export default function LandingPageEditor({ landingPageId }: Props) {
                                       <SelectItem value="none" className="text-xs py-2 px-3 font-medium text-slate-700">
                                         Semua Varian Tersedia
                                       </SelectItem>
-                                      {selectedProduct?.variants?.map((v) => (
+                                      {selectedProduct?.variants?.filter((v) => v.is_active !== false).map((v) => (
                                         <SelectItem
                                           key={v.id}
                                           value={String(v.id)}

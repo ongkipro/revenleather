@@ -39,6 +39,7 @@ type DbVariantRow = {
   compare_price: number | null;
   weight_grams: number;
   stock: number | null;
+  is_active: number | null;
 };
 
 async function loadProducts(
@@ -78,7 +79,7 @@ async function loadProducts(
   const variantResult = await database
     .prepare(
       `
-    SELECT id, product_id, sku, title, price, compare_price, weight_grams, stock
+    SELECT id, product_id, sku, title, price, compare_price, weight_grams, stock, is_active
     FROM product_variants
     WHERE product_id IN (${placeholders})
     ORDER BY product_id ASC, id ASC
@@ -86,6 +87,21 @@ async function loadProducts(
     )
     .bind(...productIds)
     .all();
+
+  // Which variants an order already uses, for the edit form only (one
+  // product): those cannot be deleted, so the form offers hiding instead.
+  // order_items has no variant_id index, so the catalogue list skips this.
+  const orderedVariantIds = new Set<number>();
+  if (productId) {
+    const ordered = await database
+      .prepare(
+        `SELECT DISTINCT oi.variant_id FROM order_items oi
+         WHERE oi.variant_id IN (SELECT id FROM product_variants WHERE product_id = ?)`,
+      )
+      .bind(productId)
+      .all<{ variant_id: number }>();
+    for (const row of ordered.results ?? []) orderedVariantIds.add(Number(row.variant_id));
+  }
 
   const variantsByProduct = new Map<number, DbVariantRow[]>();
   for (const row of (variantResult.results ?? []) as DbVariantRow[]) {
@@ -117,6 +133,10 @@ async function loadProducts(
       compare_price: variant.compare_price,
       weight_grams: variant.weight_grams,
       stock: variant.stock ?? 0,
+      is_active: variant.is_active !== 0,
+      // A variant on an order cannot be deleted (PATCH answers 409); the form
+      // offers to hide it instead of a Hapus button that fails on save.
+      has_orders: orderedVariantIds.has(variant.id),
     })),
   }));
 }
@@ -237,9 +257,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
           .prepare(
             `
         INSERT INTO product_variants (
-          product_id, sku, title, price, compare_price, weight_grams, stock
+          product_id, sku, title, price, compare_price, weight_grams, stock, is_active
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `,
           )
           .bind(
@@ -250,6 +270,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
             variant.compare_price,
             variant.weight_grams,
             variant.stock,
+            variant.is_active ? 1 : 0,
           ),
       ),
     ];
@@ -317,9 +338,17 @@ export const PATCH: APIRoute = async ({ request, locals }) => {
   }
 
   const body = rawBody as ProductMutationPayload | null;
-  const parsed = parseProductMutationPayload(body, true);
-  if ("error" in parsed) return jsonError(parsed.error, parsed.status ?? 400);
   try {
+    const bodyId = Number(body?.id);
+    const stored =
+      Number.isSafeInteger(bodyId) && bodyId > 0
+        ? ((await (database as D1Database)
+            .prepare("SELECT image_url FROM products WHERE id = ?")
+            .bind(bodyId)
+            .first()) as { image_url: string | null } | null)
+        : null;
+    const parsed = parseProductMutationPayload(body, true, stored?.image_url);
+    if ("error" in parsed) return jsonError(parsed.error, parsed.status ?? 400);
     const db = database as D1Database;
     const currentProductRows = await loadProducts(db, parsed.value.id);
     const currentProduct = currentProductRows[0];
@@ -369,7 +398,7 @@ export const PATCH: APIRoute = async ({ request, locals }) => {
         .first()) as { variant_id: number } | null;
       if (referencedVariant) {
         return jsonError(
-          `Varian ${referencedVariant.variant_id} sudah dipakai order dan tidak boleh dihapus.`,
+          `Varian ${referencedVariant.variant_id} sudah dipakai order dan tidak bisa dihapus. Matikan "Tampil di toko" untuk menyembunyikannya.`,
           409,
         );
       }
@@ -431,7 +460,7 @@ export const PATCH: APIRoute = async ({ request, locals }) => {
             .prepare(
               `
             UPDATE product_variants
-            SET sku = ?, title = ?, price = ?, compare_price = ?, weight_grams = COALESCE(?, weight_grams), stock = ?
+            SET sku = ?, title = ?, price = ?, compare_price = ?, weight_grams = COALESCE(?, weight_grams), stock = ?, is_active = ?
             WHERE id = ? AND product_id = ?
           `,
             )
@@ -442,6 +471,7 @@ export const PATCH: APIRoute = async ({ request, locals }) => {
               variant.compare_price,
               variant.weight_grams,
               variant.stock,
+              variant.is_active ? 1 : 0,
               variant.id,
               parsed.value.id,
             );
@@ -451,9 +481,9 @@ export const PATCH: APIRoute = async ({ request, locals }) => {
           .prepare(
             `
           INSERT INTO product_variants (
-            product_id, sku, title, price, compare_price, weight_grams, stock
+            product_id, sku, title, price, compare_price, weight_grams, stock, is_active
           )
-          VALUES (?, ?, ?, ?, ?, ?, ?)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `,
           )
           .bind(
@@ -464,6 +494,7 @@ export const PATCH: APIRoute = async ({ request, locals }) => {
             variant.compare_price,
             variant.weight_grams,
             variant.stock,
+            variant.is_active ? 1 : 0,
           );
       }),
       ...removedVariantIds.map((variantId) =>

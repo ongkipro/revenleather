@@ -1,6 +1,6 @@
 # Path-ownership manifest — copy-paste install updates (`revenleather`)
 
-> Verified against disk: 2026-11-01 @ merge of `7a207a0` (Reven install)
+> Verified against disk: 2026-11-13 @ `2aa04b1` + working tree (bank account removed from /kontak and /tentang). Before: 2026-11-01 @ merge of `7a207a0` (Reven install)
 
 Authority: `DECISIONS.md` ADR-020, `PLAN.md`, `TASKS.md` A-153, `AGENTS.md` §0.
 
@@ -20,7 +20,7 @@ Unlike a default install, `revenleather` has custom storefront, route, and check
    - `src/components/storefront/shared/SiteHeader.astro` & `src/components/storefront/shared/SiteFooter.astro` — Minimalist centered footer with `Kebijakan Privasi · Syarat & Ketentuan` in the copyright bar; no `/testimoni` or `/landing-page` links.
    - `src/components/storefront/shared/ProductListItem.astro` — Classic sharp (`rounded-none`) product card: Category → 1-line truncated Title (`truncate`) → `★★★★★ 4.9 (xx+ terjual)` → compact Price & Compare Price. Core's "Mulai" label sits before the price when variant prices differ.
    - `src/components/storefront/home/HeroSection.astro`, `src/components/storefront/home/ProductsSection.astro` (full-width `16:9` `/images/reven-grafir-sample.webp` Gratis Grafir spotlight + category & `Gratis Grafir (33)` filter tabs), `src/components/storefront/templates/CompactMarketHome.astro` (no `<LandingPagesSection />`).
-   - `src/components/storefront/shared/PageIntro.astro`, `src/components/storefront/shared/LegalPage.astro`, `src/pages/produk/index.astro`, `src/pages/produk/[slug].astro` (`4.9 • xx terjual`), `src/pages/tentang.astro`, `src/pages/kontak.astro`, `src/pages/pengiriman.astro`, `src/pages/landing-page/index.astro`.
+   - `src/components/storefront/shared/PageIntro.astro`, `src/components/storefront/shared/LegalPage.astro`, `src/pages/produk/index.astro`, `src/pages/produk/[slug].astro` (`4.9 • xx terjual`), `src/pages/tentang.astro`, `src/pages/kontak.astro`, `src/pages/pengiriman.astro`, `src/pages/landing-page/index.astro`. `/kontak` and `/tentang` carry **no bank account number** (removed 2026-11-13 on the owner's request): the account a buyer pays into is shown only on `/payment` and `/thanks`, from `seller_bank_accounts`. Do not restore it from an older copy.
    - Adopted from 1.8.x and recoloured, not overwritten: `Breadcrumb.astro` (one scrolling line, home icon) and `LegalPage.astro` (`legalSegments` links inside paragraphs) keep core's structure in Reven's cream/brown palette; `PageIntro.astro` keeps its `badge` as optional. `HeroSection.astro` and the hero script in `CompactMarketHome.astro` stay on the transform track (core moved to scroll-snap; the two halves do not mix).
    - **Deleted route `/testimoni`**: `src/pages/testimoni.astro` is intentionally removed (and omitted from `CONTENT_PAGES` in `src/lib/route-map.ts`). If an upstream `adsbookcms` copy re-creates `src/pages/testimoni.astro`, delete it and run `npm run route-map`.
    - `src/components/storefront/forms/FormHybridContent.astro`, `src/components/storefront/forms/GeoIpResolvedForm.astro`, `src/scripts/form-hybrid.ts`, `src/lib/shipping-quote.ts`:

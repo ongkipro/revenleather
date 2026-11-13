@@ -140,7 +140,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
            pv.sku, pv.price, pv.stock
          FROM product_variants pv
          INNER JOIN products p ON p.id = pv.product_id
-         WHERE p.is_active = 1
+         WHERE p.is_active = 1 AND pv.is_active = 1
          ORDER BY p.title, pv.id
          LIMIT 500`,
       ),

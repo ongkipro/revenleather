@@ -24,6 +24,17 @@ export interface CatalogVariantRow {
   price: number;
   compare_price?: number | null;
   stock?: number | null;
+  /** 0 hides the variant from every storefront surface (migration 0080). */
+  is_active?: number | boolean | null;
+}
+
+/**
+ * A variant the merchant switched off. Only an explicit 0/false hides it: a
+ * row read before migration 0080, or by a query that did not select the
+ * column, stays visible, which is the state every variant had before.
+ */
+export function isVariantHidden(variant: { is_active?: number | boolean | null }) {
+  return variant.is_active === 0 || variant.is_active === false;
 }
 
 type PublicationProduct = {
@@ -36,6 +47,7 @@ type PublicationVariant = {
   title?: string | null;
   price?: number | null;
   stock?: number | null;
+  is_active?: number | boolean | null;
 };
 
 export function getPublicProductValidationError(
@@ -54,12 +66,13 @@ export function getPublicProductValidationError(
   if (
     !variants.some(
       (variant) =>
+        !isVariantHidden(variant) &&
         Boolean(variant.title?.trim()) &&
         Number.isSafeInteger(variant.price) &&
         Number(variant.price) > 0,
     )
   ) {
-    return "Produk aktif wajib memiliki minimal 1 varian valid dan tersedia.";
+    return "Produk aktif wajib memiliki minimal 1 varian valid yang ditampilkan.";
   }
   return null;
 }
@@ -102,6 +115,7 @@ export function mergeStorefrontCatalog(
 
     const availableVariants = (variantsByProduct.get(product.id) ?? []).filter(
       (variant) =>
+        !isVariantHidden(variant) &&
         Number.isSafeInteger(variant.id) &&
         variant.id > 0 &&
         Boolean(variant.title?.trim()) &&

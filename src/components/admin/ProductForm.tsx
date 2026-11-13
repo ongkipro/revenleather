@@ -3,6 +3,7 @@ import { ImagePlus, LoaderCircle, RefreshCw, Trash2 } from "lucide-react";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
+import { Switch } from "../ui/switch";
 import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from "../ui/input-group";
 import { Textarea } from "../ui/textarea";
 import { DistrictCombobox, type DistrictOption } from "./DistrictCombobox";
@@ -23,6 +24,10 @@ type Variant = {
   compare_price: string;
   weight_grams: string;
   stock: string;
+  /** Shown on the storefront. Off keeps the variant on its orders. */
+  is_active: boolean;
+  /** Already on an order: the server refuses deletion, so the form offers hiding. */
+  has_orders: boolean;
 };
 type ProductPayload = {
   id?: number | string;
@@ -45,6 +50,7 @@ type ProductPayload = {
     // new variant and keeps the stored weight for an existing one.
     weight_grams: number | null;
     stock: number;
+    is_active: boolean;
   }>;
 };
 type ProductVariantResponse = {
@@ -55,6 +61,8 @@ type ProductVariantResponse = {
   compare_price: number | null;
   weight_grams: number;
   stock: number;
+  is_active?: boolean;
+  has_orders?: boolean;
 };
 type ProductResponse = {
   id: number | string;
@@ -79,6 +87,8 @@ const emptyVariant = (key: string): Variant => ({
   // variant must state it (PRD A41, REQ-231).
   weight_grams: "",
   stock: "1000",
+  is_active: true,
+  has_orders: false,
 });
 const slugify = (value: string) =>
   value
@@ -200,6 +210,8 @@ export function ProductForm({ productId, storeName = "" }: { productId?: string;
                 compare_price: String(variant.compare_price ?? ""),
                 weight_grams: String(variant.weight_grams ?? ""),
                 stock: String(variant.stock ?? 0),
+                is_active: variant.is_active !== false,
+                has_orders: Boolean(variant.has_orders),
               }))
             : [emptyVariant("new-0")],
         );
@@ -217,7 +229,32 @@ export function ProductForm({ productId, storeName = "" }: { productId?: string;
     return () => controller.abort();
   }, [productId]);
 
-  const updateVariant = (index: number, field: keyof Variant, value: string) =>
+  const setVariantShown = (index: number, shown: boolean) =>
+    setVariants((current) =>
+      current.map((variant, itemIndex) =>
+        itemIndex === index ? { ...variant, is_active: shown } : variant,
+      ),
+    );
+  // Removal only edits the form; nothing reaches D1 until "Simpan Produk".
+  // The button used to drop the card silently, which read as "did nothing"
+  // when the operator left the page, and as a failure when the save then
+  // refused a variant already on an order. Both cases are now said up front.
+  const removeVariant = (index: number) => {
+    const target = variants[index];
+    if (!target || target.has_orders) return;
+    setVariants((current) => current.filter((_, itemIndex) => itemIndex !== index));
+    if (target.id) {
+      setStatusTone("idle");
+      setStatus(
+        `Varian ${target.title || target.sku || target.id} dihapus dari formulir. Klik Simpan Produk untuk menyimpan.`,
+      );
+    }
+  };
+  const updateVariant = (
+    index: number,
+    field: Exclude<keyof Variant, "is_active" | "has_orders">,
+    value: string,
+  ) =>
     setVariants((current) =>
       current.map((variant, itemIndex) =>
         itemIndex === index ? { ...variant, [field]: value } : variant,
@@ -313,6 +350,7 @@ export function ProductForm({ productId, storeName = "" }: { productId?: string;
         ? Number(variant.weight_grams)
         : null,
       stock: Number(variant.stock),
+      is_active: variant.is_active,
     }));
 
     const invalidVariant = payloadVariants.find((v) => v.title.length > 15);
@@ -666,7 +704,7 @@ export function ProductForm({ productId, storeName = "" }: { productId?: string;
                     box inside the input grid, a different height from every
                     field beside it. */}
                 <legend className="sr-only">Varian {index + 1}</legend>
-                <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-2.5">
+                <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-slate-200 px-4 py-2.5">
                   <div className="flex min-w-0 items-center gap-2">
                     <span className="text-sm font-semibold text-slate-900">
                       Varian {index + 1}
@@ -679,22 +717,39 @@ export function ProductForm({ productId, storeName = "" }: { productId?: string;
                       <Badge variant="secondary">Baru</Badge>
                     )}
                   </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    disabled={variants.length === 1}
-                    onClick={() =>
-                      setVariants((current) =>
-                        current.filter((_, itemIndex) => itemIndex !== index),
-                      )
-                    }
-                    aria-label={`Hapus varian ${index + 1}`}
-                    className="text-rose-700 hover:text-rose-800"
-                  >
-                    <Trash2 aria-hidden="true" />
-                    Hapus
-                  </Button>
+                  <div className="flex shrink-0 items-center gap-3">
+                    <label className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+                      <Switch
+                        size="sm"
+                        checked={variant.is_active}
+                        onCheckedChange={(checked) => setVariantShown(index, checked)}
+                        aria-label={`Tampilkan varian ${variant.title || index + 1} di toko`}
+                      />
+                      {variant.is_active ? "Tampil di toko" : "Disembunyikan"}
+                    </label>
+                    {variant.has_orders ? (
+                      <span
+                        className="text-xs text-slate-500"
+                        title="Varian ini tercatat di order, jadi tidak bisa dihapus. Matikan Tampil di toko untuk berhenti menjualnya."
+                      >
+                        Dipakai order
+                      </span>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        disabled={variants.length === 1}
+                        title={variants.length === 1 ? "Produk minimal punya 1 varian." : undefined}
+                        onClick={() => removeVariant(index)}
+                        aria-label={`Hapus varian ${index + 1}`}
+                        className="text-rose-700 hover:text-rose-800"
+                      >
+                        <Trash2 aria-hidden="true" />
+                        Hapus
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 <div className="grid grid-cols-1 gap-x-3 gap-y-4 p-4 sm:grid-cols-6">
                   <label className="sm:col-span-3">
@@ -871,6 +926,9 @@ export function ProductForm({ productId, storeName = "" }: { productId?: string;
                 <dt className="text-slate-500">Varian</dt>
                 <dd className="mt-1 font-semibold text-slate-900">
                   {variants.length}
+                  {variants.some((variant) => !variant.is_active)
+                    ? ` (${variants.filter((variant) => variant.is_active).length} tampil)`
+                    : ""}
                 </dd>
               </div>
               <div className="col-span-2 rounded-lg bg-slate-50 p-3">

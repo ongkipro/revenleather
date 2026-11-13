@@ -127,7 +127,8 @@ class SqliteD1Database {
         sku TEXT,
         price INTEGER NOT NULL,
         stock INTEGER,
-        weight_grams INTEGER NOT NULL DEFAULT 1000
+        weight_grams INTEGER NOT NULL DEFAULT 1000,
+        is_active INTEGER NOT NULL DEFAULT 1
       );
 
       CREATE TABLE orders (

@@ -66,6 +66,8 @@ export type ProductVariant = {
   title: string;
   price: number;
   stock: number;
+  /** False: hidden from the storefront (migration 0080). */
+  is_active?: boolean | number;
 };
 
 export type Product = {
@@ -105,9 +107,13 @@ function formatIDR(amount: number): string {
   }).format(amount);
 }
 
+const isShown = (variant: ProductVariant) =>
+  variant.is_active !== false && variant.is_active !== 0;
+
+/** What the storefront shows for the product: hidden variants are not priced. */
 function getProductPriceRange(variants: ProductVariant[]): string | null {
   if (!variants || variants.length === 0) return null;
-  const prices = variants.map((v) => Number(v.price)).filter((p) => p > 0);
+  const prices = variants.filter(isShown).map((v) => Number(v.price)).filter((p) => p > 0);
   if (prices.length === 0) return null;
   const min = Math.min(...prices);
   const max = Math.max(...prices);
@@ -843,6 +849,11 @@ export function ProductCatalog({
                       <dt className="text-xs text-slate-500 uppercase font-semibold">Varian</dt>
                       <dd className="mt-0.5 font-semibold text-slate-900 text-xs">
                         {product.variants?.length || 0} opsi
+                        {product.variants?.some((variant) => !isShown(variant)) && (
+                          <span className="block font-normal text-slate-500">
+                            {product.variants.filter((variant) => !isShown(variant)).length} disembunyikan
+                          </span>
+                        )}
                       </dd>
                     </div>
                   </dl>
@@ -952,6 +963,11 @@ export function ProductCatalog({
                       {/* Variant count */}
                       <TableCell className="py-3.5 px-4 font-semibold text-slate-700 text-xs">
                         {product.variants?.length || 0} varian
+                        {product.variants?.some((variant) => !isShown(variant)) && (
+                          <span className="block font-normal text-slate-500">
+                            {product.variants.filter((variant) => !isShown(variant)).length} disembunyikan
+                          </span>
+                        )}
                       </TableCell>
 
                       {/* Status */}
@@ -1250,7 +1266,7 @@ export function ProductCatalog({
             </DialogDescription>
           </DialogHeader>
           <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900">
-            <strong>Catatan:</strong> Bila produk ini sudah memiliki transaksi order, menghapus produk akan mempengaruhi riwayat katalog. Anda juga dapat mengubah status ke <strong>Draft</strong> untuk menonaktifkan penjualan.
+            <strong>Catatan:</strong> Produk yang sudah dipakai order tidak bisa dihapus; sistem akan menolaknya. Ubah status ke <strong>Draft</strong> untuk menghentikan penjualan.
           </p>
           <DialogFooter>
             <DialogClose asChild>

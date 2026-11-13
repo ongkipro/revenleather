@@ -1,6 +1,6 @@
 # BUILD LOG: AdsBookCMS
 
-> Verified against disk: 2026-11-06 @ `2cf79d0` (Entry 267; earlier entries retain their historical evidence)
+> Verified against disk: 2026-11-13 @ `2aa04b1` + working tree (Entry 268 (Reven) appended). Before: 2026-11-06 @ `2cf79d0` (Entry 267; earlier entries retain their historical evidence)
 
 Author & Curator: **[ongki.pro](https://ongki.pro)**
 
@@ -8846,3 +8846,16 @@ rules. In that pass its radius was corrected from Tailwind's stock 6/12/16 px to
 (`--radius: 0.625rem`), and its re-brand contract now lists all thirteen `--sf-*` tokens, not nine. Baseline 1188.
 Not verified: the payment brand logo at its new declared size in a browser (CSS sizes it to its box). Nothing deploys from
 this repository; installs pick it up with their next product merge.
+
+### Entry 268 (Reven): bank account off the public pages; AdsBookCMS 1.11.0 variant visibility adopted (2026-11-13, Paduka: "hapus no rek di public storefront ... togle on off varian ... hapus varian juga kamu review")
+
+- `/kontak` ("Transfer Bank Resmi") and `/tentang` ("Rekening Resmi") no longer print the Mandiri account; no other
+  storefront file held it (`rg 1330035981794` empty). The payment pages still show the account the order uses.
+- Adopted from AdsBookCMS branch `feat/variant-visibility` (product BUILD-LOG Entry 274): migration `0080`
+  (`product_variants.is_active`), "Tampil di toko" per variant, hidden variants out of every storefront surface and
+  refused at checkout; "Dipakai order" instead of a Hapus button for a variant on an order. Also adopted the
+  product's earlier fix for the same "Hapus varian does nothing" report (`0bb832c`, `5d00bec`: an unchanged stored
+  image URL is no longer re-judged on save), which this install had not merged. None of these files is on the
+  protected list; the product versions were applied unchanged.
+- 1210 passing, 3 skipped (the inherited `payment-accent.test.ts` skips). Browser evidence is the product's (same
+  code); not re-rendered on this install. Not deployed: the live D1 gets `0080` on the first request after a deploy.

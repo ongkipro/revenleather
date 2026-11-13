@@ -115,7 +115,7 @@ async function loadActiveVariant(database: D1Database, variantId: number) {
       `SELECT pv.id, pv.price
        FROM product_variants pv
        INNER JOIN products p ON p.id = pv.product_id
-       WHERE pv.id = ? AND p.is_active = 1
+       WHERE pv.id = ? AND p.is_active = 1 AND pv.is_active = 1
        LIMIT 1`,
     )
     .bind(variantId)
@@ -356,6 +356,7 @@ export async function convertAbandonedLead(
              INNER JOIN products p ON p.id = pv.product_id
              WHERE pv.id = ?
                AND p.is_active = 1
+               AND pv.is_active = 1
            )`,
       )
       .bind(

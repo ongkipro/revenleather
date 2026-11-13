@@ -169,7 +169,7 @@ async function generationContext(database: D1Database, keyValue: unknown) {
            pv.compare_price, pv.weight_grams, pv.stock
          FROM product_variants pv
          INNER JOIN products p ON p.id = pv.product_id
-         WHERE p.is_active = 1
+         WHERE p.is_active = 1 AND pv.is_active = 1
          ORDER BY pv.product_id ASC, pv.id ASC`,
       ),
     ]);
@@ -196,7 +196,7 @@ async function generationContext(database: D1Database, keyValue: unknown) {
     .prepare(
       `
       SELECT id, sku, title, price, compare_price, weight_grams, stock
-      FROM product_variants WHERE product_id = ? ORDER BY id ASC
+      FROM product_variants WHERE product_id = ? AND is_active = 1 ORDER BY id ASC
     `,
     )
     .bind(product.id)

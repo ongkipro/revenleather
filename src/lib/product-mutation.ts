@@ -83,6 +83,8 @@ type ParsedVariant = {
   /** Null only for an existing variant saved without a weight: keep its stored one. */
   weight_grams: number | null;
   stock: number;
+  /** False hides the variant from the storefront; it stays on its orders. */
+  is_active: boolean;
 };
 
 type ParsedProduct = {
@@ -154,14 +156,17 @@ function parseInteger(value: unknown) {
 export function parseProductMutationPayload(
   body: ProductMutationPayload | null,
   requireId: true,
+  storedImageUrl?: string | null,
 ): ParseResult<ParsedProduct & { id: number }>;
 export function parseProductMutationPayload(
   body: ProductMutationPayload | null,
   requireId: false,
+  storedImageUrl?: string | null,
 ): ParseResult<ParsedProduct>;
 export function parseProductMutationPayload(
   body: ProductMutationPayload | null,
   requireId: boolean,
+  storedImageUrl?: string | null,
 ): ParseResult<ParsedProduct> {
   if (!body || typeof body !== "object" || Array.isArray(body)) {
     return { error: "Payload tidak valid." };
@@ -203,12 +208,18 @@ export function parseProductMutationPayload(
     }
   }
   const imageUrl = clean(body.image_url, 500);
+  // A value the row already holds is never re-judged: saving an edit (removing
+  // a variant, say) must not fail on an image address it did not change.
   if (
     imageUrl &&
+    imageUrl !== (storedImageUrl ?? "").trim() &&
     !imageUrl.startsWith("/assets/uploads/") &&
     !imageUrl.startsWith("/images/")
   ) {
-    return { error: "URL gambar produk tidak valid." };
+    return {
+      error:
+        "Alamat gambar produk tidak dikenali. Unggah ulang foto produk lewat tombol Ganti foto.",
+    };
   }
   const isActive = typeof body.is_active === "boolean" ? body.is_active : true;
   const parsedProductId =
@@ -323,6 +334,9 @@ export function parseProductMutationPayload(
       // ADR-023, so an absent or negative figure is stored as zero rather
       // than refused — a save must not fail over a number nobody reads.
       stock: stock !== null && stock > 0 ? stock : 0,
+      // Absent means shown: a client that predates the toggle keeps every
+      // variant visible rather than hiding one by omission.
+      is_active: rawVariant.is_active !== false,
     });
   }
 

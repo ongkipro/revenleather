@@ -110,10 +110,6 @@ const facts = await getStorePublicFacts(Astro.locals);
             <dd class="text-right font-semibold text-[#1a1411]">Bululawang, Kab. Malang, Jawa Timur 65171</dd>
           </div>
           <div class="flex justify-between gap-4 py-2.5">
-            <dt class="text-[#574c43]">Rekening Resmi</dt>
-            <dd class="text-right font-semibold text-[#1a1411]">Mandiri 1330035981794 (PT East Retail Network)</dd>
-          </div>
-          <div class="flex justify-between gap-4 py-2.5">
             <dt class="text-[#574c43]">Metode Pembayaran</dt>
             <dd class="text-right font-semibold text-[#1a1411]">{joinIndonesian(facts.payments) || 'Ditampilkan di formulir pemesanan'}</dd>
           </div>

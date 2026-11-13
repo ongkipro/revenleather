@@ -142,7 +142,7 @@ can reach it.
 
 On a fresh clone, run `npm run check` rather than bare `npx tsc --noEmit`. `astro check` generates `.astro/types.d.ts` first; without it `tsc` reports phantom errors such as `Property 'env' does not exist on type 'ImportMeta'`.
 
-Current verified baseline: **1188 passing** (0 skipped, 2026-11-06, `ui/storefront-image-guard`, 1.9.2), 0 type errors, `astro check` 0 errors / 0 warnings / 0 hints (590 files). A change that reduces this baseline is not done.
+Current verified baseline: **1210 passing** (3 skipped, inherited `payment-accent.test.ts`; 2026-11-13, `main` + AdsBookCMS 1.11.0 variant visibility), 0 type errors, `astro check` 0 errors / 0 warnings / 0 hints (590 files). A change that reduces this baseline is not done.
 
 New non-trivial logic — a branch, a parser, a money or auth path — leaves one runnable check behind. Trivial one-liners do not need a test.
 

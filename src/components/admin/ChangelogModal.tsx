@@ -30,10 +30,26 @@ interface ChangelogRelease {
 // changelog.test.ts fails when version.ts moves without a matching entry here.
 const CHANGELOG_RELEASES: ChangelogRelease[] = [
   {
+    version: "1.11.0",
+    date: "13 November 2026",
+    releaseTag: "2026.11-signal",
+    isLatest: true,
+    highlight: "Varian bisa disembunyikan dari toko tanpa dihapus.",
+    changes: [
+      {
+        title: "Tampil di toko per varian",
+        description: "Setiap varian di form produk punya sakelar Tampil di toko. Varian yang dimatikan hilang dari halaman produk, landing page, form order, feed Meta/Google, dan API katalog, serta ditolak saat checkout. Order lama yang memakai varian itu tetap utuh.",
+      },
+      {
+        title: "Hapus varian lebih jelas",
+        description: "Varian yang sudah tercatat di order tidak bisa dihapus, jadi tombol Hapus diganti label Dipakai order. Untuk berhenti menjualnya, matikan Tampil di toko. Varian yang dihapus dari formulir baru tersimpan setelah Simpan Produk, dan formulir sekarang mengatakannya.",
+      },
+    ],
+  },
+  {
     version: "1.10.0",
     date: "10 November 2026",
     releaseTag: "2026.11-signal",
-    isLatest: true,
     highlight: "Setiap order COD sampai ke Meta sebagai Purchase, langsung dari server.",
     changes: [
       {

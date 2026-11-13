@@ -245,3 +245,26 @@ test("a chosen Google category is sent exactly, and Meta gets it instead of a gu
   // "Dompet" alone would make the keyword engine guess a Meta wallet category.
   assert.doesNotMatch(meta, /fb_product_category/);
 });
+
+test("a hidden variant leaves the storefront; the product stays while one is shown", () => {
+  const [product] = mergeStorefrontCatalog(
+    [completeProductRow],
+    [{ ...completeVariantRows[0], is_active: 0 }, completeVariantRows[1]],
+  );
+  assert.deepEqual(product?.variants.map((variant) => variant.catalogId), [60002]);
+  // The "from" price follows what is shown, not the hidden cheaper size.
+  assert.equal(product?.price, 200000);
+
+  // A row read before migration 0080 (no column) stays visible.
+  const [legacy] = mergeStorefrontCatalog([completeProductRow], completeVariantRows);
+  assert.equal(legacy?.variants.length, 2);
+
+  // Every variant hidden: nothing left to sell, so the product is not published.
+  assert.deepEqual(
+    mergeStorefrontCatalog(
+      [completeProductRow],
+      completeVariantRows.map((variant) => ({ ...variant, is_active: false })),
+    ),
+    [],
+  );
+});

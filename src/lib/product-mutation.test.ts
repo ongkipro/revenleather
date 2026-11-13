@@ -172,6 +172,27 @@ test("a variant is accepted whatever its stock figure says", () => {
   }
 });
 
+test("a variant is shown unless the payload hides it explicitly", () => {
+  const variant = { sku: "MERCHANT-1", title: "1 Liter", price: 125000, weight_grams: 1000 };
+  const parse = (extra: Record<string, unknown>) =>
+    parseProductMutationPayload(validMutationPayload({ variants: [{ ...variant, ...extra }] }), false);
+  // A client that predates the toggle sends no flag and must not hide anything.
+  for (const extra of [{}, { is_active: true }, { is_active: 1 }, { is_active: null }]) {
+    const parsed = parse(extra);
+    assert.ok("value" in parsed && parsed.value.variants[0].is_active === true, JSON.stringify(extra));
+  }
+  // The only hidden variant leaves an active product with nothing to sell.
+  assert.deepEqual(parse({ is_active: false }), {
+    error: "Produk aktif wajib memiliki minimal 1 varian valid yang ditampilkan.",
+  });
+  // A draft may hide all of them.
+  const draft = parseProductMutationPayload(
+    validMutationPayload({ is_active: false, variants: [{ ...variant, is_active: false }] }),
+    false,
+  );
+  assert.ok("value" in draft && draft.value.variants[0].is_active === false);
+});
+
 test("product validation never synthesizes a missing slug", () => {
   assert.deepEqual(
     parseProductMutationPayload(validMutationPayload({ slug: "" }), false),
@@ -239,11 +260,12 @@ test("an existing variant saved without a weight keeps its stored one", async ()
   const sqlite = new DatabaseSync(":memory:");
   sqlite.exec(`CREATE TABLE product_variants (
     id INTEGER PRIMARY KEY, product_id INTEGER, sku TEXT, title TEXT, price INTEGER,
-    compare_price INTEGER, weight_grams INTEGER NOT NULL DEFAULT 1000, stock INTEGER
+    compare_price INTEGER, weight_grams INTEGER NOT NULL DEFAULT 1000, stock INTEGER,
+    is_active INTEGER NOT NULL DEFAULT 1
   );
-  INSERT INTO product_variants VALUES (20001, 10001, 'MERCHANT-1', '1 Liter', 125000, NULL, 750, 0);`);
+  INSERT INTO product_variants VALUES (20001, 10001, 'MERCHANT-1', '1 Liter', 125000, NULL, 750, 0, 1);`);
   const variant = parsed.value.variants[0];
-  sqlite.prepare(update).run(variant.sku, variant.title, variant.price, variant.compare_price, variant.weight_grams, variant.stock, 20001, 10001);
+  sqlite.prepare(update).run(variant.sku, variant.title, variant.price, variant.compare_price, variant.weight_grams, variant.stock, variant.is_active ? 1 : 0, 20001, 10001);
   const stored = sqlite.prepare("SELECT weight_grams FROM product_variants WHERE id = 20001").get() as { weight_grams: number };
   assert.equal(stored.weight_grams, 750);
 });
@@ -299,4 +321,12 @@ test("a Google category is an id with its path, null clears it, and absent keeps
   for (const bad of [{ google_category_id: "abc", google_category_path: "x" }, { google_category_id: 2503, google_category_path: "" }, { google_category_id: -1, google_category_path: "x" }]) {
     assert.ok("error" in parseProductMutationPayload({ ...base, ...bad }, true));
   }
+});
+
+test("an update keeps an image address the row already stores", () => {
+  const legacy = "https://cdn.example/old.jpg";
+  const payload = validMutationPayload({ id: 7, image_url: legacy });
+  assert.ok("error" in parseProductMutationPayload(payload, true));
+  assert.ok("value" in parseProductMutationPayload(payload, true, legacy));
+  assert.ok("error" in parseProductMutationPayload(payload, true, "/images/x.jpg"));
 });
